@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Our Psychiatrists — MindBridge</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .psy-full-card { background:white; border-radius:20px; overflow:hidden; box-shadow:var(--shadow); border:1px solid var(--border); transition:all 0.3s; display:flex; flex-direction:column; }
+    .psy-full-card:hover { transform:translateY(-4px); box-shadow:var(--shadow-lg); }
+    .psy-card-top { background:linear-gradient(135deg,var(--teal),var(--teal-light)); padding:1.75rem; display:flex; align-items:center; gap:1.25rem; }
+    .psy-avatar-img { width:72px; height:72px; border-radius:50%; object-fit:cover; border:3px solid rgba(255,255,255,0.4); flex-shrink:0; }
+    .psy-avatar-initials { width:72px; height:72px; border-radius:50%; background:rgba(255,255,255,0.2); display:flex; align-items:center; justify-content:center; font-size:1.7rem; color:white; font-weight:700; font-family:'Playfair Display',serif; border:3px solid rgba(255,255,255,0.3); flex-shrink:0; }
+    .psy-card-top h5 { color:white; font-size:1.05rem; font-weight:600; margin:0 0 0.25rem; }
+    .psy-card-top p { color:rgba(255,255,255,0.8); font-size:0.82rem; margin:0; }
+    .psy-card-body { padding:1.5rem; flex:1; }
+    .psy-card-footer { padding:1rem 1.5rem; border-top:1px solid var(--border); background:#fafafa; display:flex; flex-direction:column; gap:0.5rem; }
+    .psy-tag { display:inline-block; background:rgba(13,115,119,0.08); color:var(--teal); padding:0.25rem 0.75rem; border-radius:50px; font-size:0.75rem; font-weight:600; margin-right:0.4rem; margin-bottom:0.4rem; }
+    .psy-tag-mode { background:rgba(132,169,140,0.12); color:#4a7c59; }
+    .info-grid { display:grid; grid-template-columns:1fr 1fr; gap:0.6rem; margin:1rem 0; }
+    .info-item .label { color:var(--text-muted); font-weight:500; display:block; font-size:0.75rem; }
+    .info-item .value { color:var(--text); font-weight:600; font-size:0.82rem; }
+    .availability-days { display:flex; flex-wrap:wrap; gap:0.3rem; margin-top:0.4rem; }
+    .day-chip { background:rgba(13,115,119,0.08); color:var(--teal); padding:0.2rem 0.6rem; border-radius:6px; font-size:0.75rem; font-weight:600; }
+    .bio-text { color:var(--text-muted); font-size:0.85rem; line-height:1.6; margin-top:0.75rem; padding-top:0.75rem; border-top:1px solid var(--border); }
+    .fee-badge { background:rgba(255,255,255,0.2); color:white; padding:0.25rem 0.75rem; border-radius:50px; font-size:0.78rem; font-weight:600; display:inline-block; margin-top:0.4rem; }
+    .btn-book { display:block; width:100%; text-align:center; background:linear-gradient(135deg,var(--teal),var(--teal-light)); color:white; padding:0.7rem; border-radius:10px; font-weight:600; font-size:0.9rem; border:none; cursor:pointer; font-family:'DM Sans',sans-serif; transition:all 0.3s; }
+    .btn-book:hover { opacity:0.9; transform:translateY(-1px); }
+    .btn-review { display:block; width:100%; text-align:center; background:white; color:#f39c12; padding:0.65rem; border-radius:10px; font-weight:600; font-size:0.875rem; border:1.5px solid #f39c12; cursor:pointer; font-family:'DM Sans',sans-serif; transition:all 0.2s; }
+    .btn-review:hover { background:#fff9f0; }
+    .btn-login-to-book { display:block; width:100%; text-align:center; background:transparent; color:var(--text-muted); padding:0.7rem; border-radius:10px; font-weight:500; font-size:0.875rem; text-decoration:none; border:1.5px dashed var(--border); transition:all 0.2s; }
+    .btn-login-to-book:hover { border-color:var(--teal); color:var(--teal); }
+    .psy-only-msg { text-align:center; font-size:0.78rem; color:var(--text-muted); padding:0.4rem 0; margin:0; }
+
+    /* REVIEWS SECTION ON CARD */
+    .reviews-section { border-top:1px solid var(--border); padding:1.25rem 1.5rem; background:white; }
+    .reviews-section-title { font-size:0.85rem; font-weight:700; color:var(--charcoal); margin-bottom:0.75rem; display:flex; align-items:center; justify-content:space-between; }
+    .avg-rating-row { display:flex; align-items:center; gap:0.6rem; margin-bottom:1rem; padding:0.75rem 1rem; background:var(--cream); border-radius:10px; border:1px solid var(--border); }
+    .avg-big { font-family:'Playfair Display',serif; font-size:1.8rem; font-weight:700; color:var(--teal); }
+    .star-row { display:flex; gap:1px; }
+    .s { font-size:0.9rem; color:#ddd; }
+    .s.on { color:#f39c12; }
+    .review-item { padding:0.75rem 0; border-bottom:1px solid var(--border); }
+    .review-item:last-child { border-bottom:none; padding-bottom:0; }
+    .review-item-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:0.3rem; }
+    .review-patient { font-size:0.82rem; font-weight:600; color:var(--charcoal); }
+    .review-text { font-size:0.82rem; color:var(--text-muted); line-height:1.5; font-style:italic; }
+    .review-date-sm { font-size:0.72rem; color:var(--text-muted); margin-top:0.2rem; }
+    .no-reviews-msg { text-align:center; font-size:0.82rem; color:var(--text-muted); padding:1rem 0; }
+    .show-more-btn { background:none; border:none; color:var(--teal); font-size:0.8rem; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; margin-top:0.5rem; padding:0; }
+
+    /* MODALS */
+    .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:2000; display:none; align-items:center; justify-content:center; padding:1rem; }
+    .modal-overlay.show { display:flex; }
+    .modal { background:white; border-radius:20px; padding:2rem; max-width:500px; width:100%; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.3); animation:modalIn 0.3s ease; }
+    @keyframes modalIn { from{opacity:0;transform:scale(0.95) translateY(20px);}to{opacity:1;transform:scale(1) translateY(0);} }
+    .modal-title { font-family:'Playfair Display',serif; font-size:1.4rem; font-weight:700; color:var(--charcoal); margin-bottom:0.25rem; }
+    .modal-subtitle { color:var(--text-muted); font-size:0.875rem; margin-bottom:1.5rem; }
+    .slot-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:0.5rem; margin-top:0.5rem; }
+    .slot-btn { padding:0.5rem 0.75rem; border-radius:8px; border:1.5px solid var(--border); background:white; font-size:0.82rem; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; color:var(--text); transition:all 0.2s; text-align:center; }
+    .slot-btn:hover { border-color:var(--teal); color:var(--teal); }
+    .slot-btn.selected { background:var(--teal); border-color:var(--teal); color:white; }
+    .mode-option { display:flex; align-items:center; gap:0.75rem; padding:0.75rem 1rem; border:1.5px solid var(--border); border-radius:10px; cursor:pointer; margin-bottom:0.5rem; transition:all 0.2s; }
+    .mode-option.selected { border-color:var(--teal); background:rgba(13,115,119,0.05); }
+    .star-input { display:flex; gap:0.3rem; margin-top:0.5rem; }
+    .star-input span { font-size:2rem; cursor:pointer; color:#ddd; transition:color 0.15s; }
+    .star-input span.active { color:#f39c12; }
+  </style>
+</head>
+<body>
+<nav class="navbar">
+  <a href="/" class="navbar-brand">Mind<span>Bridge</span></a>
+  <div class="nav-links" id="dynamic-nav"></div>
+</nav>
+
+<div class="page-header">
+  <div class="container">
+    <h1>Our Psychiatrists</h1>
+    <p>Browse our network of certified mental health specialists</p>
+  </div>
+</div>
+
+<div id="info-banner" style="display:none; background:rgba(13,115,119,0.08); border-bottom:1px solid rgba(13,115,119,0.15); padding:0.75rem 0;">
+  <div class="container">
+    <p id="info-banner-text" style="text-align:center; font-size:0.875rem; color:var(--teal); font-weight:500; margin:0;"></p>
+  </div>
+</div>
+
+<div style="padding:4rem 0; background:var(--cream);">
+  <div class="container">
+    <div style="display:flex; gap:1rem; margin-bottom:2rem; flex-wrap:wrap; align-items:center;">
+      <input type="text" id="search-input" class="form-control" placeholder="🔍 Search by name or specialization..." oninput="filterPsychiatrists()" style="max-width:400px;">
+      <select id="filter-mode" class="form-control" onchange="filterPsychiatrists()" style="max-width:180px;">
+        <option value="">All Modes</option>
+        <option value="online">Online</option>
+        <option value="inPerson">In-Person</option>
+      </select>
+    </div>
+    <div id="psy-count" style="color:var(--text-muted); font-size:0.875rem; margin-bottom:1.5rem;"></div>
+    <div class="row g-4" id="psychiatrists-list">
+      <div style="text-align:center; padding:4rem; color:var(--text-muted); width:100%;">
+        <span class="spinner" style="width:28px;height:28px;border-width:3px;border-color:rgba(13,115,119,0.2);border-top-color:var(--teal);"></span>
+        <p style="margin-top:1rem;">Loading psychiatrists...</p>
+      </div>
+    </div>
+    <div id="no-results" style="display:none; text-align:center; padding:3rem; color:var(--text-muted);">
+      <div style="font-size:3rem; margin-bottom:1rem;">🔍</div>
+      <p>No psychiatrists found matching your search.</p>
+    </div>
+  </div>
+</div>
+
+<!-- BOOKING MODAL -->
+<div class="modal-overlay" id="booking-modal">
+  <div class="modal">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1rem;">
+      <div><div class="modal-title">📅 Book Appointment</div><div class="modal-subtitle" id="modal-psy-name"></div></div>
+      <button onclick="closeModal('booking-modal')" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--text-muted);">✕</button>
+    </div>
+    <div id="modal-alert" class="alert-box"></div>
+    <div class="mb-3">
+      <label class="form-label">Select Date *</label>
+      <input type="date" id="booking-date" class="form-control" onchange="loadSlots()" min="">
+      <div id="day-warning" style="font-size:0.8rem;color:#e17055;margin-top:0.4rem;display:none;"></div>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Select Time Slot *</label>
+      <div id="slots-container"><p style="color:var(--text-muted);font-size:0.85rem;">Please select a date first</p></div>
+    </div>
+    <div class="mb-4">
+      <label class="form-label">Consultation Mode *</label>
+      <div id="modes-container"></div>
+    </div>
+    <div class="mb-4">
+      <label class="form-label">Additional Notes (optional)</label>
+      <textarea id="booking-notes" class="form-control" rows="2" placeholder="Any specific concerns..." style="resize:vertical;"></textarea>
+    </div>
+    <button class="btn-submit" id="submit-booking-btn" onclick="submitBooking()">Submit Appointment Request</button>
+  </div>
+</div>
+
+<!-- REVIEW MODAL -->
+<div class="modal-overlay" id="review-modal">
+  <div class="modal">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1rem;">
+      <div><div class="modal-title">⭐ Leave a Review</div><div class="modal-subtitle" id="review-psy-name"></div></div>
+      <button onclick="closeModal('review-modal')" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--text-muted);">✕</button>
+    </div>
+    <div id="review-alert" class="alert-box"></div>
+    <div class="mb-3">
+      <label class="form-label">Your Rating *</label>
+      <div class="star-input" id="star-input">
+        <span onclick="setRating(1)" onmouseover="hoverRating(1)" onmouseout="resetHover()">★</span>
+        <span onclick="setRating(2)" onmouseover="hoverRating(2)" onmouseout="resetHover()">★</span>
+        <span onclick="setRating(3)" onmouseover="hoverRating(3)" onmouseout="resetHover()">★</span>
+        <span onclick="setRating(4)" onmouseover="hoverRating(4)" onmouseout="resetHover()">★</span>
+        <span onclick="setRating(5)" onmouseover="hoverRating(5)" onmouseout="resetHover()">★</span>
+      </div>
+      <div id="rating-label" style="font-size:0.82rem;color:var(--text-muted);margin-top:0.4rem;">Click to rate</div>
+    </div>
+    <div class="mb-4">
+      <label class="form-label">Your Review *</label>
+      <textarea id="review-comment" class="form-control" rows="4" placeholder="Share your experience..." style="resize:vertical;"></textarea>
+    </div>
+    <button class="btn-submit" id="submit-review-btn" onclick="submitReview()">Submit Review</button>
+  </div>
+</div>
+
+<footer>
+  <div class="container">
+    <div style="text-align:center;">
+      <div class="footer-brand">MindBridge</div>
+      <p>© 2024 MindBridge. Connecting patients with mental health specialists.</p>
+    </div>
+  </div>
+</footer>
+
+<script src="/js/app.js"></script>
+<script>
+let allPsychiatrists = [];
+let allReviewsMap = {}; // psychiatristId -> { avgRating, totalReviews, reviews[] }
+let currentPsychiatrist = null;
+let currentReviewPsychiatrist = null;
+let selectedSlot = null;
+let selectedMode = null;
+let selectedRating = 0;
+const ratingLabels = {1:'Poor',2:'Fair',3:'Good',4:'Very Good',5:'Excellent'};
+
+document.addEventListener('DOMContentLoaded', async () => {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('booking-date').min = today;
+
+  const isLoggedIn = Auth.isLoggedIn();
+  const isPsy = Auth.isPsychiatrist();
+  const banner = document.getElementById('info-banner');
+  const bannerText = document.getElementById('info-banner-text');
+  if (!isLoggedIn) {
+    banner.style.display = 'block';
+    bannerText.textContent = 'ℹ️ Only registered and logged-in patients can book appointments or leave reviews. Please login or register.';
+  } else if (isPsy) {
+    banner.style.display = 'block';
+    bannerText.textContent = 'ℹ️ Only registered patients can book appointments and leave reviews.';
+  }
+
+  try {
+    const data = await apiCall('/api/psychiatrist');
+    allPsychiatrists = data.psychiatrists || [];
+
+    // Load reviews for all psychiatrists
+    await loadAllReviews(allPsychiatrists);
+
+    renderPsychiatrists(allPsychiatrists);
+  } catch(e) {
+    document.getElementById('psychiatrists-list').innerHTML = `<div style="text-align:center;padding:3rem;color:var(--text-muted);width:100%;">Could not load psychiatrists.</div>`;
+  }
+});
+
+async function loadAllReviews(psychiatrists) {
+  // Fetch reviews for each psychiatrist in parallel
+  const promises = psychiatrists.map(p =>
+    fetch(`/api/reviews/psychiatrist/${p._id}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          allReviewsMap[p._id] = {
+            avgRating: data.avgRating || 0,
+            totalReviews: data.totalReviews || 0,
+            reviews: data.reviews || []
+          };
+        }
+      })
+      .catch(() => {})
+  );
+  await Promise.all(promises);
+}
+
+function starsHtml(rating, size='0.9rem') {
+  let html = '';
+  for (let i=1;i<=5;i++) html += `<span class="s ${i<=Math.round(rating)?'on':''}" style="font-size:${size};">★</span>`;
+  return html;
+}
+
+function filterPsychiatrists() {
+  const q = document.getElementById('search-input').value.toLowerCase();
+  const mode = document.getElementById('filter-mode').value;
+  let filtered = allPsychiatrists.filter(p => {
+    const matchSearch = p.fullName.toLowerCase().includes(q) || (p.specialization&&p.specialization.toLowerCase().includes(q));
+    const matchMode = !mode||(mode==='online'&&p.consultationModes?.online)||(mode==='inPerson'&&p.consultationModes?.inPerson);
+    return matchSearch && matchMode;
+  });
+  renderPsychiatrists(filtered);
+  document.getElementById('no-results').style.display = filtered.length===0?'block':'none';
+}
+
+function renderPsychiatrists(list) {
+  const container = document.getElementById('psychiatrists-list');
+  document.getElementById('psy-count').textContent = `Showing ${list.length} psychiatrist${list.length!==1?'s':''}`;
+  if (list.length===0){container.innerHTML='';return;}
+
+  const isPatient = Auth.isPatient();
+  const isLoggedIn = Auth.isLoggedIn();
+  const isPsy = Auth.isPsychiatrist();
+
+  container.innerHTML = list.map(p => {
+    const avatarHtml = p.profileImage
+      ? `<img src="${p.profileImage}" class="psy-avatar-img" alt="${p.fullName}">`
+      : `<div class="psy-avatar-initials">${p.fullName.charAt(0).toUpperCase()}</div>`;
+
+    const modes = [];
+    if (p.consultationModes?.online) modes.push('🌐 Online');
+    if (p.consultationModes?.inPerson) modes.push('🏥 In-Person');
+    const days = p.availableDays?.length>0?p.availableDays.map(d=>`<span class="day-chip">${d.slice(0,3)}</span>`).join(''):'';
+    const timeSlots = p.timeSlots?.length>0?p.timeSlots.map(s=>`${s.start} – ${s.end}`).join(', '):'';
+
+    // Reviews data for this psychiatrist
+    const revData = allReviewsMap[p._id] || { avgRating:0, totalReviews:0, reviews:[] };
+    const reviewsSection = buildReviewsSection(p._id, revData);
+
+    // Footer buttons
+    let footer = '';
+    if (isPatient) {
+      footer = `
+        <div class="psy-card-footer">
+          <button class="btn-book" onclick="openBookingModal('${p._id}')">📅 Book Appointment</button>
+          <button class="btn-review" onclick="openReviewModal('${p._id}','${p.fullName}')">⭐ Leave a Review</button>
+        </div>`;
+    } else if (!isLoggedIn) {
+      footer = `
+        <div class="psy-card-footer">
+          <a href="/login" class="btn-login-to-book">🔒 Login as Patient to Book Appointment</a>
+          <p class="psy-only-msg">ℹ️ Only registered patients can book appointments and leave reviews</p>
+        </div>`;
+    } else if (isPsy) {
+      footer = `<div class="psy-card-footer"><p class="psy-only-msg">ℹ️ Only registered patients can book appointments and leave reviews</p></div>`;
+    }
+
+    return `
+      <div class="col-md-4">
+        <div class="psy-full-card">
+          <div class="psy-card-top">
+            ${avatarHtml}
+            <div>
+              <h5>${p.fullName}</h5>
+              <p>${p.specialization||'General Psychiatry'}</p>
+              ${p.consultationFee?`<span class="fee-badge">PKR ${p.consultationFee}</span>`:''}
+            </div>
+          </div>
+          <div class="psy-card-body">
+            <div style="margin-bottom:0.75rem;">
+              ${p.specialization?`<span class="psy-tag">${p.specialization}</span>`:''}
+              ${modes.map(m=>`<span class="psy-tag psy-tag-mode">${m}</span>`).join('')}
+            </div>
+            <div class="info-grid">
+              ${p.qualification?`<div class="info-item"><span class="label">Qualification</span><span class="value">${p.qualification}</span></div>`:''}
+              ${p.experience?`<div class="info-item"><span class="label">Experience</span><span class="value">${p.experience}</span></div>`:''}
+              ${p.licenseNumber?`<div class="info-item"><span class="label">License No.</span><span class="value">${p.licenseNumber}</span></div>`:''}
+              ${p.gender?`<div class="info-item"><span class="label">Gender</span><span class="value">${p.gender}</span></div>`:''}
+              ${p.phone?`<div class="info-item"><span class="label">Phone</span><span class="value">${p.phone}</span></div>`:''}
+              ${p.email?`<div class="info-item"><span class="label">Email</span><span class="value" style="word-break:break-all;">${p.email}</span></div>`:''}
+            </div>
+            ${days?`<div style="margin-top:0.5rem;"><div style="font-size:0.75rem;color:var(--text-muted);font-weight:500;margin-bottom:0.3rem;">Available Days</div><div class="availability-days">${days}</div></div>`:''}
+            ${timeSlots?`<div style="margin-top:0.6rem;"><div style="font-size:0.75rem;color:var(--text-muted);font-weight:500;margin-bottom:0.2rem;">Time Slots</div><div style="font-size:0.82rem;color:var(--text);">🕐 ${timeSlots}</div></div>`:''}
+            ${p.bio?`<div class="bio-text">${p.bio}</div>`:''}
+          </div>
+          ${reviewsSection}
+          ${footer}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function buildReviewsSection(psyId, revData) {
+  const { avgRating, totalReviews, reviews } = revData;
+
+  let avgHtml = '';
+  if (totalReviews > 0) {
+    avgHtml = `
+      <div class="avg-rating-row">
+        <div class="avg-big">${avgRating}</div>
+        <div>
+          <div class="star-row">${starsHtml(avgRating, '1rem')}</div>
+          <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.2rem;">${totalReviews} review${totalReviews!==1?'s':''}</div>
+        </div>
+      </div>`;
+  }
+
+  let reviewsHtml = '';
+  if (reviews.length === 0) {
+    reviewsHtml = `<div class="no-reviews-msg">No reviews yet</div>`;
+  } else {
+    // Show first 2 reviews by default
+    const visible = reviews.slice(0, 2);
+    const hidden = reviews.slice(2);
+    reviewsHtml = visible.map(r => reviewItemHtml(r)).join('');
+    if (hidden.length > 0) {
+      reviewsHtml += `
+        <div id="hidden-reviews-${psyId}" style="display:none;">
+          ${hidden.map(r => reviewItemHtml(r)).join('')}
+        </div>
+        <button class="show-more-btn" onclick="toggleReviews('${psyId}', this)">
+          Show ${hidden.length} more review${hidden.length!==1?'s':''}
+        </button>`;
+    }
+  }
+
+  return `
+    <div class="reviews-section">
+      <div class="reviews-section-title">
+        <span>⭐ Patient Reviews</span>
+        ${totalReviews > 0 ? `<span style="color:var(--text-muted); font-size:0.75rem; font-weight:400;">${totalReviews} total</span>` : ''}
+      </div>
+      ${avgHtml}
+      ${reviewsHtml}
+    </div>`;
+}
+
+function reviewItemHtml(r) {
+  return `
+    <div class="review-item">
+      <div class="review-item-header">
+        <div class="review-patient">👤 ${r.patientName}</div>
+        <div class="star-row">${starsHtml(r.rating, '0.85rem')}</div>
+      </div>
+      <div class="review-text">"${r.comment}"</div>
+      <div class="review-date-sm">${new Date(r.createdAt).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'})}</div>
+    </div>`;
+}
+
+function toggleReviews(psyId, btn) {
+  const el = document.getElementById(`hidden-reviews-${psyId}`);
+  if (el.style.display === 'none') {
+    el.style.display = 'block';
+    btn.textContent = 'Show less';
+  } else {
+    el.style.display = 'none';
+    const count = el.querySelectorAll('.review-item').length;
+    btn.textContent = `Show ${count} more review${count!==1?'s':''}`;
+  }
+}
+
+// ===== BOOKING =====
+function openBookingModal(psychiatristId) {
+  currentPsychiatrist = allPsychiatrists.find(p=>p._id===psychiatristId);
+  if (!currentPsychiatrist) return;
+  selectedSlot=null; selectedMode=null;
+  document.getElementById('booking-date').value='';
+  document.getElementById('booking-notes').value='';
+  document.getElementById('slots-container').innerHTML='<p style="color:var(--text-muted);font-size:0.85rem;">Please select a date first</p>';
+  document.getElementById('modal-alert').style.display='none';
+  document.getElementById('modal-psy-name').textContent=`with ${currentPsychiatrist.fullName}`;
+  let modesHtml='';
+  if (currentPsychiatrist.consultationModes?.online) modesHtml+=`<div class="mode-option" id="mode-online" onclick="selectMode('online')"><input type="radio" name="cmode" value="online"><div><div style="font-weight:600;font-size:0.9rem;">🌐 Online</div><div style="font-size:0.78rem;color:var(--text-muted);">Video / Audio call</div></div></div>`;
+  if (currentPsychiatrist.consultationModes?.inPerson) modesHtml+=`<div class="mode-option" id="mode-inPerson" onclick="selectMode('inPerson')"><input type="radio" name="cmode" value="inPerson"><div><div style="font-weight:600;font-size:0.9rem;">🏥 In-Person</div><div style="font-size:0.78rem;color:var(--text-muted);">Clinic / Hospital visit</div></div></div>`;
+  document.getElementById('modes-container').innerHTML=modesHtml||'<p style="color:var(--text-muted);font-size:0.85rem;">No modes available</p>';
+  document.getElementById('booking-modal').classList.add('show');
+  document.body.style.overflow='hidden';
+}
+
+function closeModal(id){document.getElementById(id).classList.remove('show');document.body.style.overflow='';}
+function selectMode(mode){selectedMode=mode;document.querySelectorAll('.mode-option').forEach(el=>el.classList.remove('selected'));const el=document.getElementById(`mode-${mode}`);if(el){el.classList.add('selected');el.querySelector('input').checked=true;}}
+
+async function loadSlots(){
+  const date=document.getElementById('booking-date').value;
+  if(!date||!currentPsychiatrist) return;
+  const dayName=new Date(date).toLocaleDateString('en-US',{weekday:'long'});
+  const dayWarning=document.getElementById('day-warning');
+  if(currentPsychiatrist.availableDays&&!currentPsychiatrist.availableDays.includes(dayName)){dayWarning.textContent=`⚠️ Not available on ${dayName}s.`;dayWarning.style.display='block';document.getElementById('slots-container').innerHTML='<p style="color:#e17055;font-size:0.85rem;">No slots on this day.</p>';return;}
+  dayWarning.style.display='none';
+  document.getElementById('slots-container').innerHTML='<p style="color:var(--text-muted);font-size:0.85rem;">Loading slots...</p>';
+  selectedSlot=null;
+  try{
+    const data=await apiCall(`/api/appointments/slots/${currentPsychiatrist._id}?date=${date}`);
+    if(data.slots?.length>0){document.getElementById('slots-container').innerHTML=`<div class="slot-grid">${data.slots.map(slot=>`<button type="button" class="slot-btn" onclick="selectSlot(this,'${slot}')">${slot}</button>`).join('')}</div>`;}
+    else{document.getElementById('slots-container').innerHTML='<p style="color:#e17055;font-size:0.85rem;">No available slots. Try another date.</p>';}
+  }catch(e){document.getElementById('slots-container').innerHTML='<p style="color:#e17055;font-size:0.85rem;">Error loading slots.</p>';}
+}
+
+function selectSlot(btn,slot){selectedSlot=slot;document.querySelectorAll('.slot-btn').forEach(b=>b.classList.remove('selected'));btn.classList.add('selected');}
+
+async function submitBooking(){
+  const date=document.getElementById('booking-date').value;
+  const notes=document.getElementById('booking-notes').value.trim();
+  const btn=document.getElementById('submit-booking-btn');
+  if(!date){showAlert('modal-alert','Please select a date.','error');return;}
+  if(!selectedSlot){showAlert('modal-alert','Please select a time slot.','error');return;}
+  if(!selectedMode){showAlert('modal-alert','Please select a consultation mode.','error');return;}
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Submitting...';
+  try{
+    const data=await apiCall('/api/appointments/book','POST',{psychiatristId:currentPsychiatrist._id,date,timeSlot:selectedSlot,consultationMode:selectedMode,notes});
+    if(data.success){closeModal('booking-modal');showToast('✅ Appointment request submitted!','success');}
+    else{showAlert('modal-alert',data.message||'Booking failed.','error');btn.disabled=false;btn.textContent='Submit Appointment Request';}
+  }catch(e){showAlert('modal-alert','Server error.','error');btn.disabled=false;btn.textContent='Submit Appointment Request';}
+}
+
+// ===== REVIEWS =====
+function openReviewModal(psychiatristId, psychiatristName){
+  currentReviewPsychiatrist={_id:psychiatristId,fullName:psychiatristName};
+  selectedRating=0;
+  document.getElementById('review-comment').value='';
+  document.getElementById('review-alert').style.display='none';
+  document.getElementById('review-psy-name').textContent=`for ${psychiatristName}`;
+  document.getElementById('rating-label').textContent='Click to rate';
+  updateStarDisplay(0);
+  document.getElementById('review-modal').classList.add('show');
+  document.body.style.overflow='hidden';
+}
+
+function setRating(val){selectedRating=val;updateStarDisplay(val);document.getElementById('rating-label').textContent=`${val}/5 — ${ratingLabels[val]}`;}
+function hoverRating(val){updateStarDisplay(val);}
+function resetHover(){updateStarDisplay(selectedRating);}
+function updateStarDisplay(val){document.querySelectorAll('#star-input span').forEach((s,i)=>s.classList.toggle('active',i<val));}
+
+async function submitReview(){
+  const comment=document.getElementById('review-comment').value.trim();
+  const btn=document.getElementById('submit-review-btn');
+  if(!selectedRating){showAlert('review-alert','Please select a rating.','error');return;}
+  if(!comment){showAlert('review-alert','Please write a review.','error');return;}
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Submitting...';
+  try{
+    const data=await apiCall('/api/reviews/submit','POST',{psychiatristId:currentReviewPsychiatrist._id,rating:selectedRating,comment});
+    if(data.success){
+      closeModal('review-modal');
+      showToast('⭐ Review submitted! Thank you.','success');
+      // Refresh reviews for this psychiatrist on the card
+      const res=await fetch(`/api/reviews/psychiatrist/${currentReviewPsychiatrist._id}`);
+      const revData=await res.json();
+      if(revData.success){
+        allReviewsMap[currentReviewPsychiatrist._id]={avgRating:revData.avgRating,totalReviews:revData.totalReviews,reviews:revData.reviews};
+        renderPsychiatrists(allPsychiatrists);
+      }
+    }else{showAlert('review-alert',data.message||'Submission failed.','error');btn.disabled=false;btn.textContent='Submit Review';}
+  }catch(e){showAlert('review-alert','Server error.','error');btn.disabled=false;btn.textContent='Submit Review';}
+}
+
+document.getElementById('booking-modal').addEventListener('click',function(e){if(e.target===this)closeModal('booking-modal');});
+document.getElementById('review-modal').addEventListener('click',function(e){if(e.target===this)closeModal('review-modal');});
+</script>
+</body>
+</html>

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Patient Registration — MindBridge</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<nav class="navbar">
+  <a href="/" class="navbar-brand">Mind<span>Bridge</span></a>
+  <div class="nav-links" id="dynamic-nav"></div>
+</nav>
+
+<div class="form-page">
+  <div class="container">
+    <div class="form-container" style="max-width:560px;">
+      <div style="text-align:center; margin-bottom:1.5rem;">
+        <div style="font-size:2.5rem; margin-bottom:0.75rem;">🩺</div>
+        <h2 class="form-title">Patient Registration</h2>
+        <p class="form-subtitle">Create your account to connect with mental health specialists</p>
+      </div>
+      <div id="alert-box" class="alert-box"></div>
+
+      <div class="mb-3">
+        <label class="form-label">Full Name *</label>
+        <input type="text" id="fullName" class="form-control" placeholder="Enter your full name">
+      </div>
+      <div class="row">
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label class="form-label">CNIC *</label>
+            <input type="text" id="cnic" class="form-control" placeholder="XXXXX-XXXXXXX-X">
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label class="form-label">Age *</label>
+            <input type="number" id="age" class="form-control" placeholder="Your age" min="1" max="120">
+          </div>
+        </div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Email Address *</label>
+        <input type="email" id="email" class="form-control" placeholder="your@email.com">
+      </div>
+      <div class="mb-4">
+        <label class="form-label">Password *</label>
+        <input type="password" id="password" class="form-control" placeholder="Create a strong password (min 6 chars)">
+      </div>
+
+      <button class="btn-submit" id="reg-btn" onclick="handleRegister()">Create Patient Account</button>
+      <hr class="form-divider">
+      <p class="text-sm text-center">Already have an account? <a href="/login" class="form-link">Sign in</a></p>
+      <p class="text-sm text-center mt-3">Are you a psychiatrist? <a href="/register-psychiatrist" class="form-link">Register here</a></p>
+    </div>
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+if (Auth.isLoggedIn()) window.location.href = '/dashboard';
+
+async function handleRegister() {
+  const fullName = document.getElementById('fullName').value.trim();
+  const cnic = document.getElementById('cnic').value.trim();
+  const age = document.getElementById('age').value;
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const btn = document.getElementById('reg-btn');
+
+  if (!fullName || !cnic || !age || !email || !password) {
+    showAlert('alert-box', 'All fields are required.', 'error'); return;
+  }
+  if (password.length < 6) {
+    showAlert('alert-box', 'Password must be at least 6 characters.', 'error'); return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Creating account...';
+
+  try {
+    const data = await apiCall('/api/auth/register-patient', 'POST', { fullName, cnic, age, email, password });
+    if (data.success) {
+      showAlert('alert-box', '✅ Account created successfully! Redirecting to login...', 'success');
+      setTimeout(() => window.location.href = '/login', 2000);
+    } else {
+      showAlert('alert-box', data.message || 'Registration failed.', 'error');
+      btn.disabled = false; btn.textContent = 'Create Patient Account';
+    }
+  } catch(e) {
+    showAlert('alert-box', 'Server error. Please try again.', 'error');
+    btn.disabled = false; btn.textContent = 'Create Patient Account';
+  }
+}
+</script>
+</body>
+</html>

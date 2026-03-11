@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MindBridge — Mental Health Care</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <a href="/" class="navbar-brand">Mind<span>Bridge</span></a>
+  <div class="nav-links" id="dynamic-nav"></div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="container">
+    <div class="row" style="align-items:center; gap: 2rem;">
+      <div class="col hero-content">
+        <div class="hero-badge">🌿 Your Mental Wellness Journey</div>
+        <h1>Find <em>Compassionate</em><br>Care You Deserve</h1>
+        <p class="hero-desc">Connect with certified psychiatrists who understand your needs. Professional mental health support, when and where you need it.</p>
+        <div class="hero-actions" id="hero-actions">
+          <a href="/register" class="btn-hero-primary">Get Started Free</a>
+          <a href="/psychiatrists" class="btn-hero-outline">View Psychiatrists</a>
+        </div>
+      </div>
+      <div style="flex: 1; display: flex; justify-content: flex-end; padding: 0 0.75rem;">
+        <div class="hero-card">
+          <div class="stat-block">
+            <div class="stat-num">500+</div>
+            <div class="stat-label">Patients Helped</div>
+          </div>
+          <hr class="stat-divider">
+          <div class="stat-block">
+            <div class="stat-num">50+</div>
+            <div class="stat-label">Expert Psychiatrists</div>
+          </div>
+          <hr class="stat-divider">
+          <div class="stat-block" style="margin-bottom:0">
+            <div class="stat-num">98%</div>
+            <div class="stat-label">Patient Satisfaction</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features-section">
+  <div class="container">
+    <div style="text-align:center; margin-bottom: 3rem;">
+      <div class="section-tag">Why MindBridge</div>
+      <h2 class="section-title">Mental Health Support <br>That Actually Works</h2>
+    </div>
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="feature-card">
+          <div class="feature-icon">🔒</div>
+          <h5>Private & Secure</h5>
+          <p>Your health information is fully encrypted and confidential. We never share your data.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="feature-card">
+          <div class="feature-icon">👨‍⚕️</div>
+          <h5>Verified Specialists</h5>
+          <p>Every psychiatrist on our platform is certified, qualified, and background-verified.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="feature-card">
+          <div class="feature-icon">📋</div>
+          <h5>Easy Registration</h5>
+          <p>Simple sign-up process for both patients and psychiatrists. Start in minutes.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="feature-card">
+          <div class="feature-icon">🌍</div>
+          <h5>Expert Profiles</h5>
+          <p>Browse detailed profiles, qualifications, experience, and specializations before connecting.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="feature-card">
+          <div class="feature-icon">💬</div>
+          <h5>Holistic Approach</h5>
+          <p>We believe in treating the whole person — mind, body, and lifestyle together.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="feature-card">
+          <div class="feature-icon">⚡</div>
+          <h5>Quick Access</h5>
+          <p>Find the right psychiatrist for your needs quickly with our search and filter tools.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PSYCHIATRISTS PREVIEW -->
+<section class="psy-section" style="background: var(--cream);">
+  <div class="container">
+    <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:2.5rem; flex-wrap:wrap; gap:1rem;">
+      <div>
+        <div class="section-tag">Our Specialists</div>
+        <h2 class="section-title">Meet Our Psychiatrists</h2>
+      </div>
+      <a href="/psychiatrists" style="color:var(--teal); font-weight:600; text-decoration:none; font-size:0.9rem;">View All →</a>
+    </div>
+    <div class="row g-4" id="home-psychiatrists">
+      <div style="text-align:center; padding: 3rem; color: var(--text-muted); width:100%;">Loading specialists...</div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section style="background: linear-gradient(135deg, var(--teal-dark), var(--teal)); padding: 5rem 0;">
+  <div class="container" style="text-align:center;">
+    <h2 style="font-family:'Playfair Display',serif; font-size:2.2rem; color:white; margin-bottom:1rem;">Ready to Start Your Journey?</h2>
+    <p style="color:rgba(255,255,255,0.8); margin-bottom:2rem; max-width:480px; margin-left:auto; margin-right:auto;">Join thousands who have already found the mental health support they need.</p>
+    <div style="display:flex; gap:1rem; justify-content:center; flex-wrap:wrap;" id="cta-buttons">
+      <a href="/register" class="btn-hero-primary">Register as Patient</a>
+      <a href="/register-psychiatrist" class="btn-hero-outline">Join as Psychiatrist</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="row">
+      <div class="col-md-4" style="padding:0 0.75rem; margin-bottom:2rem;">
+        <div class="footer-brand">MindBridge</div>
+        <p style="font-size:0.85rem; margin-bottom:1rem;">Connecting patients with certified psychiatrists for better mental health outcomes.</p>
+      </div>
+      <div class="col-md-4" style="padding:0 0.75rem; margin-bottom:2rem;">
+        <div class="footer-heading">Quick Links</div>
+        <a href="/">Home</a>
+        <a href="/psychiatrists">View Psychiatrists</a>
+        <a href="/about">About Us</a>
+        <a href="/login">Login</a>
+      </div>
+      <div class="col-md-4" style="padding:0 0.75rem; margin-bottom:2rem;">
+        <div class="footer-heading">Register</div>
+        <a href="/register">Patient Registration</a>
+        <a href="/register-psychiatrist">Psychiatrist Registration</a>
+      </div>
+    </div>
+    <hr style="border:none; border-top:1px solid rgba(255,255,255,0.1); margin: 1.5rem 0;">
+    <p style="text-align:center; font-size:0.8rem;">© 2024 MindBridge. All rights reserved. Mental health care for everyone.</p>
+  </div>
+</footer>
+
+<script src="/js/app.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  // Load psychiatrists preview
+  try {
+    const data = await apiCall('/api/psychiatrist');
+    const container = document.getElementById('home-psychiatrists');
+    if (data.psychiatrists && data.psychiatrists.length > 0) {
+      const slice = data.psychiatrists.slice(0, 3);
+      container.innerHTML = slice.map(p => `
+        <div class="col-md-4">
+          <div class="psy-card">
+            <div class="psy-card-header">
+              <div class="psy-avatar">${p.fullName.charAt(0)}</div>
+              <div>
+                <h5>${p.fullName}</h5>
+                <p>${p.specialization || 'General Psychiatry'}</p>
+              </div>
+            </div>
+            <div class="psy-card-body">
+              <span class="psy-tag">${p.specialization || 'Psychiatrist'}</span>
+              ${p.experience ? `<p class="psy-info"><strong>Experience:</strong> ${p.experience}</p>` : ''}
+              ${p.qualification ? `<p class="psy-info"><strong>Qualification:</strong> ${p.qualification}</p>` : ''}
+              ${p.bio ? `<p class="psy-info" style="margin-top:0.75rem;">${p.bio.substring(0,100)}${p.bio.length>100?'...':''}</p>` : ''}
+            </div>
+          </div>
+        </div>
+      `).join('');
+    } else {
+      container.innerHTML = `<div style="text-align:center;padding:3rem;color:var(--text-muted);width:100%;">No psychiatrists registered yet. <a href="/register-psychiatrist" class="form-link">Be the first!</a></div>`;
+    }
+  } catch(e) {
+    document.getElementById('home-psychiatrists').innerHTML = `<div style="text-align:center;padding:2rem;color:var(--text-muted);width:100%;">Could not load psychiatrists.</div>`;
+  }
+});
+</script>
+</body>
+</html>

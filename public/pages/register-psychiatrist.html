@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Psychiatrist Registration — MindBridge</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<nav class="navbar">
+  <a href="/" class="navbar-brand">Mind<span>Bridge</span></a>
+  <div class="nav-links" id="dynamic-nav"></div>
+</nav>
+
+<div class="form-page">
+  <div class="container">
+    <div class="form-container" style="max-width:600px;">
+      <div style="text-align:center; margin-bottom:1.5rem;">
+        <div style="font-size:2.5rem; margin-bottom:0.75rem;">👨‍⚕️</div>
+        <h2 class="form-title">Psychiatrist Registration</h2>
+        <p class="form-subtitle">Join our network of certified mental health professionals</p>
+      </div>
+      <div id="alert-box" class="alert-box"></div>
+
+      <div style="background:rgba(13,115,119,0.06); border-radius:12px; padding:1rem 1.25rem; margin-bottom:1.5rem; border-left:3px solid var(--teal);">
+        <p style="font-size:0.85rem; color:var(--text-muted); margin:0;">Fields marked with <strong style="color:var(--teal);">*</strong> are required. Profile details help patients find the right specialist.</p>
+      </div>
+
+      <!-- Required fields -->
+      <div class="mb-3">
+        <label class="form-label">Full Name *</label>
+        <input type="text" id="fullName" class="form-control" placeholder="Dr. Your Full Name">
+      </div>
+      <div class="row">
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label class="form-label">CNIC *</label>
+            <input type="text" id="cnic" class="form-control" placeholder="XXXXX-XXXXXXX-X">
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label class="form-label">Phone Number</label>
+            <input type="text" id="phone" class="form-control" placeholder="+92 XXX XXXXXXX">
+          </div>
+        </div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Email Address *</label>
+        <input type="email" id="email" class="form-control" placeholder="your@email.com">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Password *</label>
+        <input type="password" id="password" class="form-control" placeholder="Create a strong password (min 6 chars)">
+      </div>
+
+      <hr class="form-divider">
+      <p style="font-size:0.8rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:1rem;">Professional Details</p>
+
+      <div class="row">
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label class="form-label">Specialization</label>
+            <input type="text" id="specialization" class="form-control" placeholder="e.g. Child Psychiatry">
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label class="form-label">Years of Experience</label>
+            <input type="text" id="experience" class="form-control" placeholder="e.g. 10 years">
+          </div>
+        </div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Qualification / Degree</label>
+        <input type="text" id="qualification" class="form-control" placeholder="e.g. MBBS, MD Psychiatry, FCPS">
+      </div>
+      <div class="mb-4">
+        <label class="form-label">Short Bio</label>
+        <textarea id="bio" class="form-control" rows="3" placeholder="A brief description about yourself and your practice..." style="resize:vertical;"></textarea>
+      </div>
+
+      <button class="btn-submit" id="reg-btn" onclick="handleRegister()">Create Psychiatrist Account</button>
+      <hr class="form-divider">
+      <p class="text-sm text-center">Already registered? <a href="/login" class="form-link">Sign in</a></p>
+      <p class="text-sm text-center mt-3">Are you a patient? <a href="/register" class="form-link">Register here</a></p>
+    </div>
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+if (Auth.isLoggedIn()) window.location.href = '/dashboard';
+
+async function handleRegister() {
+  const fullName = document.getElementById('fullName').value.trim();
+  const cnic = document.getElementById('cnic').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const phone = document.getElementById('phone').value.trim();
+  const specialization = document.getElementById('specialization').value.trim();
+  const experience = document.getElementById('experience').value.trim();
+  const qualification = document.getElementById('qualification').value.trim();
+  const bio = document.getElementById('bio').value.trim();
+  const btn = document.getElementById('reg-btn');
+
+  if (!fullName || !cnic || !email || !password) {
+    showAlert('alert-box', 'Please fill in all required fields (Name, CNIC, Email, Password).', 'error'); return;
+  }
+  if (password.length < 6) {
+    showAlert('alert-box', 'Password must be at least 6 characters.', 'error'); return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Creating account...';
+
+  try {
+    const data = await apiCall('/api/auth/register-psychiatrist', 'POST', {
+      fullName, cnic, email, password, phone, specialization, experience, qualification, bio
+    });
+    if (data.success) {
+      showAlert('alert-box', '✅ Account created successfully! Redirecting to login...', 'success');
+      setTimeout(() => window.location.href = '/login', 2000);
+    } else {
+      showAlert('alert-box', data.message || 'Registration failed.', 'error');
+      btn.disabled = false; btn.textContent = 'Create Psychiatrist Account';
+    }
+  } catch(e) {
+    showAlert('alert-box', 'Server error. Please try again.', 'error');
+    btn.disabled = false; btn.textContent = 'Create Psychiatrist Account';
+  }
+}
+</script>
+</body>
+</html>

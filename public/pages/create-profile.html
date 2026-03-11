@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Profile — MindBridge</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .section-box {
+      background: var(--cream);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .section-box-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--teal);
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.6rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .day-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+    .day-btn {
+      padding: 0.4rem 0.9rem;
+      border-radius: 8px;
+      border: 1.5px solid var(--border);
+      background: white;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: 'DM Sans', sans-serif;
+      color: var(--text-muted);
+    }
+    .day-btn.selected {
+      background: var(--teal);
+      border-color: var(--teal);
+      color: white;
+    }
+    .mode-card {
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      background: white;
+    }
+    .mode-card.selected {
+      border-color: var(--teal);
+      background: rgba(13,115,119,0.05);
+    }
+    .mode-card input[type=checkbox] { accent-color: var(--teal); width: 18px; height: 18px; }
+    .timeslot-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .timeslot-row input[type=time] {
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.875rem;
+      font-family: 'DM Sans', sans-serif;
+      background: white;
+    }
+    .timeslot-row input[type=time]:focus { border-color: var(--teal); outline: none; }
+    .btn-add-slot {
+      background: transparent;
+      border: 1.5px dashed var(--teal);
+      color: var(--teal);
+      border-radius: 8px;
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      transition: all 0.2s;
+    }
+    .btn-add-slot:hover { background: rgba(13,115,119,0.06); }
+    .btn-remove-slot {
+      background: #fff0ee;
+      border: none;
+      color: #e17055;
+      border-radius: 6px;
+      padding: 0.4rem 0.7rem;
+      font-size: 0.8rem;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .profile-img-preview {
+      width: 100px; height: 100px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid var(--teal);
+      display: none;
+    }
+    .upload-area {
+      border: 2px dashed var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .upload-area:hover { border-color: var(--teal); background: rgba(13,115,119,0.03); }
+    .step-indicator {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+      align-items: center;
+    }
+    .step {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+    .step-num {
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      background: var(--border);
+      color: var(--text-muted);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.75rem; font-weight: 700;
+    }
+    .step.active .step-num { background: var(--teal); color: white; }
+    .step.active { color: var(--teal); }
+    .step-line { flex: 1; height: 1px; background: var(--border); }
+  </style>
+</head>
+<body>
+<nav class="navbar">
+  <a href="/" class="navbar-brand">Mind<span>Bridge</span></a>
+  <div class="nav-links" id="dynamic-nav"></div>
+</nav>
+
+<div class="page-header">
+  <div class="container">
+    <h1>Create Your Profile</h1>
+    <p>Complete your professional profile so patients can find you</p>
+  </div>
+</div>
+
+<div style="padding: 3rem 0; background: var(--cream);">
+  <div class="container">
+    <div style="max-width: 780px; margin: 0 auto;">
+
+      <!-- Step indicator -->
+      <div class="step-indicator">
+        <div class="step active"><div class="step-num">1</div> Personal</div>
+        <div class="step-line"></div>
+        <div class="step active"><div class="step-num">2</div> Professional</div>
+        <div class="step-line"></div>
+        <div class="step active"><div class="step-num">3</div> Consultation</div>
+        <div class="step-line"></div>
+        <div class="step active"><div class="step-num">4</div> Availability</div>
+      </div>
+
+      <div id="alert-box" class="alert-box"></div>
+
+      <form id="profile-form" onsubmit="return false;">
+
+        <!-- FR_14-04: Personal Details -->
+        <div class="section-box">
+          <div class="section-box-title">👤 Personal Details</div>
+
+          <!-- FR_14-06: Profile Picture -->
+          <div class="mb-3" style="display:flex; align-items:center; gap:1.5rem; flex-wrap:wrap;">
+            <img id="img-preview" class="profile-img-preview" src="" alt="Preview">
+            <div style="flex:1;">
+              <label class="form-label">Profile Picture</label>
+              <div class="upload-area" onclick="document.getElementById('profileImageInput').click()">
+                <div style="font-size:1.5rem; margin-bottom:0.4rem;">📷</div>
+                <div style="font-size:0.85rem; color:var(--text-muted);">Click to upload photo</div>
+                <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.2rem;">JPG, PNG (max 2MB)</div>
+              </div>
+              <input type="file" id="profileImageInput" accept="image/*" style="display:none;" onchange="previewImage(event)">
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label">Full Name *</label>
+                <input type="text" id="fullName" class="form-control" placeholder="Dr. Full Name">
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label">Gender *</label>
+                <select id="gender" class="form-select form-control">
+                  <option value="">Select gender</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label">Email Address</label>
+                <input type="email" id="email-display" class="form-control" placeholder="Email" disabled style="background:#f0f0f0; cursor:not-allowed;">
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label">Phone Number *</label>
+                <input type="text" id="phone" class="form-control" placeholder="+92 XXX XXXXXXX">
+              </div>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Bio / About</label>
+            <textarea id="bio" class="form-control" rows="3" placeholder="Tell patients a bit about yourself..." style="resize:vertical;"></textarea>
+          </div>
+        </div>
+
+        <!-- FR_14-05: Professional Details -->
+        <div class="section-box">
+          <div class="section-box-title">🎓 Professional Details</div>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label">Specialization *</label>
+                <input type="text" id="specialization" class="form-control" placeholder="e.g. Child Psychiatry">
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label">Years of Experience *</label>
+                <input type="text" id="experience" class="form-control" placeholder="e.g. 10 years">
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label">Qualification / Degree *</label>
+                <input type="text" id="qualification" class="form-control" placeholder="e.g. MBBS, MD, FCPS">
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label">License Number *</label>
+                <input type="text" id="licenseNumber" class="form-control" placeholder="e.g. PMDC-12345">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- FR_14-07: Consultation Details -->
+        <div class="section-box">
+          <div class="section-box-title">💊 Consultation Details</div>
+          <div class="mb-3">
+            <label class="form-label">Consultation Fee (PKR)</label>
+            <input type="number" id="consultationFee" class="form-control" placeholder="e.g. 2000" min="0">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Consultation Mode * <span style="font-size:0.8rem; color:var(--text-muted);">(select at least one)</span></label>
+            <div style="display:flex; gap:1rem; flex-wrap:wrap; margin-top:0.5rem;">
+              <div class="mode-card" id="mode-online" onclick="toggleMode('online')">
+                <input type="checkbox" id="chk-online">
+                <div>
+                  <div style="font-weight:600; font-size:0.9rem;">🌐 Online</div>
+                  <div style="font-size:0.78rem; color:var(--text-muted);">Video / Audio call</div>
+                </div>
+              </div>
+              <div class="mode-card" id="mode-inperson" onclick="toggleMode('inPerson')">
+                <input type="checkbox" id="chk-inperson">
+                <div>
+                  <div style="font-weight:600; font-size:0.9rem;">🏥 In-Person</div>
+                  <div style="font-size:0.78rem; color:var(--text-muted);">Clinic / Hospital visit</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- FR_14-08: Availability -->
+        <div class="section-box">
+          <div class="section-box-title">📅 Availability</div>
+
+          <div class="mb-3">
+            <label class="form-label">Available Days * <span style="font-size:0.8rem; color:var(--text-muted);">(select all that apply)</span></label>
+            <div class="day-grid">
+              <button type="button" class="day-btn" onclick="toggleDay(this, 'Monday')">Mon</button>
+              <button type="button" class="day-btn" onclick="toggleDay(this, 'Tuesday')">Tue</button>
+              <button type="button" class="day-btn" onclick="toggleDay(this, 'Wednesday')">Wed</button>
+              <button type="button" class="day-btn" onclick="toggleDay(this, 'Thursday')">Thu</button>
+              <button type="button" class="day-btn" onclick="toggleDay(this, 'Friday')">Fri</button>
+              <button type="button" class="day-btn" onclick="toggleDay(this, 'Saturday')">Sat</button>
+              <button type="button" class="day-btn" onclick="toggleDay(this, 'Sunday')">Sun</button>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Time Slots * <span style="font-size:0.8rem; color:var(--text-muted);">(add your available hours)</span></label>
+            <div id="time-slots-container">
+              <div class="timeslot-row">
+                <span style="font-size:0.85rem; color:var(--text-muted); min-width:40px;">From</span>
+                <input type="time" class="slot-start" value="09:00">
+                <span style="font-size:0.85rem; color:var(--text-muted);">To</span>
+                <input type="time" class="slot-end" value="17:00">
+              </div>
+            </div>
+            <button type="button" class="btn-add-slot" onclick="addTimeSlot()">+ Add Another Slot</button>
+          </div>
+        </div>
+
+        <!-- Submit -->
+        <button class="btn-submit" id="save-btn" onclick="saveProfile()">
+          Save Profile
+        </button>
+
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+// Redirect if not logged in or not psychiatrist
+if (!Auth.isLoggedIn()) window.location.href = '/login';
+
+let selectedDays = [];
+let consultationModes = { online: false, inPerson: false };
+let profileImageBase64 = '';
+
+// Load existing email into form
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    const data = await apiCall('/api/auth/me');
+    if (data.success) {
+      const u = data.user;
+      if (u.role !== 'psychiatrist') window.location.href = '/dashboard';
+      document.getElementById('email-display').value = u.email;
+      // Pre-fill if profile exists
+      if (u.profileCreated) {
+        document.getElementById('fullName').value = u.fullName || '';
+        document.getElementById('phone').value = u.phone || '';
+        document.getElementById('gender').value = u.gender || '';
+        document.getElementById('bio').value = u.bio || '';
+        document.getElementById('specialization').value = u.specialization || '';
+        document.getElementById('experience').value = u.experience || '';
+        document.getElementById('qualification').value = u.qualification || '';
+        document.getElementById('licenseNumber').value = u.licenseNumber || '';
+        document.getElementById('consultationFee').value = u.consultationFee || '';
+        if (u.profileImage) {
+          document.getElementById('img-preview').src = u.profileImage;
+          document.getElementById('img-preview').style.display = 'block';
+          profileImageBase64 = u.profileImage;
+        }
+        if (u.consultationModes) {
+          if (u.consultationModes.online) toggleMode('online');
+          if (u.consultationModes.inPerson) toggleMode('inPerson');
+        }
+        if (u.availableDays) {
+          u.availableDays.forEach(day => {
+            const btns = document.querySelectorAll('.day-btn');
+            btns.forEach(btn => {
+              if (btn.getAttribute('data-day') === day || btn.textContent.trim() === day.slice(0,3)) {
+                btn.classList.add('selected');
+                if (!selectedDays.includes(day)) selectedDays.push(day);
+              }
+            });
+          });
+        }
+      } else {
+        document.getElementById('fullName').value = u.fullName || '';
+      }
+    }
+  } catch(e) {}
+});
+
+function previewImage(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (file.size > 2 * 1024 * 1024) {
+    showAlert('alert-box', 'Image must be under 2MB', 'error'); return;
+  }
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    profileImageBase64 = e.target.result;
+    const preview = document.getElementById('img-preview');
+    preview.src = e.target.result;
+    preview.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+function toggleDay(btn, day) {
+  btn.setAttribute('data-day', day);
+  if (selectedDays.includes(day)) {
+    selectedDays = selectedDays.filter(d => d !== day);
+    btn.classList.remove('selected');
+  } else {
+    selectedDays.push(day);
+    btn.classList.add('selected');
+  }
+}
+
+function toggleMode(mode) {
+  consultationModes[mode] = !consultationModes[mode];
+  if (mode === 'online') {
+    document.getElementById('chk-online').checked = consultationModes.online;
+    document.getElementById('mode-online').classList.toggle('selected', consultationModes.online);
+  } else {
+    document.getElementById('chk-inperson').checked = consultationModes.inPerson;
+    document.getElementById('mode-inperson').classList.toggle('selected', consultationModes.inPerson);
+  }
+}
+
+function addTimeSlot() {
+  const container = document.getElementById('time-slots-container');
+  const row = document.createElement('div');
+  row.className = 'timeslot-row';
+  row.innerHTML = `
+    <span style="font-size:0.85rem; color:var(--text-muted); min-width:40px;">From</span>
+    <input type="time" class="slot-start" value="09:00">
+    <span style="font-size:0.85rem; color:var(--text-muted);">To</span>
+    <input type="time" class="slot-end" value="17:00">
+    <button type="button" class="btn-remove-slot" onclick="this.parentElement.remove()">✕ Remove</button>
+  `;
+  container.appendChild(row);
+}
+
+function getTimeSlots() {
+  const rows = document.querySelectorAll('#time-slots-container .timeslot-row');
+  const slots = [];
+  rows.forEach(row => {
+    const start = row.querySelector('.slot-start').value;
+    const end = row.querySelector('.slot-end').value;
+    if (start && end) slots.push({ start, end });
+  });
+  return slots;
+}
+
+async function saveProfile() {
+  const fullName = document.getElementById('fullName').value.trim();
+  const phone = document.getElementById('phone').value.trim();
+  const gender = document.getElementById('gender').value;
+  const bio = document.getElementById('bio').value.trim();
+  const specialization = document.getElementById('specialization').value.trim();
+  const experience = document.getElementById('experience').value.trim();
+  const qualification = document.getElementById('qualification').value.trim();
+  const licenseNumber = document.getElementById('licenseNumber').value.trim();
+  const consultationFee = document.getElementById('consultationFee').value;
+  const timeSlots = getTimeSlots();
+
+  // FR_14-09: Validate
+  if (!fullName || !phone || !gender || !specialization || !qualification || !experience || !licenseNumber) {
+    showAlert('alert-box', 'Please fill in all required fields marked with *', 'error');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    return;
+  }
+  if (!consultationModes.online && !consultationModes.inPerson) {
+    showAlert('alert-box', 'Please select at least one consultation mode (Online or In-Person)', 'error');
+    return;
+  }
+  if (selectedDays.length === 0) {
+    showAlert('alert-box', 'Please select at least one available day', 'error');
+    return;
+  }
+  if (timeSlots.length === 0) {
+    showAlert('alert-box', 'Please add at least one time slot', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('save-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Saving Profile...';
+
+  try {
+    const data = await apiCall('/api/auth/create-profile', 'POST', {
+      fullName, phone, gender, bio,
+      profileImage: profileImageBase64,
+      specialization, experience, qualification, licenseNumber,
+      consultationFee,
+      consultationModes,
+      availableDays: selectedDays,
+      timeSlots
+    });
+
+    if (data.success) {
+      // FR_14-13: Success message
+      showAlert('alert-box', '✅ Profile created successfully! Redirecting to dashboard...', 'success');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      // FR_14-14: Redirect to dashboard
+      setTimeout(() => window.location.href = '/dashboard', 2000);
+    } else {
+      // FR_14-10: Error message
+      showAlert('alert-box', data.message || 'Failed to save profile. Please try again.', 'error');
+      btn.disabled = false;
+      btn.textContent = 'Save Profile';
+    }
+  } catch(e) {
+    showAlert('alert-box', 'Server error. Please try again.', 'error');
+    btn.disabled = false;
+    btn.textContent = 'Save Profile';
+  }
+}
+</script>
+</body>
+</html>

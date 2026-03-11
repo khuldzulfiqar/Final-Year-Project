@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reviews & Ratings — MindBridge</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .review-card { background: white; border-radius: 14px; padding: 1.5rem; box-shadow: var(--shadow); border: 1px solid var(--border); margin-bottom: 1rem; transition: all 0.2s; }
+    .review-card:hover { box-shadow: var(--shadow-lg); }
+    .review-header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem; }
+    .reviewer-name { font-weight: 700; font-size: 0.95rem; color: var(--charcoal); }
+    .review-date { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.15rem; }
+    .stars { display: flex; gap: 2px; }
+    .star { font-size: 1.1rem; }
+    .star.filled { color: #f39c12; }
+    .star.empty { color: #ddd; }
+    .review-comment { color: var(--text); font-size: 0.9rem; line-height: 1.6; margin-top: 0.5rem; }
+    .avg-card { background: linear-gradient(135deg, var(--teal), var(--teal-light)); border-radius: 20px; padding: 2rem; color: white; margin-bottom: 2rem; display: flex; align-items: center; gap: 2rem; flex-wrap: wrap; }
+    .avg-num { font-family: 'Playfair Display', serif; font-size: 4rem; font-weight: 700; line-height: 1; }
+    .avg-stars { display: flex; gap: 3px; margin: 0.4rem 0; }
+    .avg-star { font-size: 1.4rem; }
+    .dist-bar { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.4rem; }
+    .dist-label { font-size: 0.8rem; color: rgba(255,255,255,0.8); min-width: 30px; text-align: right; }
+    .dist-track { flex: 1; background: rgba(255,255,255,0.2); border-radius: 50px; height: 8px; }
+    .dist-fill { background: white; border-radius: 50px; height: 8px; transition: width 0.5s; }
+    .dist-count { font-size: 0.78rem; color: rgba(255,255,255,0.8); min-width: 20px; }
+    .filter-bar { display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end; margin-bottom: 2rem; background: white; border-radius: 14px; padding: 1.25rem; box-shadow: var(--shadow); border: 1px solid var(--border); }
+    .empty-state { text-align: center; padding: 4rem 2rem; color: var(--text-muted); }
+    .empty-state .icon { font-size: 3.5rem; margin-bottom: 1rem; }
+  </style>
+</head>
+<body>
+<nav class="navbar">
+  <a href="/" class="navbar-brand">Mind<span>Bridge</span></a>
+  <div class="nav-links" id="dynamic-nav"></div>
+</nav>
+
+<div class="page-header">
+  <div class="container">
+    <h1>Reviews & Ratings</h1>
+    <p>See what patients are saying about you</p>
+  </div>
+</div>
+
+<div style="padding: 3rem 0; background: var(--cream); min-height: 70vh;">
+  <div class="container">
+
+    <!-- FR_18-10: Back to dashboard -->
+    <a href="/dashboard" style="display:inline-flex; align-items:center; gap:0.4rem; color:var(--teal); font-weight:600; font-size:0.875rem; text-decoration:none; margin-bottom:1.5rem;">
+      ← Back to Dashboard
+    </a>
+
+    <!-- FR_18-06: Average rating card -->
+    <div class="avg-card" id="avg-card" style="display:none;">
+      <div style="text-align:center;">
+        <div class="avg-num" id="avg-num">0</div>
+        <div class="avg-stars" id="avg-stars"></div>
+        <div style="font-size:0.85rem; opacity:0.85;" id="total-reviews-text">0 reviews</div>
+      </div>
+      <div style="flex:1; min-width:200px;">
+        <div id="dist-bars"></div>
+      </div>
+    </div>
+
+    <!-- FR_18-07 & FR_18-08: Sort and Filter -->
+    <div class="filter-bar">
+      <div>
+        <label class="form-label">Sort By</label>
+        <select id="sort-select" class="form-control" onchange="loadReviews()" style="min-width:160px;">
+          <option value="date_desc">Newest First</option>
+          <option value="date_asc">Oldest First</option>
+          <option value="rating_desc">Highest Rating</option>
+          <option value="rating_asc">Lowest Rating</option>
+        </select>
+      </div>
+      <div>
+        <label class="form-label">Min Rating</label>
+        <select id="min-rating" class="form-control" onchange="loadReviews()" style="min-width:110px;">
+          <option value="">Any</option>
+          <option value="1">1 ⭐</option>
+          <option value="2">2 ⭐</option>
+          <option value="3">3 ⭐</option>
+          <option value="4">4 ⭐</option>
+          <option value="5">5 ⭐</option>
+        </select>
+      </div>
+      <div>
+        <label class="form-label">Max Rating</label>
+        <select id="max-rating" class="form-control" onchange="loadReviews()" style="min-width:110px;">
+          <option value="">Any</option>
+          <option value="1">1 ⭐</option>
+          <option value="2">2 ⭐</option>
+          <option value="3">3 ⭐</option>
+          <option value="4">4 ⭐</option>
+          <option value="5">5 ⭐</option>
+        </select>
+      </div>
+      <div style="align-self:flex-end;">
+        <button onclick="clearFilters()" style="background:transparent; border:1.5px solid var(--border); border-radius:8px; padding:0.6rem 1rem; font-size:0.85rem; cursor:pointer; font-family:'DM Sans',sans-serif; color:var(--text-muted);">Clear</button>
+      </div>
+    </div>
+
+    <div id="reviews-count" style="color:var(--text-muted); font-size:0.875rem; margin-bottom:1rem;"></div>
+    <div id="reviews-list"></div>
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+if (!Auth.isLoggedIn()) window.location.href = '/login';
+if (!Auth.isPsychiatrist()) window.location.href = '/dashboard';
+
+document.addEventListener('DOMContentLoaded', () => loadReviews());
+
+function clearFilters() {
+  document.getElementById('sort-select').value = 'date_desc';
+  document.getElementById('min-rating').value = '';
+  document.getElementById('max-rating').value = '';
+  loadReviews();
+}
+
+async function loadReviews() {
+  const sort = document.getElementById('sort-select').value;
+  const minRating = document.getElementById('min-rating').value;
+  const maxRating = document.getElementById('max-rating').value;
+
+  let url = `/api/reviews/my-reviews?sort=${sort}`;
+  if (minRating) url += `&minRating=${minRating}`;
+  if (maxRating) url += `&maxRating=${maxRating}`;
+
+  document.getElementById('reviews-list').innerHTML = `<div style="text-align:center;padding:3rem;color:var(--text-muted);"><span class="spinner" style="width:24px;height:24px;border-width:3px;border-color:rgba(13,115,119,0.2);border-top-color:var(--teal);"></span></div>`;
+
+  try {
+    const data = await apiCall(url);
+    if (data.success) {
+      renderAvgCard(data.avgRating, data.totalReviews, data.distribution);
+      renderReviews(data.reviews);
+    }
+  } catch(e) {
+    document.getElementById('reviews-list').innerHTML = `<p style="color:var(--text-muted);">Error loading reviews.</p>`;
+  }
+}
+
+function renderAvgCard(avg, total, distribution) {
+  if (total === 0) return;
+  document.getElementById('avg-card').style.display = 'flex';
+  document.getElementById('avg-num').textContent = avg;
+  document.getElementById('total-reviews-text').textContent = `${total} review${total !== 1 ? 's' : ''}`;
+  document.getElementById('avg-stars').innerHTML = renderStarsHtml(avg, 'avg-star');
+
+  // Distribution bars
+  const distHtml = [5,4,3,2,1].map(star => {
+    const count = distribution ? (distribution[star] || 0) : 0;
+    const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+    return `
+      <div class="dist-bar">
+        <div class="dist-label">${star} ⭐</div>
+        <div class="dist-track"><div class="dist-fill" style="width:${pct}%"></div></div>
+        <div class="dist-count">${count}</div>
+      </div>`;
+  }).join('');
+  document.getElementById('dist-bars').innerHTML = distHtml;
+}
+
+function renderReviews(reviews) {
+  const container = document.getElementById('reviews-list');
+  document.getElementById('reviews-count').textContent = `Showing ${reviews.length} review${reviews.length !== 1 ? 's' : ''}`;
+
+  // FR_18-09: Empty state
+  if (reviews.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="icon">⭐</div>
+        <p style="font-size:1.05rem; font-weight:600; color:var(--text);">No reviews found</p>
+        <p style="font-size:0.875rem; margin-top:0.5rem;">Patient reviews will appear here once submitted.</p>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = reviews.map(r => `
+    <div class="review-card">
+      <div class="review-header">
+        <div>
+          <div class="reviewer-name">👤 ${r.patientName}</div>
+          <div class="review-date">${new Date(r.createdAt).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="stars">${renderStarsHtml(r.rating, 'star')}</div>
+          <div style="font-size:0.8rem; font-weight:600; color:#f39c12; margin-top:0.2rem;">${r.rating}/5</div>
+        </div>
+      </div>
+      <div class="review-comment">"${r.comment}"</div>
+    </div>
+  `).join('');
+}
+
+function renderStarsHtml(rating, cls) {
+  let html = '';
+  for (let i = 1; i <= 5; i++) {
+    html += `<span class="${cls} ${i <= Math.round(rating) ? 'filled' : 'empty'}">★</span>`;
+  }
+  return html;
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — MindBridge</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .appt-item {
+      background: var(--cream);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 0.75rem;
+      border-left: 4px solid var(--border);
+    }
+    .appt-item.pending { border-left-color: #ffc107; }
+    .appt-item.accepted { border-left-color: #28a745; }
+    .appt-item.rejected { border-left-color: #dc3545; }
+    .appt-item-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+    .appt-doctor { font-weight: 700; font-size: 0.95rem; color: var(--charcoal); }
+    .status-badge { padding: 0.25rem 0.75rem; border-radius: 50px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+    .status-pending { background: #fff3cd; color: #856404; }
+    .status-accepted { background: #d4edda; color: #155724; }
+    .status-rejected { background: #f8d7da; color: #721c24; }
+    .appt-meta { font-size: 0.82rem; color: var(--text-muted); display: flex; flex-wrap: wrap; gap: 0.75rem; }
+    .appt-meta span { display: flex; align-items: center; gap: 0.3rem; }
+    .rejection-note { background: #fff0ee; border-radius: 8px; padding: 0.6rem 0.85rem; font-size: 0.8rem; color: #c0392b; margin-top: 0.5rem; }
+    .empty-appt { text-align: center; padding: 2rem; color: var(--text-muted); font-size: 0.875rem; }
+    .tab-row { display: flex; gap: 0.4rem; margin-bottom: 1rem; flex-wrap: wrap; }
+    .mini-tab { padding: 0.35rem 0.9rem; border-radius: 8px; border: 1.5px solid var(--border); background: white; font-size: 0.8rem; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; color: var(--text-muted); transition: all 0.2s; }
+    .mini-tab.active { background: var(--teal); color: white; border-color: var(--teal); }
+  </style>
+</head>
+<body>
+<nav class="navbar">
+  <a href="/" class="navbar-brand">Mind<span>Bridge</span></a>
+  <div class="nav-links" id="dynamic-nav"></div>
+</nav>
+
+<div style="min-height:100vh; background:var(--cream); padding: 2rem 0;">
+  <div class="container">
+    <div id="loading-state" style="text-align:center; padding:4rem;">
+      <div class="spinner" style="width:32px;height:32px;border-width:3px;"></div>
+      <p style="color:var(--text-muted); margin-top:1rem;">Loading your dashboard...</p>
+    </div>
+
+    <!-- ===== PATIENT DASHBOARD ===== -->
+    <div id="patient-dashboard" style="display:none;">
+      <div class="dash-welcome">
+        <h2>Hello, <span id="patient-name">Patient</span> 👋</h2>
+        <p>Welcome to your MindBridge patient dashboard</p>
+      </div>
+
+      <div class="row">
+        <!-- Profile Info -->
+        <div class="col-md-4">
+          <div class="dash-card">
+            <div class="dash-card-title">👤 My Profile</div>
+            <div id="patient-info"></div>
+            <div style="margin-top:1rem;">
+              <a href="/psychiatrists" class="btn-submit" style="display:block; text-align:center; text-decoration:none; padding:0.65rem;">
+                👨‍⚕️ Browse Psychiatrists
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Appointments -->
+        <div class="col-md-8">
+          <div class="dash-card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
+              <div class="dash-card-title" style="margin-bottom:0;">📅 My Appointments</div>
+              <a href="/psychiatrists" style="font-size:0.82rem; color:var(--teal); font-weight:600; text-decoration:none;">+ Book New</a>
+            </div>
+
+            <!-- Status tabs -->
+            <div class="tab-row">
+              <button class="mini-tab active" onclick="filterAppts('all', this)">All</button>
+              <button class="mini-tab" onclick="filterAppts('pending', this)">⏳ Pending</button>
+              <button class="mini-tab" onclick="filterAppts('accepted', this)">✅ Accepted</button>
+              <button class="mini-tab" onclick="filterAppts('rejected', this)">❌ Rejected</button>
+            </div>
+
+            <div id="appt-list">
+              <div class="empty-appt">
+                <span class="spinner" style="width:20px;height:20px;border-width:2px;border-color:rgba(13,115,119,0.2);border-top-color:var(--teal);"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PSYCHIATRIST DASHBOARD ===== -->
+    <div id="psychiatrist-dashboard" style="display:none;">
+      <div class="dash-welcome">
+        <h2>Hello, Dr. <span id="psy-name">Psychiatrist</span> 👋</h2>
+        <p>Manage your professional profile on MindBridge</p>
+        <a href="/create-profile" style="display:inline-block; margin-top:1.25rem; background:white; color:var(--teal); padding:0.65rem 1.5rem; border-radius:10px; font-weight:600; font-size:0.95rem; text-decoration:none; box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+          ✏️ Create / Update Profile
+        </a>
+        <a href="/appointments" style="display:inline-block; margin-top:1.25rem; margin-left:0.75rem; background:rgba(255,255,255,0.2); color:white; padding:0.65rem 1.5rem; border-radius:10px; font-weight:600; font-size:0.95rem; text-decoration:none; border:1.5px solid rgba(255,255,255,0.4);">
+          📋 View Appointment Requests
+        </a>
+      </div>
+
+      <div class="row">
+        <div class="col-md-5">
+          <div class="dash-card">
+            <div class="dash-card-title">👤 My Profile</div>
+            <div id="psy-info"></div>
+            <div id="profile-status" style="margin-top:1rem;"></div>
+          </div>
+        </div>
+        <div class="col-md-7">
+          <div class="dash-card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+              <div class="dash-card-title" style="margin-bottom:0;">📋 Recent Appointment Requests</div>
+              <a href="/appointments" style="font-size:0.82rem; color:var(--teal); font-weight:600; text-decoration:none;">View All →</a>
+            </div>
+            <div id="psy-appt-list">
+              <div class="empty-appt"><span class="spinner" style="width:20px;height:20px;border-width:2px;border-color:rgba(13,115,119,0.2);border-top-color:var(--teal);"></span></div>
+            </div>
+          </div>
+
+          <div class="dash-card">
+            <div class="dash-card-title" style="margin-bottom:1.25rem;">✏️ Quick Edit</div>
+            <div id="edit-alert" class="alert-box"></div>
+            <div class="mb-3"><label class="form-label">Full Name</label><input type="text" id="edit-fullName" class="form-control"></div>
+            <div class="mb-3"><label class="form-label">Specialization</label><input type="text" id="edit-specialization" class="form-control"></div>
+            <div class="mb-3"><label class="form-label">Experience</label><input type="text" id="edit-experience" class="form-control"></div>
+            <div class="mb-3"><label class="form-label">Qualification</label><input type="text" id="edit-qualification" class="form-control"></div>
+            <div class="mb-3"><label class="form-label">Phone</label><input type="text" id="edit-phone" class="form-control"></div>
+            <div class="mb-3"><label class="form-label">Bio</label><textarea id="edit-bio" class="form-control" rows="3" style="resize:vertical;"></textarea></div>
+            <button class="btn-submit" id="save-btn" onclick="saveProfile()">Save Changes</button>
+            <div style="margin-top:1rem; text-align:center;"><a href="/create-profile" class="form-link" style="font-size:0.875rem;">→ Full Profile Editor</a></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+if (!Auth.isLoggedIn()) window.location.href = '/login';
+
+let allPatientAppts = [];
+
+document.addEventListener('DOMContentLoaded', async () => {
+  const user = Auth.getUser();
+  if (!user) { window.location.href = '/login'; return; }
+
+  try {
+    const data = await apiCall('/api/auth/me');
+    if (!data.success) { Auth.clear(); window.location.href = '/login'; return; }
+
+    const u = data.user;
+    document.getElementById('loading-state').style.display = 'none';
+
+    if (u.role === 'patient') {
+      document.getElementById('patient-dashboard').style.display = 'block';
+      document.getElementById('patient-name').textContent = u.fullName.split(' ')[0];
+      document.getElementById('patient-info').innerHTML = `
+        <div class="info-row"><span class="info-key">Full Name</span><span class="info-val">${u.fullName}</span></div>
+        <div class="info-row"><span class="info-key">CNIC</span><span class="info-val">${u.cnic}</span></div>
+        <div class="info-row"><span class="info-key">Age</span><span class="info-val">${u.age} years</span></div>
+        <div class="info-row"><span class="info-key">Email</span><span class="info-val">${u.email}</span></div>
+        <div class="info-row"><span class="info-key">Role</span><span class="info-val"><span style="background:rgba(132,169,140,0.15);color:#4a7c59;padding:0.2rem 0.7rem;border-radius:50px;font-size:0.75rem;font-weight:600;">Patient</span></span></div>
+        <div class="info-row"><span class="info-key">Member Since</span><span class="info-val">${new Date(u.createdAt).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</span></div>
+      `;
+      // Load patient appointments
+      loadPatientAppointments();
+
+    } else if (u.role === 'psychiatrist') {
+      document.getElementById('psychiatrist-dashboard').style.display = 'block';
+      document.getElementById('psy-name').textContent = u.fullName.split(' ').slice(-1)[0];
+      document.getElementById('psy-info').innerHTML = `
+        <div class="info-row"><span class="info-key">Full Name</span><span class="info-val">${u.fullName}</span></div>
+        <div class="info-row"><span class="info-key">CNIC</span><span class="info-val">${u.cnic}</span></div>
+        <div class="info-row"><span class="info-key">Email</span><span class="info-val">${u.email}</span></div>
+        ${u.phone ? `<div class="info-row"><span class="info-key">Phone</span><span class="info-val">${u.phone}</span></div>` : ''}
+        ${u.specialization ? `<div class="info-row"><span class="info-key">Specialization</span><span class="info-val">${u.specialization}</span></div>` : ''}
+        ${u.experience ? `<div class="info-row"><span class="info-key">Experience</span><span class="info-val">${u.experience}</span></div>` : ''}
+        ${u.qualification ? `<div class="info-row"><span class="info-key">Qualification</span><span class="info-val">${u.qualification}</span></div>` : ''}
+        ${u.licenseNumber ? `<div class="info-row"><span class="info-key">License No.</span><span class="info-val">${u.licenseNumber}</span></div>` : ''}
+        ${u.consultationFee ? `<div class="info-row"><span class="info-key">Fee</span><span class="info-val">PKR ${u.consultationFee}</span></div>` : ''}
+        <div class="info-row"><span class="info-key">Role</span><span class="info-val"><span style="background:rgba(13,115,119,0.1);color:var(--teal);padding:0.2rem 0.7rem;border-radius:50px;font-size:0.75rem;font-weight:600;">Psychiatrist</span></span></div>
+      `;
+
+      // Profile status
+      const statusEl = document.getElementById('profile-status');
+      if (u.profileCreated) {
+        statusEl.innerHTML = `<span style="background:#d4edda;color:#155724;padding:0.35rem 0.9rem;border-radius:50px;font-size:0.78rem;font-weight:600;">✅ Profile Complete</span>`;
+      } else {
+        statusEl.innerHTML = `
+          <span style="background:#fff3cd;color:#856404;padding:0.35rem 0.9rem;border-radius:50px;font-size:0.78rem;font-weight:600;">⚠️ Profile Incomplete</span>
+          <p style="font-size:0.82rem;color:var(--text-muted);margin-top:0.5rem;">Complete your profile so patients can find you.</p>
+          <a href="/create-profile" style="display:inline-block;margin-top:0.5rem;background:var(--teal);color:white;padding:0.5rem 1.2rem;border-radius:8px;font-size:0.85rem;font-weight:600;text-decoration:none;">Create Profile Now →</a>
+        `;
+      }
+
+      // Pre-fill quick edit
+      document.getElementById('edit-fullName').value = u.fullName || '';
+      document.getElementById('edit-specialization').value = u.specialization || '';
+      document.getElementById('edit-experience').value = u.experience || '';
+      document.getElementById('edit-qualification').value = u.qualification || '';
+      document.getElementById('edit-phone').value = u.phone || '';
+      document.getElementById('edit-bio').value = u.bio || '';
+
+      // Load psychiatrist recent appointments
+      loadPsyAppointments();
+    }
+  } catch(e) {
+    document.getElementById('loading-state').innerHTML = '<p style="color:var(--text-muted);">Error loading dashboard. Please <a href="/login" class="form-link">log in again</a>.</p>';
+  }
+});
+
+// ===== PATIENT APPOINTMENTS =====
+async function loadPatientAppointments() {
+  try {
+    const data = await apiCall('/api/appointments/patient');
+    allPatientAppts = data.appointments || [];
+    renderPatientAppts('all');
+  } catch(e) {
+    document.getElementById('appt-list').innerHTML = `<div class="empty-appt">Could not load appointments.</div>`;
+  }
+}
+
+function filterAppts(status, btn) {
+  document.querySelectorAll('.mini-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderPatientAppts(status);
+}
+
+function renderPatientAppts(filter) {
+  const list = filter === 'all' ? allPatientAppts : allPatientAppts.filter(a => a.status === filter);
+  const container = document.getElementById('appt-list');
+
+  if (list.length === 0) {
+    const msgs = {
+      all: '📭 No appointments yet. <a href="/psychiatrists" class="form-link">Book one now!</a>',
+      pending: '⏳ No pending appointments.',
+      accepted: '✅ No accepted appointments yet.',
+      rejected: '❌ No rejected appointments.'
+    };
+    container.innerHTML = `<div class="empty-appt">${msgs[filter] || 'No appointments found.'}</div>`;
+    return;
+  }
+
+  container.innerHTML = list.map(a => `
+    <div class="appt-item ${a.status}">
+      <div class="appt-item-header">
+        <div class="appt-doctor">👨‍⚕️ ${a.psychiatristName}</div>
+        <span class="status-badge status-${a.status}">${getStatusLabel(a.status)}</span>
+      </div>
+      <div class="appt-meta">
+        <span>📅 ${a.date}</span>
+        <span>🕐 ${a.timeSlot}</span>
+        <span>${a.consultationMode === 'online' ? '🌐 Online' : '🏥 In-Person'}</span>
+      </div>
+      ${a.notes ? `<div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.4rem;">📝 ${a.notes}</div>` : ''}
+      ${a.status === 'rejected' && a.rejectionReason ? `<div class="rejection-note">❌ Reason: ${a.rejectionReason}</div>` : ''}
+      ${a.status === 'accepted' ? `<div style="background:#d4edda;border-radius:8px;padding:0.5rem 0.85rem;font-size:0.8rem;color:#155724;margin-top:0.5rem;">✅ Your appointment has been confirmed!</div>` : ''}
+      <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.4rem;">Requested: ${new Date(a.createdAt).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'})}</div>
+    </div>
+  `).join('');
+}
+
+function getStatusLabel(status) {
+  return { pending: '⏳ Pending', accepted: '✅ Accepted', rejected: '❌ Rejected' }[status] || status;
+}
+
+// ===== PSYCHIATRIST RECENT APPOINTMENTS =====
+async function loadPsyAppointments() {
+  try {
+    const data = await apiCall('/api/appointments/psychiatrist');
+    const recent = (data.appointments || []).slice(0, 5);
+    const container = document.getElementById('psy-appt-list');
+
+    if (recent.length === 0) {
+      container.innerHTML = `<div class="empty-appt">📭 No appointment requests yet.</div>`;
+      return;
+    }
+
+    container.innerHTML = recent.map(a => `
+      <div class="appt-item ${a.status}">
+        <div class="appt-item-header">
+          <div class="appt-doctor">👤 ${a.patientName}</div>
+          <span class="status-badge status-${a.status}">${getStatusLabel(a.status)}</span>
+        </div>
+        <div class="appt-meta">
+          <span>📅 ${a.date}</span>
+          <span>🕐 ${a.timeSlot}</span>
+          <span>${a.consultationMode === 'online' ? '🌐 Online' : '🏥 In-Person'}</span>
+        </div>
+      </div>
+    `).join('');
+  } catch(e) {
+    document.getElementById('psy-appt-list').innerHTML = `<div class="empty-appt">Could not load appointments.</div>`;
+  }
+}
+
+// ===== QUICK EDIT =====
+async function saveProfile() {
+  const btn = document.getElementById('save-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Saving...';
+  const body = {
+    fullName: document.getElementById('edit-fullName').value.trim(),
+    specialization: document.getElementById('edit-specialization').value.trim(),
+    experience: document.getElementById('edit-experience').value.trim(),
+    qualification: document.getElementById('edit-qualification').value.trim(),
+    phone: document.getElementById('edit-phone').value.trim(),
+    bio: document.getElementById('edit-bio').value.trim()
+  };
+  try {
+    const data = await apiCall('/api/auth/profile', 'PUT', body);
+    if (data.success) {
+      const u = Auth.getUser();
+      u.fullName = data.user.fullName;
+      localStorage.setItem('mb_user', JSON.stringify(u));
+      showAlert('edit-alert', '✅ Profile updated successfully!', 'success');
+      showToast('Profile saved!', 'success');
+    } else {
+      showAlert('edit-alert', data.message || 'Update failed.', 'error');
+    }
+  } catch(e) {
+    showAlert('edit-alert', 'Server error. Please try again.', 'error');
+  }
+  btn.disabled = false;
+  btn.textContent = 'Save Changes';
+}
+</script>
+</body>
+</html>

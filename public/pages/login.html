@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login — MindBridge</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<nav class="navbar">
+  <a href="/" class="navbar-brand">Mind<span>Bridge</span></a>
+  <div class="nav-links" id="dynamic-nav"></div>
+</nav>
+
+<div class="form-page">
+  <div class="container">
+    <div class="form-container">
+      <div style="text-align:center; margin-bottom:1.5rem;">
+        <div style="font-size:2.5rem; margin-bottom:0.75rem;">🧠</div>
+        <h2 class="form-title">Welcome Back</h2>
+        <p class="form-subtitle">Sign in to your MindBridge account</p>
+      </div>
+      <div id="alert-box" class="alert-box"></div>
+      <div class="mb-3">
+        <label class="form-label">Email Address</label>
+        <input type="email" id="email" class="form-control" placeholder="your@email.com">
+      </div>
+      <div class="mb-4">
+        <label class="form-label">Password</label>
+        <input type="password" id="password" class="form-control" placeholder="Enter your password">
+      </div>
+      <button class="btn-submit" id="login-btn" onclick="handleLogin()">Sign In</button>
+      <hr class="form-divider">
+      <p class="text-sm text-center">Don't have an account? <a href="/register" class="form-link">Register as Patient</a></p>
+      <p class="text-sm text-center mt-3">Are you a psychiatrist? <a href="/register-psychiatrist" class="form-link">Register here</a></p>
+    </div>
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+if (Auth.isLoggedIn()) window.location.href = '/dashboard';
+
+async function handleLogin() {
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const btn = document.getElementById('login-btn');
+  if (!email || !password) { showAlert('alert-box', 'Please fill in all fields.', 'error'); return; }
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Signing in...';
+  try {
+    const data = await apiCall('/api/auth/login', 'POST', { email, password });
+    if (data.success) {
+      Auth.setAuth(data.token, data.user);
+      showToast('Welcome back, ' + data.user.fullName + '!', 'success');
+      setTimeout(() => window.location.href = '/dashboard', 800);
+    } else {
+      showAlert('alert-box', data.message || 'Login failed.', 'error');
+      btn.disabled = false; btn.textContent = 'Sign In';
+    }
+  } catch(e) {
+    showAlert('alert-box', 'Server error. Please try again.', 'error');
+    btn.disabled = false; btn.textContent = 'Sign In';
+  }
+}
+document.addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
+</script>
+</body>
+</html>

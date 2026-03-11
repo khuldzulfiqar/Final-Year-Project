@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Appointment Requests — MindBridge</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .appt-card {
+      background: white; border-radius: 16px; padding: 1.5rem;
+      box-shadow: var(--shadow); border: 1px solid var(--border);
+      margin-bottom: 1rem; transition: all 0.2s;
+    }
+    .appt-card:hover { box-shadow: var(--shadow-lg); }
+    .appt-header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1rem; }
+    .appt-patient { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 700; color: var(--charcoal); }
+    .status-badge { padding: 0.3rem 0.9rem; border-radius: 50px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+    .status-pending { background: #fff3cd; color: #856404; }
+    .status-accepted { background: #d4edda; color: #155724; }
+    .status-rejected { background: #f8d7da; color: #721c24; }
+    .appt-details { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.75rem; margin-bottom: 1rem; }
+    .appt-detail-item { font-size: 0.85rem; }
+    .appt-detail-item .label { color: var(--text-muted); font-size: 0.75rem; font-weight: 500; display: block; margin-bottom: 0.1rem; }
+    .appt-detail-item .value { color: var(--text); font-weight: 600; }
+    .appt-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+    .btn-accept { background: #28a745; color: white; border: none; padding: 0.55rem 1.25rem; border-radius: 8px; font-weight: 600; font-size: 0.875rem; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s; }
+    .btn-accept:hover { background: #218838; }
+    .btn-reject { background: #dc3545; color: white; border: none; padding: 0.55rem 1.25rem; border-radius: 8px; font-weight: 600; font-size: 0.875rem; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s; }
+    .btn-reject:hover { background: #c82333; }
+    .reject-form { background: #fff5f5; border: 1px solid #f5c6cb; border-radius: 10px; padding: 1rem; margin-top: 0.75rem; display: none; }
+    .reject-form.show { display: block; }
+    .filter-bar { display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; margin-bottom: 2rem; }
+    .tabs { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 2rem; }
+    .tab-btn { padding: 0.5rem 1.25rem; border-radius: 8px; border: 1.5px solid var(--border); background: white; font-size: 0.875rem; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; color: var(--text-muted); transition: all 0.2s; }
+    .tab-btn.active { background: var(--teal); color: white; border-color: var(--teal); }
+    .tab-btn:hover:not(.active) { border-color: var(--teal); color: var(--teal); }
+    .empty-state { text-align: center; padding: 4rem 2rem; color: var(--text-muted); }
+    .empty-state .icon { font-size: 3.5rem; margin-bottom: 1rem; }
+    .notes-box { background: rgba(13,115,119,0.04); border-radius: 8px; padding: 0.75rem; font-size: 0.82rem; color: var(--text-muted); margin-top: 0.5rem; }
+    .rejection-reason { background: #fff0ee; border-radius: 8px; padding: 0.75rem; font-size: 0.82rem; color: #c0392b; margin-top: 0.5rem; }
+  </style>
+</head>
+<body>
+<nav class="navbar">
+  <a href="/" class="navbar-brand">Mind<span>Bridge</span></a>
+  <div class="nav-links" id="dynamic-nav"></div>
+</nav>
+
+<div class="page-header">
+  <div class="container">
+    <h1>Appointment Requests</h1>
+    <p>Manage your patient appointment requests</p>
+  </div>
+</div>
+
+<div style="padding: 3rem 0; background: var(--cream); min-height: 70vh;">
+  <div class="container">
+
+    <!-- FR_16-10: Back to dashboard -->
+    <a href="/dashboard" style="display:inline-flex; align-items:center; gap:0.4rem; color:var(--teal); font-weight:600; font-size:0.875rem; text-decoration:none; margin-bottom:1.5rem;">
+      ← Back to Dashboard
+    </a>
+
+    <!-- FR_16-07: Filter bar -->
+    <div class="filter-bar">
+      <div>
+        <label class="form-label" style="margin-bottom:0.3rem;">Filter by Date</label>
+        <input type="date" id="filter-date" class="form-control" onchange="loadAppointments()" style="max-width:200px;">
+      </div>
+      <div style="align-self:flex-end;">
+        <button onclick="clearFilters()" style="background:transparent; border:1.5px solid var(--border); border-radius:8px; padding:0.55rem 1rem; font-size:0.85rem; cursor:pointer; font-family:'DM Sans',sans-serif; color:var(--text-muted);">Clear Filters</button>
+      </div>
+    </div>
+
+    <!-- FR_16-07: Status tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="setTab('all', this)">All</button>
+      <button class="tab-btn" onclick="setTab('pending', this)">⏳ Pending</button>
+      <button class="tab-btn" onclick="setTab('accepted', this)">✅ Accepted</button>
+      <button class="tab-btn" onclick="setTab('rejected', this)">❌ Rejected</button>
+    </div>
+
+    <div id="alert-box" class="alert-box"></div>
+    <div id="appointments-count" style="color:var(--text-muted); font-size:0.875rem; margin-bottom:1rem;"></div>
+    <div id="appointments-list"></div>
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+if (!Auth.isLoggedIn()) window.location.href = '/login';
+if (!Auth.isPsychiatrist()) window.location.href = '/dashboard';
+
+let currentTab = 'all';
+let allAppointments = [];
+
+document.addEventListener('DOMContentLoaded', () => loadAppointments());
+
+function setTab(tab, btn) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderAppointments();
+}
+
+function clearFilters() {
+  document.getElementById('filter-date').value = '';
+  loadAppointments();
+}
+
+async function loadAppointments() {
+  const date = document.getElementById('filter-date').value;
+  let url = '/api/appointments/psychiatrist';
+  if (date) url += `?date=${date}`;
+
+  document.getElementById('appointments-list').innerHTML = `<div style="text-align:center;padding:3rem;color:var(--text-muted);"><span class="spinner" style="width:24px;height:24px;border-width:3px;border-color:rgba(13,115,119,0.2);border-top-color:var(--teal);"></span></div>`;
+
+  try {
+    const data = await apiCall(url);
+    if (data.success) {
+      allAppointments = data.appointments;
+      renderAppointments();
+    }
+  } catch(e) {
+    document.getElementById('appointments-list').innerHTML = `<p style="color:var(--text-muted);">Error loading appointments.</p>`;
+  }
+}
+
+function renderAppointments() {
+  const filtered = currentTab === 'all'
+    ? allAppointments
+    : allAppointments.filter(a => a.status === currentTab);
+
+  const countEl = document.getElementById('appointments-count');
+  countEl.textContent = `Showing ${filtered.length} request${filtered.length !== 1 ? 's' : ''}`;
+
+  const container = document.getElementById('appointments-list');
+
+  // FR_16-09: Empty state
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="icon">📭</div>
+        <p style="font-size:1.05rem; font-weight:600; color:var(--text);">No appointment requests found</p>
+        <p style="font-size:0.875rem; margin-top:0.5rem;">New requests will appear here automatically.</p>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = filtered.map(a => `
+    <div class="appt-card" id="card-${a._id}">
+      <div class="appt-header">
+        <div>
+          <div class="appt-patient">👤 ${a.patientName}</div>
+          <div style="font-size:0.82rem; color:var(--text-muted); margin-top:0.2rem;">Requested on ${new Date(a.createdAt).toLocaleDateString('en-US', {year:'numeric',month:'long',day:'numeric'})}</div>
+        </div>
+        <span class="status-badge status-${a.status}">${a.status}</span>
+      </div>
+
+      <div class="appt-details">
+        <div class="appt-detail-item"><span class="label">📅 Date</span><span class="value">${a.date}</span></div>
+        <div class="appt-detail-item"><span class="label">🕐 Time Slot</span><span class="value">${a.timeSlot}</span></div>
+        <div class="appt-detail-item"><span class="label">📋 Mode</span><span class="value">${a.consultationMode === 'online' ? '🌐 Online' : '🏥 In-Person'}</span></div>
+        <div class="appt-detail-item"><span class="label">📊 Status</span><span class="value">${a.status.charAt(0).toUpperCase() + a.status.slice(1)}</span></div>
+      </div>
+
+      ${a.notes ? `<div class="notes-box">📝 <strong>Patient Notes:</strong> ${a.notes}</div>` : ''}
+      ${a.status === 'rejected' && a.rejectionReason ? `<div class="rejection-reason">❌ <strong>Rejection Reason:</strong> ${a.rejectionReason}</div>` : ''}
+
+      ${a.status === 'pending' ? `
+        <div class="appt-actions">
+          <button class="btn-accept" onclick="handleAction('${a._id}', 'accepted')">✅ Accept</button>
+          <button class="btn-reject" onclick="toggleRejectForm('${a._id}')">❌ Reject</button>
+        </div>
+        <div class="reject-form" id="reject-form-${a._id}">
+          <label class="form-label">Reason for Rejection *</label>
+          <textarea id="reject-reason-${a._id}" class="form-control" rows="2" placeholder="Please provide a reason..." style="resize:vertical; margin-bottom:0.75rem;"></textarea>
+          <div style="display:flex; gap:0.5rem;">
+            <button class="btn-reject" onclick="handleAction('${a._id}', 'rejected')">Confirm Rejection</button>
+            <button onclick="toggleRejectForm('${a._id}')" style="background:transparent; border:1.5px solid var(--border); border-radius:8px; padding:0.5rem 1rem; font-size:0.85rem; cursor:pointer; font-family:'DM Sans',sans-serif;">Cancel</button>
+          </div>
+        </div>
+      ` : ''}
+    </div>
+  `).join('');
+}
+
+function toggleRejectForm(id) {
+  const form = document.getElementById(`reject-form-${id}`);
+  form.classList.toggle('show');
+}
+
+async function handleAction(appointmentId, action) {
+  let rejectionReason = '';
+  if (action === 'rejected') {
+    rejectionReason = document.getElementById(`reject-reason-${appointmentId}`).value.trim();
+    if (!rejectionReason) {
+      showAlert('alert-box', 'Please provide a reason for rejection.', 'error');
+      return;
+    }
+  }
+
+  try {
+    const data = await apiCall(`/api/appointments/${appointmentId}/action`, 'PUT', { action, rejectionReason });
+    if (data.success) {
+      showToast(data.message, 'success');
+      // FR_17-08: Update status in list
+      allAppointments = allAppointments.map(a =>
+        a._id === appointmentId ? { ...a, status: action, rejectionReason } : a
+      );
+      // FR_17-11: Remove rejected from pending view
+      renderAppointments();
+    } else {
+      showAlert('alert-box', data.message || 'Action failed.', 'error');
+    }
+  } catch(e) {
+    showAlert('alert-box', 'Server error. Please try again.', 'error');
+  }
+}
+</script>
+</body>
+</html>
