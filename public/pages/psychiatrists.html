@@ -320,6 +320,16 @@ function renderPsychiatrists(list) {
             ${days?`<div style="margin-top:0.5rem;"><div style="font-size:0.75rem;color:var(--text-muted);font-weight:500;margin-bottom:0.3rem;">Available Days</div><div class="availability-days">${days}</div></div>`:''}
             ${timeSlots?`<div style="margin-top:0.6rem;"><div style="font-size:0.75rem;color:var(--text-muted);font-weight:500;margin-bottom:0.2rem;">Time Slots</div><div style="font-size:0.82rem;color:var(--text);">🕐 ${timeSlots}</div></div>`:''}
             ${p.bio?`<div class="bio-text">${p.bio}</div>`:''}
+            ${(p.clinicAddress && p.clinicAddress.city) ? `
+            <div style="margin-top:0.75rem; padding:0.75rem 1rem; background:rgba(255,152,0,0.07); border:1px solid rgba(255,152,0,0.2); border-radius:10px; display:flex; align-items:flex-start; gap:0.5rem;">
+              <span style="font-size:1rem; flex-shrink:0;">📍</span>
+              <div>
+                <div style="font-size:0.72rem; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:0.2rem;">Clinic Address</div>
+                <div style="font-size:0.83rem; color:var(--text); font-weight:500; line-height:1.5;">
+                  ${p.clinicAddress.street ? p.clinicAddress.street + ', ' : ''}${p.clinicAddress.city}${p.clinicAddress.state ? ', ' + p.clinicAddress.state : ''}${p.clinicAddress.country ? ', ' + p.clinicAddress.country : ''}
+                </div>
+              </div>
+            </div>` : ''}
           </div>
           ${reviewsSection}
           ${footer}
