@@ -8,37 +8,31 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   role: { type: String, enum: ['patient', 'psychiatrist'], required: true },
   age: { type: Number },
-
-  // Personal
   phone: { type: String, trim: true },
   gender: { type: String, enum: ['Male', 'Female', 'Other'] },
-  profileImage: { type: String }, // base64
-
-  // Professional
+  profileImage: { type: String },
   specialization: { type: String, trim: true },
   qualification: { type: String, trim: true },
   experience: { type: String, trim: true },
   licenseNumber: { type: String, trim: true },
 
-  // Clinic / Session Address
+  // Clinic address with optional map coordinates
   clinicAddress: {
     street:  { type: String, trim: true },
     city:    { type: String, trim: true },
     state:   { type: String, trim: true },
-    country: { type: String, trim: true, default: 'Pakistan' }
+    country: { type: String, trim: true, default: 'Pakistan' },
+    lat:     { type: String },
+    lng:     { type: String }
   },
 
-  // Consultation
   consultationFee: { type: Number },
   consultationModes: {
     online:   { type: Boolean, default: false },
     inPerson: { type: Boolean, default: false }
   },
-
-  // Availability
   availableDays: [{ type: String }],
   timeSlots: [{ start: String, end: String }],
-
   bio: { type: String, trim: true },
   profileCreated: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now }

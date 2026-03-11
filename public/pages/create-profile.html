@@ -4,6 +4,8 @@
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Create Profile — MindBridge</title>
   <link rel="stylesheet" href="/css/style.css">
+  <!-- Leaflet CSS (OpenStreetMap - no API key needed) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
   <style>
     .profile-wizard { max-width: 780px; margin: 0 auto; }
     .section-card { background: white; border-radius: 18px; padding: 2rem; box-shadow: var(--shadow); border: 1px solid var(--border); margin-bottom: 1.5rem; }
@@ -29,7 +31,20 @@
     .avatar-preview { width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 3px solid var(--border); }
     .avatar-placeholder { width: 90px; height: 90px; border-radius: 50%; background: var(--cream); border: 3px dashed var(--border); display: flex; align-items: center; justify-content: center; font-size: 2rem; color: var(--text-muted); }
     .upload-btn { display: inline-block; background: var(--cream); border: 1.5px solid var(--border); color: var(--text); padding: 0.5rem 1.2rem; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; }
-    .address-icon { font-size: 1.5rem; margin-bottom: 0.25rem; }
+
+    /* MAP STYLES */
+    #map { height: 320px; border-radius: 12px; border: 2px solid var(--border); margin: 1rem 0; z-index: 1; }
+    #map.picking { border-color: var(--teal); cursor: crosshair !important; }
+    .map-search-row { display: flex; gap: 0.5rem; margin-bottom: 0.75rem; }
+    .map-search-row input { flex: 1; }
+    .btn-search-map { background: var(--teal); color: white; border: none; border-radius: 10px; padding: 0.6rem 1.2rem; font-size: 0.875rem; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; white-space: nowrap; }
+    .btn-search-map:hover { opacity: 0.88; }
+    .address-confirmed { background: rgba(13,115,119,0.07); border: 1.5px solid rgba(13,115,119,0.25); border-radius: 10px; padding: 0.85rem 1rem; margin-top: 0.75rem; display: none; }
+    .address-confirmed .addr-line { font-size: 0.875rem; color: var(--text); font-weight: 500; line-height: 1.5; }
+    .address-confirmed .addr-coords { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem; }
+    .map-tip { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem; }
+    .map-instructions { background: var(--cream); border-radius: 10px; padding: 0.75rem 1rem; font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.75rem; line-height: 1.6; }
+    .leaflet-container { font-family: 'DM Sans', sans-serif !important; }
   </style>
 </head>
 <body>
@@ -98,29 +113,58 @@
         </div>
       </div>
 
-      <!-- SECTION 3: Clinic Address -->
+      <!-- SECTION 3: Clinic Address with Map -->
       <div class="section-card">
         <div class="section-header">
           <div class="section-icon">📍</div>
-          <div><p class="section-title">Clinic / Session Address</p><p class="section-subtitle">Where patients can visit you for in-person sessions</p></div>
+          <div><p class="section-title">Clinic / Session Address</p><p class="section-subtitle">Pin your clinic location on the map</p></div>
         </div>
-        <div class="mb-3">
-          <label class="form-label">Street / Building / Clinic Name *</label>
-          <input type="text" id="addr-street" class="form-control" placeholder="e.g. Clinic 5, Al-Shifa Complex, Main Boulevard">
+
+        <div class="map-instructions">
+          <strong>How to set your address:</strong><br>
+          1️⃣ Type your clinic name or area in the search box and click <strong>Search</strong><br>
+          2️⃣ Or click anywhere on the map to drop a pin at your exact location<br>
+          3️⃣ The address fields below will fill in automatically
         </div>
-        <div class="form-row">
-          <div class="mb-3">
-            <label class="form-label">City *</label>
-            <input type="text" id="addr-city" class="form-control" placeholder="e.g. Lahore">
+
+        <!-- Search box -->
+        <div class="map-search-row">
+          <input type="text" id="map-search-input" class="form-control" placeholder="🔍 Search clinic name, street or area..." onkeydown="if(event.key==='Enter'){event.preventDefault();searchAddress();}">
+          <button class="btn-search-map" onclick="searchAddress()">Search</button>
+        </div>
+        <div id="search-results" style="background:white; border:1px solid var(--border); border-radius:10px; display:none; max-height:180px; overflow-y:auto; margin-bottom:0.75rem; box-shadow:var(--shadow);"></div>
+
+        <!-- Map -->
+        <div class="map-tip">🖱️ Click on the map to place your clinic pin</div>
+        <div id="map"></div>
+
+        <!-- Confirmed address display -->
+        <div class="address-confirmed" id="address-confirmed">
+          <div style="display:flex; align-items:flex-start; gap:0.5rem;">
+            <span style="font-size:1.1rem;">📍</span>
+            <div>
+              <div class="addr-line" id="confirmed-addr-text"></div>
+              <div class="addr-coords" id="confirmed-coords"></div>
+            </div>
+            <button onclick="clearPin()" style="background:none;border:none;color:#e17055;cursor:pointer;font-size:0.85rem;margin-left:auto;font-family:'DM Sans',sans-serif;">✕ Clear</button>
           </div>
-          <div class="mb-3">
-            <label class="form-label">Province / State</label>
-            <input type="text" id="addr-state" class="form-control" placeholder="e.g. Punjab">
-          </div>
         </div>
-        <div class="mb-3">
-          <label class="form-label">Country</label>
-          <input type="text" id="addr-country" class="form-control" value="Pakistan">
+
+        <!-- Hidden / editable address fields -->
+        <div style="margin-top:1.25rem; padding-top:1.25rem; border-top:1px solid var(--border);">
+          <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:0.75rem;">✏️ You can also edit the address fields manually:</p>
+          <div class="mb-3">
+            <label class="form-label">Street / Building / Clinic Name *</label>
+            <input type="text" id="addr-street" class="form-control" placeholder="e.g. Clinic 5, Al-Shifa Complex, Main Boulevard">
+          </div>
+          <div class="form-row">
+            <div class="mb-3"><label class="form-label">City *</label><input type="text" id="addr-city" class="form-control" placeholder="e.g. Lahore"></div>
+            <div class="mb-3"><label class="form-label">Province / State</label><input type="text" id="addr-state" class="form-control" placeholder="e.g. Punjab"></div>
+          </div>
+          <div class="mb-3"><label class="form-label">Country</label><input type="text" id="addr-country" class="form-control" value="Pakistan"></div>
+          <!-- Hidden lat/lng -->
+          <input type="hidden" id="addr-lat">
+          <input type="hidden" id="addr-lng">
         </div>
       </div>
 
@@ -178,7 +222,6 @@
         </div>
       </div>
 
-      <!-- Submit -->
       <button class="btn-submit" id="submit-btn" onclick="submitProfile()" style="width:100%; font-size:1rem; padding:1rem;">
         💾 Save Profile
       </button>
@@ -189,14 +232,170 @@
   </div>
 </div>
 
+<!-- Leaflet JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="/js/app.js"></script>
 <script>
 if (!Auth.isLoggedIn() || !Auth.isPsychiatrist()) window.location.href = '/login';
 
 let profileImageBase64 = null;
 let selectedDays = [];
+let map, marker;
 
+// ── MAP INIT ──────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
+  initMap();
+  await prefillForm();
+});
+
+function initMap() {
+  // Default center: Pakistan
+  map = L.map('map', { zoomControl: true }).setView([30.3753, 69.3451], 6);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    maxZoom: 19
+  }).addTo(map);
+
+  // Custom marker icon
+  const pinIcon = L.divIcon({
+    html: `<div style="background:var(--teal,#0d7377);width:36px;height:36px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid white;box-shadow:0 3px 12px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;">
+             <span style="transform:rotate(45deg);font-size:16px;">📍</span>
+           </div>`,
+    iconSize: [36, 36],
+    iconAnchor: [18, 36],
+    className: ''
+  });
+
+  // Click on map to place pin
+  map.on('click', async function(e) {
+    placePin(e.latlng.lat, e.latlng.lng, pinIcon);
+    await reverseGeocode(e.latlng.lat, e.latlng.lng);
+  });
+
+  window._pinIcon = pinIcon;
+}
+
+function placePin(lat, lng, icon) {
+  if (marker) map.removeLayer(marker);
+  marker = L.marker([lat, lng], { icon: icon || window._pinIcon, draggable: true }).addTo(map);
+  document.getElementById('addr-lat').value = lat.toFixed(7);
+  document.getElementById('addr-lng').value = lng.toFixed(7);
+  document.getElementById('confirmed-coords').textContent = `Coordinates: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+
+  // Allow dragging to fine-tune
+  marker.on('dragend', async function(e) {
+    const pos = e.target.getLatLng();
+    document.getElementById('addr-lat').value = pos.lat.toFixed(7);
+    document.getElementById('addr-lng').value = pos.lng.toFixed(7);
+    document.getElementById('confirmed-coords').textContent = `Coordinates: ${pos.lat.toFixed(5)}, ${pos.lng.toFixed(5)}`;
+    await reverseGeocode(pos.lat, pos.lng);
+  });
+}
+
+async function reverseGeocode(lat, lng) {
+  try {
+    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`, {
+      headers: { 'Accept-Language': 'en' }
+    });
+    const data = await res.json();
+    if (data && data.address) {
+      fillAddressFields(data);
+      const display = data.display_name || '';
+      document.getElementById('confirmed-addr-text').textContent = display;
+      document.getElementById('address-confirmed').style.display = 'block';
+    }
+  } catch(e) {
+    console.error('Reverse geocode error:', e);
+  }
+}
+
+function fillAddressFields(data) {
+  const a = data.address;
+  const street = [a.amenity, a.building, a.road, a.neighbourhood].filter(Boolean).join(', ');
+  const city = a.city || a.town || a.village || a.county || '';
+  const state = a.state || a.province || '';
+  const country = a.country || 'Pakistan';
+
+  if (street) document.getElementById('addr-street').value = street;
+  if (city) document.getElementById('addr-city').value = city;
+  if (state) document.getElementById('addr-state').value = state;
+  document.getElementById('addr-country').value = country;
+}
+
+// ── SEARCH ────────────────────────────────────────────────
+async function searchAddress() {
+  const q = document.getElementById('map-search-input').value.trim();
+  if (!q) return;
+
+  const btn = document.querySelector('.btn-search-map');
+  btn.textContent = 'Searching...';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=6&addressdetails=1`, {
+      headers: { 'Accept-Language': 'en' }
+    });
+    const results = await res.json();
+    showSearchResults(results);
+  } catch(e) {
+    showToast('Search failed. Please try again.', 'error');
+  }
+
+  btn.textContent = 'Search';
+  btn.disabled = false;
+}
+
+function showSearchResults(results) {
+  const box = document.getElementById('search-results');
+  if (!results.length) {
+    box.innerHTML = `<div style="padding:1rem;color:var(--text-muted);font-size:0.875rem;text-align:center;">No results found. Try a different search.</div>`;
+    box.style.display = 'block';
+    return;
+  }
+  box.innerHTML = results.map((r, i) => `
+    <div onclick="selectSearchResult(${i})" data-lat="${r.lat}" data-lon="${r.lon}" data-display="${encodeURIComponent(r.display_name)}" data-addr='${encodeURIComponent(JSON.stringify(r))}'
+      style="padding:0.75rem 1rem; cursor:pointer; border-bottom:1px solid var(--border); font-size:0.85rem; transition:background 0.15s;"
+      onmouseover="this.style.background='var(--cream)'" onmouseout="this.style.background='white'">
+      <div style="font-weight:600; color:var(--charcoal);">📍 ${r.display_name.split(',').slice(0,2).join(',')}</div>
+      <div style="color:var(--text-muted); font-size:0.78rem; margin-top:0.15rem;">${r.display_name.split(',').slice(2,5).join(',')}</div>
+    </div>
+  `).join('');
+  box.style.display = 'block';
+}
+
+function selectSearchResult(i) {
+  const items = document.querySelectorAll('#search-results > div');
+  const item = items[i];
+  const lat = parseFloat(item.dataset.lat);
+  const lon = parseFloat(item.dataset.lon);
+  const rawAddr = JSON.parse(decodeURIComponent(item.dataset.addr));
+
+  map.flyTo([lat, lon], 16, { animate: true, duration: 1 });
+  placePin(lat, lon);
+
+  document.getElementById('confirmed-addr-text').textContent = decodeURIComponent(item.dataset.display);
+  document.getElementById('address-confirmed').style.display = 'block';
+  document.getElementById('search-results').style.display = 'none';
+
+  fillAddressFields(rawAddr);
+}
+
+function clearPin() {
+  if (marker) { map.removeLayer(marker); marker = null; }
+  document.getElementById('address-confirmed').style.display = 'none';
+  document.getElementById('addr-lat').value = '';
+  document.getElementById('addr-lng').value = '';
+}
+
+// Click outside to close search results
+document.addEventListener('click', e => {
+  if (!e.target.closest('#search-results') && !e.target.closest('#map-search-input') && !e.target.closest('.btn-search-map'))
+    document.getElementById('search-results').style.display = 'none';
+});
+
+// ── PREFILL FORM ──────────────────────────────────────────
+async function prefillForm() {
   const data = await apiCall('/api/auth/me');
   if (!data.success) return;
   const u = data.user;
@@ -212,64 +411,67 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('licenseNumber').value = u.licenseNumber || '';
   document.getElementById('consultationFee').value = u.consultationFee || '';
 
-  // Pre-fill address
   if (u.clinicAddress) {
     document.getElementById('addr-street').value = u.clinicAddress.street || '';
     document.getElementById('addr-city').value = u.clinicAddress.city || '';
     document.getElementById('addr-state').value = u.clinicAddress.state || '';
     document.getElementById('addr-country').value = u.clinicAddress.country || 'Pakistan';
+
+    // If lat/lng saved, restore pin on map
+    if (u.clinicAddress.lat && u.clinicAddress.lng) {
+      const lat = parseFloat(u.clinicAddress.lat);
+      const lng = parseFloat(u.clinicAddress.lng);
+      setTimeout(() => {
+        map.setView([lat, lng], 15);
+        placePin(lat, lng);
+        const addrText = [u.clinicAddress.street, u.clinicAddress.city, u.clinicAddress.state, u.clinicAddress.country].filter(Boolean).join(', ');
+        document.getElementById('confirmed-addr-text').textContent = addrText;
+        document.getElementById('address-confirmed').style.display = 'block';
+      }, 300);
+    } else if (u.clinicAddress.city) {
+      // Try to geocode the saved city to center map
+      setTimeout(async () => {
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(u.clinicAddress.city + ', ' + (u.clinicAddress.country || 'Pakistan'))}&format=json&limit=1`);
+          const r = await res.json();
+          if (r[0]) map.setView([r[0].lat, r[0].lon], 13);
+        } catch(e) {}
+      }, 300);
+    }
   }
 
   if (u.profileImage) {
     profileImageBase64 = u.profileImage;
-    document.getElementById('avatar-display').innerHTML = `<img src="${u.profileImage}" class="avatar-preview" id="avatar-img">`;
+    document.getElementById('avatar-display').innerHTML = `<img src="${u.profileImage}" class="avatar-preview">`;
   }
-
-  if (u.consultationModes?.online) {
-    document.getElementById('card-online').classList.add('selected');
-    document.getElementById('mode-online').checked = true;
-  }
-  if (u.consultationModes?.inPerson) {
-    document.getElementById('card-inPerson').classList.add('selected');
-    document.getElementById('mode-inPerson').checked = true;
-  }
+  if (u.consultationModes?.online) { document.getElementById('card-online').classList.add('selected'); document.getElementById('mode-online').checked = true; }
+  if (u.consultationModes?.inPerson) { document.getElementById('card-inPerson').classList.add('selected'); document.getElementById('mode-inPerson').checked = true; }
 
   if (u.availableDays?.length > 0) {
     selectedDays = [...u.availableDays];
-    document.querySelectorAll('.day-btn').forEach(btn => {
-      if (selectedDays.includes(btn.getAttribute('data-day') || btn.textContent.trim())) btn.classList.add('active');
-    });
-    // Match by full day name
     const dayMap = { Mon:'Monday', Tue:'Tuesday', Wed:'Wednesday', Thu:'Thursday', Fri:'Friday', Sat:'Saturday', Sun:'Sunday' };
     document.querySelectorAll('.day-btn').forEach(btn => {
       const full = dayMap[btn.textContent.trim()];
       if (selectedDays.includes(full)) btn.classList.add('active');
     });
   }
+  if (u.timeSlots?.length > 0) u.timeSlots.forEach(s => addSlot(s.start, s.end));
+  else addSlot();
+}
 
-  if (u.timeSlots?.length > 0) {
-    u.timeSlots.forEach(slot => addSlot(slot.start, slot.end));
-  } else {
-    addSlot();
-  }
-});
-
+// ── FORM HELPERS ──────────────────────────────────────────
 function handleImage(input) {
   const file = input.files[0];
   if (!file) return;
-  if (file.size > 2 * 1024 * 1024) { showAlert('form-alert', 'Image must be under 2MB', 'error'); return; }
+  if (file.size > 2 * 1024 * 1024) { showAlert('form-alert','Image must be under 2MB','error'); return; }
   const reader = new FileReader();
-  reader.onload = e => {
-    profileImageBase64 = e.target.result;
-    document.getElementById('avatar-display').innerHTML = `<img src="${e.target.result}" class="avatar-preview">`;
-  };
+  reader.onload = e => { profileImageBase64 = e.target.result; document.getElementById('avatar-display').innerHTML = `<img src="${e.target.result}" class="avatar-preview">`; };
   reader.readAsDataURL(file);
 }
 
 function toggleMode(mode) {
-  const card = document.getElementById(`card-${mode}`);
+  document.getElementById(`card-${mode}`).classList.toggle('selected');
   const cb = document.getElementById(`mode-${mode}`);
-  card.classList.toggle('selected');
   cb.checked = !cb.checked;
 }
 
@@ -280,26 +482,23 @@ function toggleDay(btn, day) {
 }
 
 let slotCount = 0;
-function addSlot(start = '', end = '') {
+function addSlot(start='', end='') {
   slotCount++;
   const id = `slot-${slotCount}`;
   const div = document.createElement('div');
-  div.className = 'slot-row';
-  div.id = id;
+  div.className = 'slot-row'; div.id = id;
   div.innerHTML = `
-    <span style="font-size:0.85rem; color:var(--text-muted); font-weight:500;">From</span>
+    <span style="font-size:0.85rem;color:var(--text-muted);font-weight:500;">From</span>
     <input type="time" class="form-control slot-start" value="${start}">
-    <span style="font-size:0.85rem; color:var(--text-muted); font-weight:500;">To</span>
+    <span style="font-size:0.85rem;color:var(--text-muted);font-weight:500;">To</span>
     <input type="time" class="form-control slot-end" value="${end}">
-    <button type="button" class="remove-slot" onclick="document.getElementById('${id}').remove()" title="Remove">✕</button>
-  `;
+    <button type="button" class="remove-slot" onclick="document.getElementById('${id}').remove()" title="Remove">✕</button>`;
   document.getElementById('slots-list').appendChild(div);
 }
 
 function getTimeSlots() {
-  const rows = document.querySelectorAll('.slot-row');
   const slots = [];
-  rows.forEach(row => {
+  document.querySelectorAll('.slot-row').forEach(row => {
     const start = row.querySelector('.slot-start').value;
     const end = row.querySelector('.slot-end').value;
     if (start && end) slots.push({ start, end });
@@ -307,6 +506,7 @@ function getTimeSlots() {
   return slots;
 }
 
+// ── SUBMIT ────────────────────────────────────────────────
 async function submitProfile() {
   const fullName = document.getElementById('fullName').value.trim();
   const phone = document.getElementById('phone').value.trim();
@@ -321,37 +521,35 @@ async function submitProfile() {
   const city = document.getElementById('addr-city').value.trim();
   const state = document.getElementById('addr-state').value.trim();
   const country = document.getElementById('addr-country').value.trim();
-
+  const lat = document.getElementById('addr-lat').value;
+  const lng = document.getElementById('addr-lng').value;
   const onlineMode = document.getElementById('mode-online').checked;
   const inPersonMode = document.getElementById('mode-inPerson').checked;
   const timeSlots = getTimeSlots();
 
-  // Validation
-  if (!fullName) { showAlert('form-alert', 'Full name is required.', 'error'); return; }
-  if (!gender) { showAlert('form-alert', 'Please select your gender.', 'error'); return; }
-  if (!phone) { showAlert('form-alert', 'Phone number is required.', 'error'); return; }
-  if (!specialization) { showAlert('form-alert', 'Specialization is required.', 'error'); return; }
-  if (!experience) { showAlert('form-alert', 'Experience is required.', 'error'); return; }
-  if (!qualification) { showAlert('form-alert', 'Qualification is required.', 'error'); return; }
-  if (!licenseNumber) { showAlert('form-alert', 'License number is required.', 'error'); return; }
-  if (!street || !city) { showAlert('form-alert', 'Street and city are required for clinic address.', 'error'); return; }
-  if (!consultationFee) { showAlert('form-alert', 'Consultation fee is required.', 'error'); return; }
-  if (!onlineMode && !inPersonMode) { showAlert('form-alert', 'Please select at least one consultation mode.', 'error'); return; }
-  if (selectedDays.length === 0) { showAlert('form-alert', 'Please select at least one available day.', 'error'); return; }
-  if (timeSlots.length === 0) { showAlert('form-alert', 'Please add at least one time slot.', 'error'); return; }
+  if (!fullName) { showAlert('form-alert','Full name is required.','error'); return; }
+  if (!gender) { showAlert('form-alert','Please select your gender.','error'); return; }
+  if (!phone) { showAlert('form-alert','Phone number is required.','error'); return; }
+  if (!specialization) { showAlert('form-alert','Specialization is required.','error'); return; }
+  if (!experience) { showAlert('form-alert','Experience is required.','error'); return; }
+  if (!qualification) { showAlert('form-alert','Qualification is required.','error'); return; }
+  if (!licenseNumber) { showAlert('form-alert','License number is required.','error'); return; }
+  if (!street || !city) { showAlert('form-alert','Please set your clinic address (street and city are required).','error'); return; }
+  if (!consultationFee) { showAlert('form-alert','Consultation fee is required.','error'); return; }
+  if (!onlineMode && !inPersonMode) { showAlert('form-alert','Please select at least one consultation mode.','error'); return; }
+  if (selectedDays.length === 0) { showAlert('form-alert','Please select at least one available day.','error'); return; }
+  if (timeSlots.length === 0) { showAlert('form-alert','Please add at least one time slot.','error'); return; }
 
   const btn = document.getElementById('submit-btn');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> Saving...';
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Saving...';
 
   const body = {
     fullName, phone, gender, bio,
     specialization, experience, qualification, licenseNumber,
     consultationFee: parseInt(consultationFee),
     consultationModes: { online: onlineMode, inPerson: inPersonMode },
-    availableDays: selectedDays,
-    timeSlots,
-    clinicAddress: { street, city, state, country }
+    availableDays: selectedDays, timeSlots,
+    clinicAddress: { street, city, state, country, lat: lat || null, lng: lng || null }
   };
   if (profileImageBase64) body.profileImage = profileImageBase64;
 
@@ -360,9 +558,8 @@ async function submitProfile() {
     showAlert('form-alert', '✅ Profile saved successfully! Redirecting...', 'success');
     setTimeout(() => window.location.href = '/dashboard', 1500);
   } else {
-    showAlert('form-alert', data.message || 'Failed to save profile.', 'error');
-    btn.disabled = false;
-    btn.textContent = '💾 Save Profile';
+    showAlert('form-alert', data.message || 'Failed to save.', 'error');
+    btn.disabled = false; btn.textContent = '💾 Save Profile';
   }
 }
 </script>
