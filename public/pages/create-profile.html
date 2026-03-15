@@ -238,7 +238,7 @@
 <script>
 if (!Auth.isLoggedIn() || !Auth.isPsychiatrist()) window.location.href = '/login';
 
-let profileImageBase64 = null;
+let profileImageUrl = null;   // Cloudinary URL stored here after upload
 let selectedDays = [];
 let map, marker;
 
@@ -441,7 +441,7 @@ async function prefillForm() {
   }
 
   if (u.profileImage) {
-    profileImageBase64 = u.profileImage;
+    profileImageUrl = u.profileImage;
     document.getElementById('avatar-display').innerHTML = `<img src="${u.profileImage}" class="avatar-preview">`;
   }
   if (u.consultationModes?.online) { document.getElementById('card-online').classList.add('selected'); document.getElementById('mode-online').checked = true; }
@@ -460,13 +460,49 @@ async function prefillForm() {
 }
 
 // ── FORM HELPERS ──────────────────────────────────────────
-function handleImage(input) {
+async function handleImage(input) {
   const file = input.files[0];
   if (!file) return;
-  if (file.size > 2 * 1024 * 1024) { showAlert('form-alert','Image must be under 2MB','error'); return; }
+  if (file.size > 5 * 1024 * 1024) { showAlert('form-alert', 'Image must be under 5MB', 'error'); return; }
+
+  // Show local preview immediately
   const reader = new FileReader();
-  reader.onload = e => { profileImageBase64 = e.target.result; document.getElementById('avatar-display').innerHTML = `<img src="${e.target.result}" class="avatar-preview">`; };
+  reader.onload = e => {
+    document.getElementById('avatar-display').innerHTML =
+      `<div style="position:relative;display:inline-block;">
+         <img src="${e.target.result}" class="avatar-preview" id="avatar-img">
+         <div id="upload-overlay" style="position:absolute;inset:0;border-radius:50%;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;">
+           <span class="spinner" style="width:20px;height:20px;border-width:2px;border-color:rgba(255,255,255,0.3);border-top-color:white;"></span>
+         </div>
+       </div>`;
+  };
   reader.readAsDataURL(file);
+
+  // Upload to Cloudinary via backend
+  try {
+    const formData = new FormData();
+    formData.append('image', file);
+    const token = Auth.getToken();
+    const res = await fetch('/api/upload/profile-image', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token },
+      body: formData
+    });
+    const data = await res.json();
+    if (data.success) {
+      profileImageUrl = data.url;
+      // Remove spinner overlay, keep preview
+      const overlay = document.getElementById('upload-overlay');
+      if (overlay) overlay.remove();
+      showToast('✅ Photo uploaded!', 'success');
+    } else {
+      showAlert('form-alert', 'Image upload failed: ' + data.message, 'error');
+      document.getElementById('avatar-display').innerHTML = '<div class="avatar-placeholder">👤</div>';
+    }
+  } catch(e) {
+    showAlert('form-alert', 'Image upload failed. Please try again.', 'error');
+    document.getElementById('avatar-display').innerHTML = '<div class="avatar-placeholder">👤</div>';
+  }
 }
 
 function toggleMode(mode) {
@@ -551,7 +587,7 @@ async function submitProfile() {
     availableDays: selectedDays, timeSlots,
     clinicAddress: { street, city, state, country, lat: lat || null, lng: lng || null }
   };
-  if (profileImageBase64) body.profileImage = profileImageBase64;
+  if (profileImageUrl) body.profileImage = profileImageUrl;
 
   const data = await apiCall('/api/auth/create-profile', 'POST', body);
   if (data.success) {
