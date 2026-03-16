@@ -15,8 +15,6 @@ const userSchema = new mongoose.Schema({
   qualification: { type: String, trim: true },
   experience: { type: String, trim: true },
   licenseNumber: { type: String, trim: true },
-
-  // Clinic address with optional map coordinates
   clinicAddress: {
     street:  { type: String, trim: true },
     city:    { type: String, trim: true },
@@ -25,7 +23,6 @@ const userSchema = new mongoose.Schema({
     lat:     { type: String },
     lng:     { type: String }
   },
-
   consultationFee: { type: Number },
   consultationModes: {
     online:   { type: Boolean, default: false },
@@ -35,6 +32,11 @@ const userSchema = new mongoose.Schema({
   timeSlots: [{ start: String, end: String }],
   bio: { type: String, trim: true },
   profileCreated: { type: Boolean, default: false },
+
+  // Password reset fields
+  resetPasswordToken:   { type: String },
+  resetPasswordExpires: { type: Date },
+
   createdAt: { type: Date, default: Date.now }
 });
 

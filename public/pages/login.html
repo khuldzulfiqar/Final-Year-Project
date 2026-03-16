@@ -11,28 +11,36 @@
   <div class="nav-links" id="dynamic-nav"></div>
 </nav>
 
-<div class="form-page">
-  <div class="container">
-    <div class="form-container">
-      <div style="text-align:center; margin-bottom:1.5rem;">
-        <div style="font-size:2.5rem; margin-bottom:0.75rem;">🧠</div>
-        <h2 class="form-title">Welcome Back</h2>
-        <p class="form-subtitle">Sign in to your MindBridge account</p>
-      </div>
-      <div id="alert-box" class="alert-box"></div>
-      <div class="mb-3">
-        <label class="form-label">Email Address</label>
-        <input type="email" id="email" class="form-control" placeholder="your@email.com">
-      </div>
-      <div class="mb-4">
-        <label class="form-label">Password</label>
-        <input type="password" id="password" class="form-control" placeholder="Enter your password">
-      </div>
-      <button class="btn-submit" id="login-btn" onclick="handleLogin()">Sign In</button>
-      <hr class="form-divider">
-      <p class="text-sm text-center">Don't have an account? <a href="/register" class="form-link">Register as Patient</a></p>
-      <p class="text-sm text-center mt-3">Are you a psychiatrist? <a href="/register-psychiatrist" class="form-link">Register here</a></p>
+<div class="auth-wrapper">
+  <div class="auth-card">
+    <div class="auth-header">
+      <h2 class="auth-title">Welcome Back</h2>
+      <p class="auth-subtitle">Sign in to your MindBridge account</p>
     </div>
+    <div id="login-alert" class="alert-box"></div>
+    <div class="mb-3">
+      <label class="form-label">Email Address</label>
+      <input type="email" id="login-email" class="form-control" placeholder="you@example.com"
+        onkeydown="if(event.key==='Enter') login()">
+    </div>
+    <div class="mb-4">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
+        <label class="form-label" style="margin-bottom:0;">Password</label>
+        <a href="/forgot-password" class="form-link" style="font-size:0.8rem;">Forgot password?</a>
+      </div>
+      <div style="position:relative;">
+        <input type="password" id="login-password" class="form-control" placeholder="Enter your password"
+          onkeydown="if(event.key==='Enter') login()">
+        <button type="button" onclick="togglePwd()"
+          style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:1rem;color:var(--text-muted);">👁</button>
+      </div>
+    </div>
+    <button class="btn-submit" id="login-btn" onclick="login()">Sign In</button>
+    <p class="auth-footer">
+      Don't have an account?
+      <a href="/register" class="form-link">Register as Patient</a> or
+      <a href="/register-psychiatrist" class="form-link">Register as Psychiatrist</a>
+    </p>
   </div>
 </div>
 
@@ -40,29 +48,33 @@
 <script>
 if (Auth.isLoggedIn()) window.location.href = '/dashboard';
 
-async function handleLogin() {
-  const email = document.getElementById('email').value.trim();
-  const password = document.getElementById('password').value;
+function togglePwd() {
+  const input = document.getElementById('login-password');
+  input.type = input.type === 'password' ? 'text' : 'password';
+}
+
+async function login() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
   const btn = document.getElementById('login-btn');
-  if (!email || !password) { showAlert('alert-box', 'Please fill in all fields.', 'error'); return; }
+  if (!email || !password) { showAlert('login-alert', 'Please enter email and password.', 'error'); return; }
   btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span>Signing in...';
+  btn.innerHTML = '<span class="spinner"></span> Signing in...';
   try {
     const data = await apiCall('/api/auth/login', 'POST', { email, password });
     if (data.success) {
       Auth.setAuth(data.token, data.user);
-      showToast('Welcome back, ' + data.user.fullName + '!', 'success');
+      showToast('Welcome back! 👋', 'success');
       setTimeout(() => window.location.href = '/dashboard', 800);
     } else {
-      showAlert('alert-box', data.message || 'Login failed.', 'error');
+      showAlert('login-alert', data.message || 'Login failed.', 'error');
       btn.disabled = false; btn.textContent = 'Sign In';
     }
   } catch(e) {
-    showAlert('alert-box', 'Server error. Please try again.', 'error');
+    showAlert('login-alert', 'Server error. Please try again.', 'error');
     btn.disabled = false; btn.textContent = 'Sign In';
   }
 }
-document.addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
 </script>
 </body>
 </html>
