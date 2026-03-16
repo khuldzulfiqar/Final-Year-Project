@@ -20,6 +20,10 @@ const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://mindbridge:mindbridge1
 mongoose.connect(MONGO_URI)
   .then(() => console.log('✅ MongoDB Connected'))
   .catch(err => console.log('❌ MongoDB Error:', err.message));
+const adminRoutes = require("./routes/adminRoutes");
+app.use("/api/admin", adminRoutes);
+
+
 
 app.use('/api/auth',         require('./routes/auth'));
 app.use('/api/psychiatrist', require('./routes/psychiatrist'));
@@ -43,5 +47,5 @@ app.get('/reviews',               (req, res) => res.sendFile(p('reviews.html')))
 app.get('/forgot-password',       (req, res) => res.sendFile(p('forgot-password.html')));
 app.get('/reset-password',        (req, res) => res.sendFile(p('reset-password.html')));
 
-const PORT = process.env.PORT || 5500;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));

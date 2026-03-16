@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Manage Psychiatrists</title>
+  <link rel="stylesheet" href="/css/admin-css/admin-dashboard.css">
+</head>
+
+<body>
+
+<div class="admin-container">
+
+  <!-- 🔵 Sidebar -->
+  <div class="sidebar">
+    <h2>Admin Panel</h2>
+    <ul>
+      <li><a href="/admin/admin-dashboard">Dashboard</a></li>
+      <li><a href="/admin/manage-patients.html">Manage Patients</a></li>
+      <li><a href="/admin/manage-psychiatrists.html" class="active">Manage Psychiatrists</a></li>
+      <li><a href="/admin/manage-appointments.html">ManageAppointments</a></li>
+      <li><a href="/admin/manage-reviews.html">Manage Reviews</a></li>
+
+      <li><button onclick="logout()">Logout</button></li>
+    </ul>
+  </div>
+
+  <!-- 🟢 Main Content -->
+  <div class="main-content">
+
+    <h1>Manage Psychiatrists</h1>
+
+    <!-- 🔍 Search Box -->
+    <input type="text" id="searchInput" placeholder="Search psychiatrist...">
+
+    <table id="psyTable">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Specialization</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+  </div>
+
+</div>
+
+<script src="../js/psychiatrist.js"></script>
+</body>
+</html>

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<title>Manage Patients</title>
+
+<link rel="stylesheet" href="../css/admin-css/admin-dashboard.css">
+
+</head>
+
+<body>
+
+<div class="dashboard">
+
+<!-- Sidebar -->
+
+<div class="sidebar">
+
+<h2>Admin Panel</h2>
+
+<ul>
+
+<li><a href="/admin/admin-dashboard.html">Dashboard</a></li>
+
+<li><a href="/admin/manage-patients.html" class="active">Manage Patients</a></li>
+
+<li><a href="/admin/manage-psychiatrists.html">Manage Psychiatrists</a></li>
+
+<li><a href="/admin/manage-appointments.html">Manage Appointments</a></li>
+
+<li><a href="/admin/manage-reviews.html">Manage Reviews</a></li>
+
+<li><button onclick="logout()">Logout</button></li>
+
+</ul>
+
+</div>
+
+<!-- Main Content -->
+
+<div class="main-content">
+
+<h1>Manage Patients</h1>
+
+<input type="text" id="search" placeholder="Search by name or email">
+
+<br><br>
+
+<table border="1" width="100%" id="patientsTable">
+
+<thead>
+
+<tr>
+<th>Name</th>
+<th>Email</th>
+<th>Profile</th>
+<th>Delete</th>
+</tr>
+
+</thead>
+
+<tbody>
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+<script src="../js/patients.js"></script>
+
+</body>
+</html>

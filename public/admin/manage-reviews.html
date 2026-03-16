@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Manage Reviews</title>
+
+  <!-- Admin CSS -->
+  <link rel="stylesheet" href="/css/admin-css/admin-dashboard.css">
+  
+
+</head>
+
+<body>
+
+<div class="admin-container">
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+
+    <h2>Admin Panel</h2>
+
+    <ul>
+
+      <li><a href="/admin/admin-dashboard.html">Dashboard</a></li>
+
+      <li><a href="/admin/manage-patients.html">Manage Patients</a></li>
+
+      <li><a href="/admin/manage-psychiatrists.html">Manage Psychiatrists</a></li>
+
+      <li><a href="/admin/manage-appointments.html">Manage Appointments</a></li>
+
+      <li><a href="/admin/manage-reviews.html" class="active"> Manage Reviews</a></li>
+      <li><button onclick="logout()">Logout</button></li>
+
+    </ul>
+
+  </div>
+
+
+  <!-- Content -->
+  <div class="content">
+
+    <h1>Review & Rating Management</h1>
+
+    <!-- Top Search Bar -->
+    <div class="top-bar">
+
+      <input type="text" id="searchInput" placeholder="Search reviews...">
+
+    </div>
+
+
+    <!-- Reviews Table -->
+    <table id="reviewTable">
+
+      <thead>
+
+        <tr>
+
+          <th>Patient</th>
+          <th>Psychiatrist</th>
+          <th>Rating</th>
+          <th>Review</th>
+          <th>Date</th>
+          <th>Action</th>
+
+        </tr>
+
+      </thead>
+
+      <tbody>
+
+      </tbody>
+
+    </table>
+
+  </div>
+
+</div>
+
+<!-- JS -->
+<script src="../js/manage-reviews.js"></script>
+
+</body>
+</html>
