@@ -16,7 +16,7 @@ app.use(session({
   cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 }
 }));
 
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/mindbridge';
+const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://mindbridge:mindbridge12@mindbridge.nas1mkf.mongodb.net/';
 mongoose.connect(MONGO_URI)
   .then(() => console.log('✅ MongoDB Connected'))
   .catch(err => console.log('❌ MongoDB Error:', err.message));
@@ -37,5 +37,5 @@ app.get('/create-profile', (req, res) => res.sendFile(path.join(__dirname, 'publ
 app.get('/appointments', (req, res) => res.sendFile(path.join(__dirname, 'public', 'pages', 'appointments.html')));
 app.get('/reviews', (req, res) => res.sendFile(path.join(__dirname, 'public', 'pages', 'reviews.html')));
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5500;
 app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
