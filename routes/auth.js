@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
+const Admin = require('../models/Admin');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'mindbridge-jwt-secret';
 
@@ -53,19 +54,71 @@ router.post('/register-psychiatrist', async (req, res) => {
   }
 });
 
+
 // Login
 router.post('/login', async (req, res) => {
   try {
     const User = require('../models/User');
     const { email, password } = req.body;
+
     if (!email || !password)
       return res.status(400).json({ success: false, message: 'Email and password are required' });
+
+    // 🔥 1. Check Admin FIRST
+    const admin = await Admin.findOne({ email });
+
+    if (admin) {
+      const match = await admin.comparePassword(password);
+
+      if (!match)
+        return res.status(400).json({ success: false, message: 'Invalid email or password' });
+
+      const token = generateToken({ _id: admin._id, role: 'admin' });
+
+      return res.json({
+        success: true,
+        token,
+        user: {
+          _id: admin._id,
+          fullName: admin.fullName,
+          email: admin.email,
+          role: 'admin'
+        }
+      });
+    }
+
+    // 🔥 2. Check User (Patient / Psychiatrist)
     const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ success: false, message: 'Invalid email or password' });
+
+    if (!user)
+      return res.status(400).json({ success: false, message: 'Invalid email or password' });
+
     const match = await user.comparePassword(password);
-    if (!match) return res.status(400).json({ success: false, message: 'Invalid email or password' });
+
+    if (!match)
+      return res.status(400).json({ success: false, message: 'Invalid email or password' });
+
+    // psychiatrist approval check
+    if (user.role === 'psychiatrist' && user.status !== 'Approved') {
+      return res.status(403).json({
+        success: false,
+        message: 'Your account is not approved yet'
+      });
+    }
+
     const token = generateToken(user);
-    res.json({ success: true, token, user: { _id: user._id, fullName: user.fullName, email: user.email, role: user.role } });
+
+    res.json({
+      success: true,
+      token,
+      user: {
+        _id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        role: user.role
+      }
+    });
+
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -125,5 +178,6 @@ router.put('/profile', authMiddleware, async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 });
+
 
 module.exports = router;

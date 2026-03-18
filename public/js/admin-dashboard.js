@@ -1,7 +1,5 @@
-function logout(){
-
-localStorage.removeItem("token");
-
-window.location.href = "admin-login.html";
-
+function logout() {
+  Auth.clear();
+  showToast('Logged out successfully', 'success');
+  setTimeout(() => window.location.href = '/login', 800);
 }

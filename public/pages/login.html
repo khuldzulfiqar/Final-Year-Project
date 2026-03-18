@@ -65,7 +65,17 @@ async function login() {
     if (data.success) {
       Auth.setAuth(data.token, data.user);
       showToast('Welcome back! 👋', 'success');
-      setTimeout(() => window.location.href = '/dashboard', 800);
+      setTimeout(() => {
+  if (data.user.role === 'admin') {
+    window.location.href = '/admin/admin-dashboard.html';
+  } 
+  else if (data.user.role === 'psychiatrist') {
+    window.location.href = '/psychiatrist-dashboard.html';
+  } 
+  else {
+    window.location.href = '/dashboard';
+  }
+}, 800);
     } else {
       showAlert('login-alert', data.message || 'Login failed.', 'error');
       btn.disabled = false; btn.textContent = 'Sign In';
