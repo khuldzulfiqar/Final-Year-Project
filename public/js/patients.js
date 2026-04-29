@@ -14,37 +14,32 @@ displayPatients(patients);
 }
 
 function displayPatients(data){
+  tableBody.innerHTML = "";
 
-tableBody.innerHTML = "";
+  data.forEach(patient => {
 
-data.forEach(patient => {
+    const row = `
+      <tr>
+        <td>${patient.fullName || ""}</td>
+        <td>${patient.email || ""}</td>
 
-const row = `
-<tr>
+        <td>
+          <button class="view-btn" onclick="viewProfile('${patient._id}')">View</button>
+        </td>
 
-<td>${patient.name}</td>
-<td>${patient.email}</td>
+        <td>
+          <button class="delete-btn" onclick="deletePatient('${patient._id}')">Delete</button>
+        </td>
+      </tr>
+    `;
 
-<td>
-<button class="view-btn" onclick="viewProfile('${patient._id}')">View</button>
-</td>
-
-<td>
-<button class="delete-btn" onclick="deletePatient('${patient._id}')">Delete</button>
-</td>
-
-</tr>
-`;
-
-tableBody.innerHTML += row;
-
-});
-
+    tableBody.innerHTML += row;
+  });
 }
 
 function viewProfile(id){
 
-window.location.href = "patient-profile.html?id=" + id;
+window.location.href = "/pages/patient-profile.html?id=" + id;
 
 }
 
@@ -62,17 +57,27 @@ loadPatients();
 
 }
 
-searchInput.addEventListener("keyup", function(){
+searchInput.addEventListener("keyup", function () {
 
 const value = searchInput.value.toLowerCase();
 
 const filtered = patients.filter(p =>
-p.name.toLowerCase().includes(value) ||
-p.email.toLowerCase().includes(value)
+  (p.fullName || "").toLowerCase().includes(value) ||
+  (p.email || "").toLowerCase().includes(value)
 );
 
 displayPatients(filtered);
 
 });
 
+
+
 loadPatients();
+document.getElementById("logoutBtn").addEventListener("click", function () {
+  console.log("Logout clicked");
+
+  localStorage.clear();
+  sessionStorage.clear();
+
+  window.location.href = '/';
+});

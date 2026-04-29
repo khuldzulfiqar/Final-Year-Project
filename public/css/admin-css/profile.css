@@ -1,0 +1,85 @@
+
+
+/* profile page */
+
+/* ===== Background ===== */
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: linear-gradient(135deg, #eef2f7, #dfe9f3);
+}
+
+/* ===== Page Layout ===== */
+.page {
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ===== Title ===== */
+.title {
+  font-size: 26px;
+  color: #2c3e50;
+  margin-bottom: 20px;
+}
+
+/* ===== Card ===== */
+.cardd {
+  width: 100%;
+  max-width: 450px;
+  background: white;
+  padding: 25px;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+  text-align: center;
+  transition: 0.3s;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+}
+
+
+
+/* ===== Name ===== */
+.name {
+  margin: 10px 0 20px;
+  color: #0f0f0f;
+}
+
+/* ===== Info Section ===== */
+.info {
+  text-align: left;
+}
+
+/* ===== ROW (IMPORTANT FIX) ===== */
+.row {
+  margin: 12px 0;
+  padding: 12px;
+  background: #f7f9fc;
+  border-radius: 10px;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+}
+
+/* Label (Email, CNIC etc.) */
+.row span {
+  font-size: 13px;
+  color: #050505;
+  font-weight: 500;
+  width: 100px; /* alignment fix */
+}
+
+/* Value */
+.row p {
+  margin: 0;
+  font-size: 15px;
+  color: #2f2e2e;
+  font-weight: bold;
+  flex: 1;
+  text-align: center;
+}

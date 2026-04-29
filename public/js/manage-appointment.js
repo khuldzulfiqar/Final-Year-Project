@@ -1,8 +1,16 @@
 const tableBody = document.querySelector("#appointmentTable tbody");
 const statusFilter = document.getElementById("statusFilter");
+const searchInput = document.getElementById("searchInput");
 
-// Load All
-async function loadAppointments(url = "/api/admin/appointments") {
+async function loadAppointments() {
+  const status = statusFilter.value;
+  const search = searchInput.value;
+
+  let url = `/api/admin/appointments?`;
+
+  if (status) url += `status=${status}&`;
+  if (search) url += `search=${search}`;
+
   const res = await fetch(url);
   const data = await res.json();
 
@@ -20,32 +28,17 @@ async function loadAppointments(url = "/api/admin/appointments") {
   });
 }
 
+// 👇 EVENTS (VERY IMPORTANT)
+statusFilter.addEventListener("change", loadAppointments);
+searchInput.addEventListener("keyup", loadAppointments);
+
+// initial load
 loadAppointments();
+document.getElementById("logoutBtn").addEventListener("click", function () {
+  console.log("Logout clicked");
 
-// Filter
-statusFilter.addEventListener("change", function () {
-  const value = statusFilter.value;
+  localStorage.clear();
+  sessionStorage.clear();
 
-  if (value === "") {
-    loadAppointments();
-  } else {
-    loadAppointments(`/api/admin/appointments/status/${value}`);
-  }
+  window.location.href = '/';
 });
-
-// Search
-const searchInput = document.getElementById("searchInput");
-
-if (searchInput) {
-  searchInput.addEventListener("keyup", function () {
-    const filter = searchInput.value.toLowerCase();
-    const rows = document.querySelectorAll("#appointmentTable tbody tr");
-
-    rows.forEach(row => {
-      row.style.display =
-        row.innerText.toLowerCase().includes(filter)
-          ? ""
-          : "none";
-    });
-  });
-}

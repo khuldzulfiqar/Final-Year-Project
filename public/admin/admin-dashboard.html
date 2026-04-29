@@ -10,6 +10,9 @@
 </head>
 
 <body>
+    <nav class="navbar">
+  <a href="/" class="navbar-brand">Mind<span>Bridge</span></a>
+</nav>
 
 <div class="dashboard">
 
@@ -27,11 +30,11 @@
 
             <li><a href="/admin/manage-psychiatrists.html">ManagePsychiatrists</a></li>
 
-            <li><a href="admin/manage-appointments.html">Manage Appointments</a></li>
+            <li><a href="/admin/manage-appointments.html">Manage Appointments</a></li>
 
             <li><a href="/admin/manage-reviews.html">Manage Reviews</a></li>
 
-            <li><button onclick="logout()">Logout</button></li>
+            <li><button id="logoutBtn">Logout</button></li>
 
         </ul>
 
@@ -46,22 +49,22 @@
         <div class="cards">
 
             <div class="card">
-                <h3>Total Patients</h3>
+                <h3> Patients</h3>
                 <p id="patientsCount">0</p>
             </div>
 
             <div class="card">
-                <h3>Total Psychiatrists</h3>
+                <h3> Psychiatrists</h3>
                 <p id="psychiatristsCount">0</p>
             </div>
 
             <div class="card">
-                <h3>Total Appointments</h3>
+                <h3>Appointments</h3>
                 <p id="appointmentsCount">0</p>
             </div>
 
             <div class="card">
-                <h3>Total Reviews</h3>
+                <h3> Reviews</h3>
                 <p id="reviewsCount">0</p>
             </div>
 
@@ -70,6 +73,9 @@
     </div>
 
 </div>
+<div id="footer-container"></div>
+
+<script src="/js/footer.js"></script>
 
 <script src="../js/admin-dashboard.js"></script>
 

@@ -53,6 +53,8 @@ userSchema.pre('save', async function () {
 userSchema.methods.comparePassword = async function (password) {
   return bcrypt.compare(password, this.password);
 };
+// 🔥 INDEX (IMPORTANT)
+userSchema.index({ role: 1 });
 
 const User = mongoose.models.User || mongoose.model('User', userSchema);
 module.exports = User;

@@ -8,6 +8,9 @@
 </head>
 
 <body>
+   <nav class="navbar">
+  <a href="/" class="navbar-brand">Mind<span>Bridge</span></a>
+</nav>
 
 <div class="admin-container">
 
@@ -20,8 +23,9 @@
       <li><a href="/admin/manage-psychiatrists.html">Manage Psychiatrists</a></li>
       <li><a href="/admin/manage-appointments.html" class="active">ManageAppointments</a></li>
        <li><a href="/admin/manage-reviews.html">Manage Reviews</a></li>
+         <li><button id="logoutBtn">Logout</button></li>
 
-            <li><button onclick="logout()">Logout</button></li>
+          
     </ul>
   </div>
 
@@ -37,7 +41,7 @@
       <select id="statusFilter">
         <option value="">All</option>
         <option value="Pending">Pending</option>
-        <option value="Approved">Approved</option>
+        <option value="accepted">Accepted</option>
         <option value="Rejected">Rejected</option>
       </select>
     </div>
@@ -58,6 +62,10 @@
   </div>
 
 </div>
+
+<div id="footer-container"></div>
+
+<script src="/js/footer.js"></script>
 
 <script src="../js/manage-appointment.js"></script>
 

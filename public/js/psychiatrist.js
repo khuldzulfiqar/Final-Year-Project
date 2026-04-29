@@ -22,6 +22,7 @@ async function loadPsychiatrists() {
           <td>${p.specialization || ""}</td>
           <td>${p.status}</td>
           <td>
+            <button onclick="view('${p._id}')">View</button>
             <button onclick="approve('${p._id}')">Approve</button>
             <button onclick="reject('${p._id}')">Reject</button>
             <button onclick="deleteP('${p._id}')">Delete</button>
@@ -40,17 +41,33 @@ async function loadPsychiatrists() {
 // -------------------------------
 const searchInput = document.getElementById("searchInput");
 
-if (searchInput) {
-  searchInput.addEventListener("keyup", function () {
-    const filter = searchInput.value.toLowerCase();
-    const rows = document.querySelectorAll("#psyTable tbody tr");
+searchInput.addEventListener("keyup", async function () {
 
-    rows.forEach(row => {
-      const text = row.innerText.toLowerCase();
-      row.style.display = text.includes(filter) ? "" : "none";
-    });
+  const value = searchInput.value;
+
+  const res = await fetch(`/api/admin/psychiatrists?search=${value}`);
+  const data = await res.json();
+
+  tableBody.innerHTML = "";
+
+  data.forEach(p => {
+    tableBody.innerHTML += `
+      <tr>
+        <td>${p.fullName}</td>
+        <td>${p.email}</td>
+        <td>${p.specialization || ""}</td>
+        <td>${p.status}</td>
+        <td>
+          <button onclick="view('${p._id}')">View</button>
+          <button onclick="approve('${p._id}')">Approve</button>
+          <button onclick="reject('${p._id}')">Reject</button>
+          <button onclick="delete('${p._id}')">Delete</button>
+        </td>
+      </tr>
+    `;
   });
-}
+
+});
 
 // -------------------------------
 // Approve
@@ -84,8 +101,22 @@ async function deleteP(id) {
 
   loadPsychiatrists();
 }
+ function view(id){
+
+window.location.href = "/pages/psychiatrists.html?id=" + id;
+
+
+}
 
 // -------------------------------
 // Initial Load
 // -------------------------------
 loadPsychiatrists();
+document.getElementById("logoutBtn").addEventListener("click", function () {
+  console.log("Logout clicked");
+
+  localStorage.clear();
+  sessionStorage.clear();
+
+  window.location.href = '/';
+});

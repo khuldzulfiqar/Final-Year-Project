@@ -16,21 +16,23 @@ app.use(session({
   cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 }
 }));
 
+
+
 const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://mindbridge:mindbridge12@mindbridge.nas1mkf.mongodb.net/';
 mongoose.connect(MONGO_URI)
   .then(() => console.log('✅ MongoDB Connected'))
   .catch(err => console.log('❌ MongoDB Error:', err.message));
-const adminRoutes = require("./routes/adminRoutes");
-app.use("/api/admin", adminRoutes);
 
 
 
+app.use("/api/admin", require("./routes/adminRoutes"));
 app.use('/api/auth',         require('./routes/auth'));
 app.use('/api/psychiatrist', require('./routes/psychiatrist'));
 app.use('/api/appointments', require('./routes/appointments'));
 app.use('/api/reviews',      require('./routes/reviews'));
 app.use('/api/upload',       require('./routes/upload'));
 app.use('/api/password',     require('./routes/password'));
+
 
 const p = (file) => path.join(__dirname, 'public', 'pages', file);
 
@@ -46,6 +48,7 @@ app.get('/appointments',          (req, res) => res.sendFile(p('appointments.htm
 app.get('/reviews',               (req, res) => res.sendFile(p('reviews.html')));
 app.get('/forgot-password',       (req, res) => res.sendFile(p('forgot-password.html')));
 app.get('/reset-password',        (req, res) => res.sendFile(p('reset-password.html')));
+app.get('/patient-profile',        (req, res) => res.sendFile(p('patient-profile.html')));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));

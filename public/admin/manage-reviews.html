@@ -12,6 +12,9 @@
 </head>
 
 <body>
+   <nav class="navbar">
+  <a href="/" class="navbar-brand">Mind<span>Bridge</span></a>
+</nav>
 
 <div class="admin-container">
 
@@ -31,7 +34,7 @@
       <li><a href="/admin/manage-appointments.html">Manage Appointments</a></li>
 
       <li><a href="/admin/manage-reviews.html" class="active"> Manage Reviews</a></li>
-      <li><button onclick="logout()">Logout</button></li>
+        <li><button id="logoutBtn">Logout</button></li>
 
     </ul>
 
@@ -78,6 +81,9 @@
   </div>
 
 </div>
+<div id="footer-container"></div>
+
+<script src="/js/footer.js"></script>
 
 <!-- JS -->
 <script src="../js/manage-reviews.js"></script>

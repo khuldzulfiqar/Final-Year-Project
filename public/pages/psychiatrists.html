@@ -202,8 +202,25 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   try {
-    const data = await apiCall('/api/psychiatrist');
-    allPsychiatrists = data.psychiatrists || [];
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("id");
+
+if (id) {
+  // SINGLE psychiatrist
+  const res = await fetch(`/api/psychiatrist/${id}`);
+  const data = await res.json();
+
+  if (data.success) {
+    allPsychiatrists = [data.psychiatrist];
+  } else {
+    alert("Psychiatrist not found");
+  }
+} else {
+  // ALL psychiatrists
+  const data = await apiCall('/api/psychiatrist');
+  allPsychiatrists = data.psychiatrists || [];
+}
+   
 
     // Load reviews for all psychiatrists
     await loadAllReviews(allPsychiatrists);

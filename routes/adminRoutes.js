@@ -1,8 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
-const Patient = require("../models/User");
-const Psychiatrist = require("../models/User");
+const User = require("../models/User");
 const Appointment = require("../models/Appointment");
 const Review = require("../models/Review");
 
@@ -13,21 +12,50 @@ const Review = require("../models/Review");
 
 // get all patients
 router.get("/patients", async (req, res) => {
+  try {
+    const patients = await User.find({ role: "patient" });
+    res.json(patients);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+router.get("/patient/:id", async (req, res) => {
+  try {
+    const patient = await User.findOne({
+      _id: req.params.id,
+      role: "patient"
+    });
 
-const patients = await Patient.find();
+    if (!patient) {
+      return res.status(404).json({ message: "Not found" });
+    }
 
-res.json(patients);
+    res.json(patient);
 
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 });
 
 // delete patient
 router.delete("/patient/:id", async (req, res) => {
+  try {
+    const patient = await User.findByIdAndDelete(req.params.id);
 
-await Patient.findByIdAndDelete(req.params.id);
+    if (!patient) {
+      return res.status(404).json({ success: false, message: "Not found" });
+    }
 
-res.json({ message: "Patient deleted" });
-
+    res.json({ message: "Patient deleted" });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
 });
+
+
+
+
+
 
 
 /* =========================
@@ -39,7 +67,7 @@ res.json({ message: "Patient deleted" });
 
 // 1️⃣ Get all psychiatrists
 router.get("/psychiatrists", async (req, res) => {
-  const psychiatrists = await Psychiatrist.find({
+  const psychiatrists = await User.find({
     role: "psychiatrist"
   });
 
@@ -49,7 +77,7 @@ router.get("/psychiatrists", async (req, res) => {
 // 2️⃣ Approve psychiatrist
 router.put("/approve/:id", async (req, res) => {
   try {
-    await Psychiatrist.findByIdAndUpdate(req.params.id, {
+    await User.findByIdAndUpdate(req.params.id, {
       status: "Approved"
     });
 
@@ -62,7 +90,7 @@ router.put("/approve/:id", async (req, res) => {
 // 3️⃣ Reject psychiatrist
 router.put("/reject/:id", async (req, res) => {
   try {
-    await Psychiatrist.findByIdAndUpdate(req.params.id, {
+    await User.findByIdAndUpdate(req.params.id, {
       status: "Rejected"
     });
 
@@ -75,7 +103,7 @@ router.put("/reject/:id", async (req, res) => {
 // 4️⃣ Delete psychiatrist
 router.delete("/delete/:id", async (req, res) => {
   try {
-    await Psychiatrist.findByIdAndDelete(req.params.id);
+    await User.findByIdAndDelete(req.params.id);
     res.json({ message: "Psychiatrist deleted" });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -90,13 +118,31 @@ router.delete("/delete/:id", async (req, res) => {
 
 router.get("/appointments", async (req, res) => {
   try {
-    const appointments = await Appointment.find()
+    const { status, search } = req.query;
+
+    let filter = {};
+
+    // ✅ STATUS FILTER
+    if (status) {
+      filter.status = status;
+    }
+
+    let appointments = await Appointment.find(filter)
       .populate("patient")
       .populate("psychiatrist");
 
+    // ✅ SEARCH FILTER
+    if (search) {
+      appointments = appointments.filter(app =>
+        app.patient?.fullName.toLowerCase().includes(search.toLowerCase()) ||
+        app.psychiatrist?.fullName.toLowerCase().includes(search.toLowerCase())
+      );
+    }
+
     res.json(appointments);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 });
 
@@ -110,10 +156,23 @@ router.get("/appointments", async (req, res) => {
 router.get("/reviews", async (req, res) => {
   try {
 
-    const reviews = await Review.find()
+    const { search } = req.query;
+
+    let filter = {};
+
+    let reviews = await Review.find()
       .populate("patient", "fullName email")
       .populate("psychiatrist", "fullName email")
       .sort({ createdAt: -1 });
+
+    // ✅ SEARCH FILTER
+    if (search) {
+      reviews = reviews.filter(r =>
+        r.patient?.fullName?.toLowerCase().includes(search.toLowerCase()) ||
+        r.psychiatrist?.fullName?.toLowerCase().includes(search.toLowerCase()) ||
+        r.comment?.toLowerCase().includes(search.toLowerCase())
+      );
+    }
 
     res.json(reviews);
 
@@ -136,5 +195,19 @@ router.delete("/reviews/delete/:id", async (req, res) => {
   }
 
 });
+router.get("/dashboard-counts", async (req, res) => {
+  try {
+    const [patients, psychiatrists, appointments, reviews] = await Promise.all([
+      User.countDocuments({ role: "patient" }),
+      User.countDocuments({ role: "psychiatrist" }),
+      Appointment.countDocuments(),
+      Review.countDocuments()
+    ]);
 
+    res.json({ patients, psychiatrists, appointments, reviews });
+
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 module.exports = router;

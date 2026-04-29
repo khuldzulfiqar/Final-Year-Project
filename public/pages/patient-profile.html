@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Patient Profile</title>
+  <link rel="stylesheet" href="/css/admin-css/profile.css">
+  <link rel="stylesheet" href="/css/admin-css/admin-dashboard.css">
+</head>
+
+<body>
+       <nav class="navbar">
+  <a href="/" class="navbar-brand">Mind<span>Bridge</span></a>
+</nav>
+
+<div class="page">
+
+  <h2 class="title">Patient Profile</h2>
+
+  <div class="cardd">
+
+    <h3 id="name" class="name">Loading...</h3>
+
+    <div class="info">
+
+      <div class="row">
+        <span> Email</span>
+        <p id="email"></p>
+      </div>
+
+      <div class="row">
+        <span> CNIC</span>
+        <p id="cnic"></p>
+      </div>
+
+      <div class="row">
+        <span> Age</span>
+        <p id="age"></p>
+      </div>
+
+      <div class="row">
+        <span> Role</span>
+        <p id="role"></p>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+<div id="footer-container"></div>
+
+<script src="/js/footer.js"></script>
+
+<script>
+const id = new URLSearchParams(window.location.search).get("id");
+
+async function loadPatient() {
+  const res = await fetch(`/api/admin/patient/${id}`);
+  const data = await res.json();
+
+  document.getElementById("name").innerText = data.fullName;
+  document.getElementById("email").innerText = data.email;
+  document.getElementById("cnic").innerText = data.cnic;
+  document.getElementById("age").innerText = data.age;
+  document.getElementById("role").innerText = data.role;
+}
+
+loadPatient();
+</script>
+
+</body>
+</html>
