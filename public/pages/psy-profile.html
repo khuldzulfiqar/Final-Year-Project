@@ -19,16 +19,26 @@
       justify-content: center;
       margin: 0 auto 14px;
     }
-    .badge-patient {
+    .badge-psy {
       display: inline-block;
-      background: #dbeafe;
-      color: #1e40af;
+      background: #d1fae5;
+      color: #065f46;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 0.2rem 0.75rem;
+      border-radius: 50px;
+      margin-bottom: 4px;
+    }
+    .status-badge {
+      display: inline-block;
       font-size: 0.72rem;
       font-weight: 700;
       padding: 0.2rem 0.75rem;
       border-radius: 50px;
       margin-bottom: 18px;
     }
+    .status-live   { background: #d1fae5; color: #065f46; }
+    .status-draft  { background: #fef3c7; color: #92400e; }
     .edit-link {
       display: inline-block;
       margin-top: 20px;
@@ -72,9 +82,10 @@
 
     <div class="cardd">
 
-      <div class="avatar-circle" id="avatar-circle">?</div>
+      <div class="avatar-circle" id="avatar-circle">D</div>
       <h3 id="name" class="name">Loading...</h3>
-      <span class="badge-patient">Patient</span>
+      <div><span class="badge-psy">Psychiatrist</span></div>
+      <div id="profile-status-badge"></div>
 
       <div class="info">
 
@@ -84,13 +95,33 @@
         </div>
 
         <div class="row">
-          <span>CNIC</span>
-          <p id="cnic">—</p>
+          <span>Specialization</span>
+          <p id="specialization">—</p>
         </div>
 
         <div class="row">
-          <span>Age</span>
-          <p id="age">—</p>
+          <span>Experience</span>
+          <p id="experience">—</p>
+        </div>
+
+        <div class="row">
+          <span>Qualification</span>
+          <p id="qualification">—</p>
+        </div>
+
+        <div class="row">
+          <span>Phone</span>
+          <p id="phone">—</p>
+        </div>
+
+        <div class="row">
+          <span>Consultation Fee</span>
+          <p id="fee">—</p>
+        </div>
+
+        <div class="row">
+          <span>License No.</span>
+          <p id="license">—</p>
         </div>
 
         <div class="row">
@@ -102,7 +133,7 @@
 
       <p id="error-msg" class="error-msg" style="display:none;"></p>
 
-      <a href="/register" class="edit-link">✏️ Edit Profile</a>
+      <a href="/create-profile" class="edit-link">✏️ Update Profile</a>
 
     </div>
 
@@ -130,16 +161,28 @@
         const u = data.user;
 
         // Avatar initial
-        const initial = (u.fullName || 'P').charAt(0).toUpperCase();
+        const initial = (u.fullName || 'D').charAt(0).toUpperCase();
         document.getElementById('avatar-circle').textContent = initial;
 
         document.getElementById('name').textContent = u.fullName || '—';
         document.getElementById('email').textContent = u.email || '—';
-        document.getElementById('cnic').textContent = u.cnic || '—';
-        document.getElementById('age').textContent = u.age ? u.age + ' years' : '—';
+        document.getElementById('specialization').textContent = u.specialization || '—';
+        document.getElementById('experience').textContent = u.experience || '—';
+        document.getElementById('qualification').textContent = u.qualification || '—';
+        document.getElementById('phone').textContent = u.phone || '—';
+        document.getElementById('fee').textContent = u.consultationFee ? 'PKR ' + u.consultationFee : '—';
+        document.getElementById('license').textContent = u.licenseNumber || '—';
         document.getElementById('since').textContent = u.createdAt
           ? new Date(u.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
           : '—';
+
+        // Profile live / draft badge
+        const statusBadge = document.getElementById('profile-status-badge');
+        if (u.profileCreated) {
+          statusBadge.innerHTML = `<span class="status-badge status-live">✅ Profile Live</span>`;
+        } else {
+          statusBadge.innerHTML = `<span class="status-badge status-draft">⚠️ Profile Incomplete</span>`;
+        }
 
       } catch (err) {
         document.getElementById('name').textContent = 'Failed to load';

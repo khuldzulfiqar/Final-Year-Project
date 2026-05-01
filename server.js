@@ -49,6 +49,7 @@ app.get('/reviews',               (req, res) => res.sendFile(p('reviews.html')))
 app.get('/forgot-password',       (req, res) => res.sendFile(p('forgot-password.html')));
 app.get('/reset-password',        (req, res) => res.sendFile(p('reset-password.html')));
 app.get('/patient-profile',        (req, res) => res.sendFile(p('patient-profile.html')));
+app.get('/psy-profile',            (req, res) => res.sendFile(p('psy-profile.html'))); 
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));

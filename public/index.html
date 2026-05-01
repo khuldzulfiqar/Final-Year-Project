@@ -125,8 +125,8 @@
     <h2 style="font-family:'Playfair Display',serif; font-size:2.2rem; color:white; margin-bottom:1rem;">Ready to Start Your Journey?</h2>
     <p style="color:rgba(255,255,255,0.8); margin-bottom:2rem; max-width:480px; margin-left:auto; margin-right:auto;">Join thousands who have already found the mental health support they need.</p>
     <div style="display:flex; gap:1rem; justify-content:center; flex-wrap:wrap;" id="cta-buttons">
-      <a href="/register" class="btn-hero-primary">Register as Patient</a>
-      <a href="/register-psychiatrist" class="btn-hero-outline">Join as Psychiatrist</a>
+      <a href="/register?role=patient" class="btn-hero-primary">Register as Patient</a>
+      <a href="/register?role=psychiatrist" class="btn-hero-outline">Join as Psychiatrist</a>
     </div>
   </div>
 </section>
@@ -149,7 +149,7 @@
       <div class="col-md-4" style="padding:0 0.75rem; margin-bottom:2rem;">
         <div class="footer-heading">Register</div>
         <a href="/register">Patient Registration</a>
-        <a href="/register-psychiatrist">Psychiatrist Registration</a>
+        <a href="/register?role=psychiatrist">Psychiatrist Registration</a>
       </div>
     </div>
     <hr style="border:none; border-top:1px solid rgba(255,255,255,0.1); margin: 1.5rem 0;">
@@ -186,7 +186,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         </div>
       `).join('');
     } else {
-      container.innerHTML = `<div style="text-align:center;padding:3rem;color:var(--text-muted);width:100%;">No psychiatrists registered yet. <a href="/register-psychiatrist" class="form-link">Be the first!</a></div>`;
+      container.innerHTML = `<div style="text-align:center;padding:3rem;color:var(--text-muted);width:100%;">No psychiatrists registered yet. <a href="/register?role=psychiatrist" class="form-link">Be the first!</a></div>`;
     }
   } catch(e) {
     document.getElementById('home-psychiatrists').innerHTML = `<div style="text-align:center;padding:2rem;color:var(--text-muted);width:100%;">Could not load psychiatrists.</div>`;

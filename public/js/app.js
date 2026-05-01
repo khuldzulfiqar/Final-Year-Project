@@ -5,7 +5,8 @@ const Auth = {
   clear: () => { localStorage.removeItem('mb_token'); localStorage.removeItem('mb_user'); },
   isLoggedIn: () => !!localStorage.getItem('mb_token'),
   isPsychiatrist: () => { const u = Auth.getUser(); return u && u.role === 'psychiatrist'; },
-  isPatient: () => { const u = Auth.getUser(); return u && u.role === 'patient'; }
+  isPatient: () => { const u = Auth.getUser(); return u && u.role === 'patient'; },
+  isAdmin: () => { const u = Auth.getUser(); return u && u.role === 'admin'; }
 };
 
 function showToast(msg, type = 'success') {
@@ -22,7 +23,8 @@ function buildNavbar() {
   const nav = document.getElementById('dynamic-nav');
   if (!nav) return;
   const isLoggedIn = Auth.isLoggedIn();
-  const isPsy = Auth.isPsychiatrist();
+  const isPsy   = Auth.isPsychiatrist();
+  const isAdmin = Auth.isAdmin();
   let html = '';
   html += `<a href="/" class="nav-link">Home</a>`;
   html += `<a href="/psychiatrists" class="nav-link">View Psychiatrists</a>`;
@@ -30,6 +32,9 @@ function buildNavbar() {
   if (!isLoggedIn) {
     html += `<a href="/login" class="btn-nav btn-nav-outline">Login</a>`;
     html += `<a href="/register" class="btn-nav btn-nav-primary">Register</a>`;
+  } else if (isAdmin) {
+    html += `<a href="/admin/admin-dashboard.html" class="btn-nav btn-nav-outline">Admin Dashboard</a>`;
+    html += `<button onclick="logout()" class="btn-nav btn-nav-danger">Logout</button>`;
   } else if (isPsy) {
     html += `<a href="/create-profile" class="btn-nav btn-nav-outline">Create Profile</a>`;
     html += `<a href="/appointments" class="btn-nav btn-nav-outline">Appointments</a>`;
