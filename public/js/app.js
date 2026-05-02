@@ -23,27 +23,32 @@ function buildNavbar() {
   const nav = document.getElementById('dynamic-nav');
   if (!nav) return;
   const isLoggedIn = Auth.isLoggedIn();
-  const isPsy   = Auth.isPsychiatrist();
   const isAdmin = Auth.isAdmin();
+  const currentPath = window.location.pathname;
+
+  // Helper to mark active link
+  const link = (href, label) => {
+    const active = currentPath === href || (href !== '/' && currentPath.startsWith(href)) ? ' active' : '';
+    return `<a href="${href}" class="nav-link${active}">${label}</a>`;
+  };
+
   let html = '';
-  html += `<a href="/" class="nav-link">Home</a>`;
-  html += `<a href="/psychiatrists" class="nav-link">View Psychiatrists</a>`;
-  html += `<a href="/about" class="nav-link">About Us</a>`;
+  html += link('/', 'Home');
+  html += link('/psychiatrists', 'View Psychiatrists');
+  html += link('/about', 'About Us');
+
   if (!isLoggedIn) {
+    html += link('/dashboard', 'My Dashboard');
     html += `<a href="/login" class="btn-nav btn-nav-outline">Login</a>`;
     html += `<a href="/register" class="btn-nav btn-nav-primary">Register</a>`;
   } else if (isAdmin) {
-    html += `<a href="/admin/admin-dashboard.html" class="btn-nav btn-nav-outline">Admin Dashboard</a>`;
-    html += `<button onclick="logout()" class="btn-nav btn-nav-danger">Logout</button>`;
-  } else if (isPsy) {
-    html += `<a href="/create-profile" class="btn-nav btn-nav-outline">Create Profile</a>`;
-    html += `<a href="/appointments" class="btn-nav btn-nav-outline">Appointments</a>`;
-    html += `<a href="/reviews" class="btn-nav btn-nav-primary">Reviews</a>`;
+    html += `<a href="/admin/admin-dashboard.html" class="nav-link">My Dashboard</a>`;
     html += `<button onclick="logout()" class="btn-nav btn-nav-danger">Logout</button>`;
   } else {
-    html += `<a href="/dashboard" class="btn-nav btn-nav-outline">My Dashboard</a>`;
+    html += link('/dashboard', 'My Dashboard');
     html += `<button onclick="logout()" class="btn-nav btn-nav-danger">Logout</button>`;
   }
+
   nav.innerHTML = html;
 }
 

@@ -2,86 +2,197 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Create Profile — MindBridge</title>
+  <title>Update Profile — MindBridge</title>
   <link rel="stylesheet" href="/css/style.css">
-  <!-- Leaflet CSS (OpenStreetMap - no API key needed) -->
+  <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
   <style>
+    /* ── WIZARD LAYOUT ── */
     .profile-wizard { max-width: 780px; margin: 0 auto; }
-    .section-card { background: white; border-radius: 18px; padding: 2rem; box-shadow: var(--shadow); border: 1px solid var(--border); margin-bottom: 1.5rem; }
-    .section-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.75rem; padding-bottom: 1rem; border-bottom: 2px solid var(--cream); }
-    .section-icon { width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, var(--teal), var(--teal-light)); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
-    .section-title { font-family: 'Playfair Display', serif; font-size: 1.2rem; font-weight: 700; color: var(--charcoal); margin: 0; }
-    .section-subtitle { font-size: 0.8rem; color: var(--text-muted); margin: 0; }
+
+    .section-card {
+      background: white; border-radius: 18px; padding: 2rem;
+      box-shadow: var(--shadow); border: 1px solid var(--border);
+      margin-bottom: 1.5rem;
+    }
+    .section-header {
+      display: flex; align-items: center; gap: 0.85rem;
+      margin-bottom: 1.75rem; padding-bottom: 1.1rem;
+      border-bottom: 2px solid var(--cream);
+    }
+    .section-icon {
+      width: 44px; height: 44px; border-radius: 12px;
+      background: linear-gradient(135deg, var(--teal), var(--teal-light));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem; flex-shrink: 0;
+    }
+    .section-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.15rem; font-weight: 700; color: var(--charcoal); margin: 0;
+    }
+    .section-subtitle { font-size: 0.8rem; color: var(--text-muted); margin: 0.2rem 0 0; }
+
+    /* ── FORM GRID ── */
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-    @media(max-width:600px){ .form-row { grid-template-columns: 1fr; } }
+    @media(max-width:600px) { .form-row { grid-template-columns: 1fr; } }
+
+    /* ── AVATAR UPLOAD ── */
+    .avatar-upload {
+      display: flex; align-items: center; gap: 1.5rem;
+      margin-bottom: 1.75rem; flex-wrap: wrap;
+    }
+    .avatar-preview {
+      width: 90px; height: 90px; border-radius: 50%;
+      object-fit: cover; border: 3px solid var(--border);
+    }
+    .avatar-placeholder {
+      width: 90px; height: 90px; border-radius: 50%;
+      background: var(--cream); border: 3px dashed var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem; color: var(--text-muted);
+    }
+    .upload-btn {
+      display: inline-block; background: var(--cream); border: 1.5px solid var(--border);
+      color: var(--text); padding: 0.5rem 1.2rem; border-radius: 10px;
+      font-size: 0.85rem; font-weight: 600; cursor: pointer;
+      font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+    }
+    .upload-btn:hover { border-color: var(--teal); color: var(--teal); }
+
+    /* ── CONSULTATION MODE CARDS ── */
     .mode-cards { display: flex; gap: 1rem; flex-wrap: wrap; }
-    .mode-card { flex: 1; min-width: 140px; border: 2px solid var(--border); border-radius: 12px; padding: 1rem; text-align: center; cursor: pointer; transition: all 0.2s; }
+    .mode-card {
+      flex: 1; min-width: 140px; border: 2px solid var(--border);
+      border-radius: 14px; padding: 1.25rem; text-align: center;
+      cursor: pointer; transition: all 0.2s;
+    }
     .mode-card.selected { border-color: var(--teal); background: rgba(13,115,119,0.05); }
     .mode-card input { display: none; }
-    .day-grid { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; }
-    .day-btn { padding: 0.4rem 1rem; border-radius: 8px; border: 1.5px solid var(--border); background: white; font-size: 0.85rem; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; color: var(--text-muted); transition: all 0.2s; }
-    .day-btn.active { background: var(--teal); color: white; border-color: var(--teal); }
-    .slot-row { display: flex; gap: 0.75rem; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; }
-    .slot-row input { max-width: 130px; }
-    .remove-slot { background: none; border: none; color: #e17055; cursor: pointer; font-size: 1.2rem; font-family: 'DM Sans', sans-serif; padding: 0 0.3rem; }
-    .add-slot-btn { background: transparent; border: 1.5px dashed var(--teal); color: var(--teal); padding: 0.5rem 1.2rem; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s; }
-    .add-slot-btn:hover { background: rgba(13,115,119,0.05); }
-    .avatar-upload { display: flex; align-items: center; gap: 1.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
-    .avatar-preview { width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 3px solid var(--border); }
-    .avatar-placeholder { width: 90px; height: 90px; border-radius: 50%; background: var(--cream); border: 3px dashed var(--border); display: flex; align-items: center; justify-content: center; font-size: 2rem; color: var(--text-muted); }
-    .upload-btn { display: inline-block; background: var(--cream); border: 1.5px solid var(--border); color: var(--text); padding: 0.5rem 1.2rem; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+    .mode-card:hover { border-color: var(--teal-light); }
 
-    /* MAP STYLES */
-    #map { height: 320px; border-radius: 12px; border: 2px solid var(--border); margin: 1rem 0; z-index: 1; }
+    /* ── DAY BUTTONS ── */
+    .day-grid { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; }
+    .day-btn {
+      padding: 0.45rem 1.1rem; border-radius: 8px;
+      border: 1.5px solid var(--border); background: white;
+      font-size: 0.85rem; font-weight: 600; cursor: pointer;
+      font-family: 'DM Sans', sans-serif; color: var(--text-muted); transition: all 0.2s;
+    }
+    .day-btn.active { background: var(--teal); color: white; border-color: var(--teal); }
+    .day-btn:hover:not(.active) { border-color: var(--teal); color: var(--teal); }
+
+    /* ── TIME SLOTS ── */
+    .slot-row {
+      display: flex; gap: 0.75rem; align-items: center;
+      margin-bottom: 0.75rem; flex-wrap: wrap;
+    }
+    .slot-row input { max-width: 130px; }
+    .remove-slot {
+      background: none; border: none; color: #e17055; cursor: pointer;
+      font-size: 1.2rem; font-family: 'DM Sans', sans-serif; padding: 0 0.3rem;
+    }
+    .add-slot-btn {
+      background: transparent; border: 1.5px dashed var(--teal); color: var(--teal);
+      padding: 0.5rem 1.2rem; border-radius: 10px; font-size: 0.85rem; font-weight: 600;
+      cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+    }
+    .add-slot-btn:hover { background: rgba(13,115,119,0.06); }
+
+    /* ── MAP ── */
+    #map {
+      height: 320px; border-radius: 14px;
+      border: 2px solid var(--border); margin: 1rem 0; z-index: 1;
+    }
     #map.picking { border-color: var(--teal); cursor: crosshair !important; }
     .map-search-row { display: flex; gap: 0.5rem; margin-bottom: 0.75rem; }
     .map-search-row input { flex: 1; }
-    .btn-search-map { background: var(--teal); color: white; border: none; border-radius: 10px; padding: 0.6rem 1.2rem; font-size: 0.875rem; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; white-space: nowrap; }
+    .btn-search-map {
+      background: var(--teal); color: white; border: none;
+      border-radius: 10px; padding: 0.65rem 1.2rem;
+      font-size: 0.875rem; font-weight: 600; cursor: pointer;
+      font-family: 'DM Sans', sans-serif; white-space: nowrap;
+      transition: opacity 0.2s;
+    }
     .btn-search-map:hover { opacity: 0.88; }
-    .address-confirmed { background: rgba(13,115,119,0.07); border: 1.5px solid rgba(13,115,119,0.25); border-radius: 10px; padding: 0.85rem 1rem; margin-top: 0.75rem; display: none; }
+    .address-confirmed {
+      background: rgba(13,115,119,0.07); border: 1.5px solid rgba(13,115,119,0.2);
+      border-radius: 12px; padding: 0.9rem 1rem; margin-top: 0.75rem; display: none;
+    }
     .address-confirmed .addr-line { font-size: 0.875rem; color: var(--text); font-weight: 500; line-height: 1.5; }
-    .address-confirmed .addr-coords { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem; }
+    .address-confirmed .addr-coords { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem; }
     .map-tip { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem; }
-    .map-instructions { background: var(--cream); border-radius: 10px; padding: 0.75rem 1rem; font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.75rem; line-height: 1.6; }
+    .map-instructions {
+      background: var(--cream); border-radius: 12px; padding: 0.85rem 1rem;
+      font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.75rem; line-height: 1.65;
+    }
     .leaflet-container { font-family: 'DM Sans', sans-serif !important; }
+
+    /* ── PAGE CONTENT WRAP ── */
+    .page-content { padding: 3rem 0; background: var(--cream); min-height: calc(100vh - 70px - 200px); }
+
+    /* ── BACK LINK ── */
+    .back-link {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      color: var(--text-muted); font-size: 0.85rem; font-weight: 500;
+      text-decoration: none; margin-bottom: 1.5rem; transition: color 0.2s;
+    }
+    .back-link:hover { color: var(--teal); }
   </style>
 </head>
 <body>
+
+<!-- NAVBAR — matches all other project pages -->
 <nav class="navbar">
   <a href="/" class="navbar-brand">Mind<span>Bridge</span></a>
-  <div class="nav-links" id="dynamic-nav"></div>
+  <div class="nav-links" id="dynamic-nav">
+    <a href="/dashboard" class="nav-link">Dashboard</a>
+    <button class="btn-nav btn-nav-outline" onclick="(function(){localStorage.clear();window.location.href='/login';})()">Sign Out</button>
+  </div>
 </nav>
 
+<!-- PAGE HEADER — uses shared .page-header class from style.css -->
 <div class="page-header">
   <div class="container">
-    <h1>Create Your Profile</h1>
-    <p>Complete your professional profile so patients can find and book you</p>
+    <h1>Update Your Profile</h1>
+    <p>Keep your professional profile complete so patients can find and book you</p>
   </div>
 </div>
 
-<div style="padding: 3rem 0; background: var(--cream);">
+<!-- CONTENT -->
+<div class="page-content">
   <div class="container">
     <div class="profile-wizard">
+
+      <a href="/dashboard" class="back-link">← Back to Dashboard</a>
+
       <div id="form-alert" class="alert-box" style="margin-bottom:1.5rem;"></div>
 
       <!-- SECTION 1: Personal Info -->
       <div class="section-card">
         <div class="section-header">
           <div class="section-icon">👤</div>
-          <div><p class="section-title">Personal Information</p><p class="section-subtitle">Your basic profile details</p></div>
+          <div>
+            <p class="section-title">Personal Information</p>
+            <p class="section-subtitle">Your basic profile details</p>
+          </div>
         </div>
+
         <div class="avatar-upload">
           <div id="avatar-display"><div class="avatar-placeholder">👤</div></div>
           <div>
             <label class="upload-btn" for="profileImage-input">📷 Upload Photo</label>
             <input type="file" id="profileImage-input" accept="image/*" style="display:none;" onchange="handleImage(this)">
-            <p style="font-size:0.78rem; color:var(--text-muted); margin-top:0.5rem;">JPG or PNG, max 2MB</p>
+            <p style="font-size:0.78rem; color:var(--text-muted); margin-top:0.5rem;">JPG or PNG, max 5MB</p>
           </div>
         </div>
+
         <div class="form-row">
-          <div class="mb-3"><label class="form-label">Full Name *</label><input type="text" id="fullName" class="form-control" placeholder="Dr. Ahmed Ali"></div>
-          <div class="mb-3"><label class="form-label">Gender *</label>
+          <div class="mb-3">
+            <label class="form-label">Full Name *</label>
+            <input type="text" id="fullName" class="form-control" placeholder="Dr. Ahmed Ali">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Gender *</label>
             <select id="gender" class="form-control">
               <option value="">Select gender</option>
               <option value="Male">Male</option>
@@ -91,25 +202,49 @@
           </div>
         </div>
         <div class="form-row">
-          <div class="mb-3"><label class="form-label">Email</label><input type="email" id="email" class="form-control" disabled style="background:var(--cream);color:var(--text-muted);"></div>
-          <div class="mb-3"><label class="form-label">Phone *</label><input type="text" id="phone" class="form-control" placeholder="03xx-xxxxxxx"></div>
+          <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input type="email" id="email" class="form-control" disabled style="background:var(--cream);color:var(--text-muted);">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Phone *</label>
+            <input type="text" id="phone" class="form-control" placeholder="03xx-xxxxxxx">
+          </div>
         </div>
-        <div class="mb-3"><label class="form-label">Bio</label><textarea id="bio" class="form-control" rows="3" placeholder="Brief description about yourself and your approach..." style="resize:vertical;"></textarea></div>
+        <div class="mb-3">
+          <label class="form-label">Bio</label>
+          <textarea id="bio" class="form-control" rows="3" placeholder="Brief description about yourself and your approach…" style="resize:vertical;"></textarea>
+        </div>
       </div>
 
       <!-- SECTION 2: Professional Info -->
       <div class="section-card">
         <div class="section-header">
           <div class="section-icon">🎓</div>
-          <div><p class="section-title">Professional Information</p><p class="section-subtitle">Your qualifications and experience</p></div>
+          <div>
+            <p class="section-title">Professional Information</p>
+            <p class="section-subtitle">Your qualifications and experience</p>
+          </div>
         </div>
         <div class="form-row">
-          <div class="mb-3"><label class="form-label">Specialization *</label><input type="text" id="specialization" class="form-control" placeholder="e.g. Child Psychiatry, Depression"></div>
-          <div class="mb-3"><label class="form-label">Experience *</label><input type="text" id="experience" class="form-control" placeholder="e.g. 5 years"></div>
+          <div class="mb-3">
+            <label class="form-label">Specialization *</label>
+            <input type="text" id="specialization" class="form-control" placeholder="e.g. Child Psychiatry, Depression">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Experience *</label>
+            <input type="text" id="experience" class="form-control" placeholder="e.g. 5 years">
+          </div>
         </div>
         <div class="form-row">
-          <div class="mb-3"><label class="form-label">Qualification *</label><input type="text" id="qualification" class="form-control" placeholder="e.g. MBBS, FCPS Psychiatry"></div>
-          <div class="mb-3"><label class="form-label">License Number *</label><input type="text" id="licenseNumber" class="form-control" placeholder="e.g. PMDC-12345"></div>
+          <div class="mb-3">
+            <label class="form-label">Qualification *</label>
+            <input type="text" id="qualification" class="form-control" placeholder="e.g. MBBS, FCPS Psychiatry">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">License Number *</label>
+            <input type="text" id="licenseNumber" class="form-control" placeholder="e.g. PMDC-12345">
+          </div>
         </div>
       </div>
 
@@ -117,7 +252,10 @@
       <div class="section-card">
         <div class="section-header">
           <div class="section-icon">📍</div>
-          <div><p class="section-title">Clinic / Session Address</p><p class="section-subtitle">Pin your clinic location on the map</p></div>
+          <div>
+            <p class="section-title">Clinic / Session Address</p>
+            <p class="section-subtitle">Pin your clinic location on the map</p>
+          </div>
         </div>
 
         <div class="map-instructions">
@@ -127,18 +265,17 @@
           3️⃣ The address fields below will fill in automatically
         </div>
 
-        <!-- Search box -->
         <div class="map-search-row">
-          <input type="text" id="map-search-input" class="form-control" placeholder="🔍 Search clinic name, street or area..." onkeydown="if(event.key==='Enter'){event.preventDefault();searchAddress();}">
+          <input type="text" id="map-search-input" class="form-control"
+            placeholder="🔍 Search clinic name, street or area…"
+            onkeydown="if(event.key==='Enter'){event.preventDefault();searchAddress();}">
           <button class="btn-search-map" onclick="searchAddress()">Search</button>
         </div>
-        <div id="search-results" style="background:white; border:1px solid var(--border); border-radius:10px; display:none; max-height:180px; overflow-y:auto; margin-bottom:0.75rem; box-shadow:var(--shadow);"></div>
+        <div id="search-results" style="background:white; border:1px solid var(--border); border-radius:12px; display:none; max-height:180px; overflow-y:auto; margin-bottom:0.75rem; box-shadow:var(--shadow);"></div>
 
-        <!-- Map -->
         <div class="map-tip">🖱️ Click on the map to place your clinic pin</div>
         <div id="map"></div>
 
-        <!-- Confirmed address display -->
         <div class="address-confirmed" id="address-confirmed">
           <div style="display:flex; align-items:flex-start; gap:0.5rem;">
             <span style="font-size:1.1rem;">📍</span>
@@ -150,7 +287,6 @@
           </div>
         </div>
 
-        <!-- Hidden / editable address fields -->
         <div style="margin-top:1.25rem; padding-top:1.25rem; border-top:1px solid var(--border);">
           <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:0.75rem;">✏️ You can also edit the address fields manually:</p>
           <div class="mb-3">
@@ -161,18 +297,23 @@
             <div class="mb-3"><label class="form-label">City *</label><input type="text" id="addr-city" class="form-control" placeholder="e.g. Lahore"></div>
             <div class="mb-3"><label class="form-label">Province / State</label><input type="text" id="addr-state" class="form-control" placeholder="e.g. Punjab"></div>
           </div>
-          <div class="mb-3"><label class="form-label">Country</label><input type="text" id="addr-country" class="form-control" value="Pakistan"></div>
-          <!-- Hidden lat/lng -->
+          <div class="mb-3">
+            <label class="form-label">Country</label>
+            <input type="text" id="addr-country" class="form-control" value="Pakistan">
+          </div>
           <input type="hidden" id="addr-lat">
           <input type="hidden" id="addr-lng">
         </div>
       </div>
 
-      <!-- SECTION 4: Consultation -->
+      <!-- SECTION 4: Consultation Details -->
       <div class="section-card">
         <div class="section-header">
           <div class="section-icon">💊</div>
-          <div><p class="section-title">Consultation Details</p><p class="section-subtitle">Fee and modes of consultation</p></div>
+          <div>
+            <p class="section-title">Consultation Details</p>
+            <p class="section-subtitle">Fee and modes of consultation</p>
+          </div>
         </div>
         <div class="mb-4">
           <label class="form-label">Consultation Fee (PKR) *</label>
@@ -201,7 +342,10 @@
       <div class="section-card">
         <div class="section-header">
           <div class="section-icon">📅</div>
-          <div><p class="section-title">Availability</p><p class="section-subtitle">Days and time slots you are available</p></div>
+          <div>
+            <p class="section-title">Availability</p>
+            <p class="section-subtitle">Days and time slots you are available</p>
+          </div>
         </div>
         <div class="mb-4">
           <label class="form-label">Available Days *</label>
@@ -222,15 +366,37 @@
         </div>
       </div>
 
+      <!-- SUBMIT -->
       <button class="btn-submit" id="submit-btn" onclick="submitProfile()" style="width:100%; font-size:1rem; padding:1rem;">
         💾 Save Profile
       </button>
       <p style="text-align:center; color:var(--text-muted); font-size:0.82rem; margin-top:1rem;">
         <a href="/dashboard" class="form-link">← Back to Dashboard</a>
       </p>
+
+    </div><!-- /.profile-wizard -->
+  </div><!-- /.container -->
+</div><!-- /.page-content -->
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="row">
+      <div class="col-md-4" style="padding:0 0.75rem; margin-bottom:1.5rem;">
+        <div class="footer-brand">MindBridge</div>
+        <p style="font-size:0.85rem;">Connecting patients with certified psychiatrists.</p>
+      </div>
+      <div class="col-md-4" style="padding:0 0.75rem; margin-bottom:1.5rem;">
+        <div class="footer-heading">Quick Links</div>
+        <a href="/">Home</a>
+        <a href="/dashboard">Dashboard</a>
+        <a href="/psychiatrists">Psychiatrists</a>
+      </div>
     </div>
+    <hr style="border:none;border-top:1px solid rgba(255,255,255,0.1);margin:1.5rem 0;">
+    <p style="text-align:center;font-size:0.8rem;">© 2024 MindBridge. All rights reserved.</p>
   </div>
-</div>
+</footer>
 
 <!-- Leaflet JS -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
@@ -238,41 +404,33 @@
 <script>
 if (!Auth.isLoggedIn() || !Auth.isPsychiatrist()) window.location.href = '/login';
 
-let profileImageUrl = null;   // Cloudinary URL stored here after upload
+let profileImageUrl = null;
 let selectedDays = [];
 let map, marker;
 
-// ── MAP INIT ──────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
   initMap();
   await prefillForm();
 });
 
 function initMap() {
-  // Default center: Pakistan
   map = L.map('map', { zoomControl: true }).setView([30.3753, 69.3451], 6);
-
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     maxZoom: 19
   }).addTo(map);
 
-  // Custom marker icon
   const pinIcon = L.divIcon({
     html: `<div style="background:var(--teal,#0d7377);width:36px;height:36px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid white;box-shadow:0 3px 12px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;">
              <span style="transform:rotate(45deg);font-size:16px;">📍</span>
            </div>`,
-    iconSize: [36, 36],
-    iconAnchor: [18, 36],
-    className: ''
+    iconSize: [36, 36], iconAnchor: [18, 36], className: ''
   });
 
-  // Click on map to place pin
   map.on('click', async function(e) {
     placePin(e.latlng.lat, e.latlng.lng, pinIcon);
     await reverseGeocode(e.latlng.lat, e.latlng.lng);
   });
-
   window._pinIcon = pinIcon;
 }
 
@@ -282,8 +440,6 @@ function placePin(lat, lng, icon) {
   document.getElementById('addr-lat').value = lat.toFixed(7);
   document.getElementById('addr-lng').value = lng.toFixed(7);
   document.getElementById('confirmed-coords').textContent = `Coordinates: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-
-  // Allow dragging to fine-tune
   marker.on('dragend', async function(e) {
     const pos = e.target.getLatLng();
     document.getElementById('addr-lat').value = pos.lat.toFixed(7);
@@ -295,89 +451,68 @@ function placePin(lat, lng, icon) {
 
 async function reverseGeocode(lat, lng) {
   try {
-    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`, {
-      headers: { 'Accept-Language': 'en' }
-    });
+    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`, { headers: { 'Accept-Language': 'en' } });
     const data = await res.json();
     if (data && data.address) {
       fillAddressFields(data);
-      const display = data.display_name || '';
-      document.getElementById('confirmed-addr-text').textContent = display;
+      document.getElementById('confirmed-addr-text').textContent = data.display_name || '';
       document.getElementById('address-confirmed').style.display = 'block';
     }
-  } catch(e) {
-    console.error('Reverse geocode error:', e);
-  }
+  } catch(e) { console.error('Reverse geocode error:', e); }
 }
 
 function fillAddressFields(data) {
   const a = data.address;
-  const street = [a.amenity, a.building, a.road, a.neighbourhood].filter(Boolean).join(', ');
-  const city = a.city || a.town || a.village || a.county || '';
-  const state = a.state || a.province || '';
+  const street  = [a.amenity, a.building, a.road, a.neighbourhood].filter(Boolean).join(', ');
+  const city    = a.city || a.town || a.village || a.county || '';
+  const state   = a.state || a.province || '';
   const country = a.country || 'Pakistan';
-
-  if (street) document.getElementById('addr-street').value = street;
-  if (city) document.getElementById('addr-city').value = city;
-  if (state) document.getElementById('addr-state').value = state;
+  if (street)  document.getElementById('addr-street').value  = street;
+  if (city)    document.getElementById('addr-city').value    = city;
+  if (state)   document.getElementById('addr-state').value   = state;
   document.getElementById('addr-country').value = country;
 }
 
-// ── SEARCH ────────────────────────────────────────────────
 async function searchAddress() {
   const q = document.getElementById('map-search-input').value.trim();
   if (!q) return;
-
   const btn = document.querySelector('.btn-search-map');
-  btn.textContent = 'Searching...';
-  btn.disabled = true;
-
+  btn.textContent = 'Searching…'; btn.disabled = true;
   try {
-    const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=6&addressdetails=1`, {
-      headers: { 'Accept-Language': 'en' }
-    });
-    const results = await res.json();
-    showSearchResults(results);
-  } catch(e) {
-    showToast('Search failed. Please try again.', 'error');
-  }
-
-  btn.textContent = 'Search';
-  btn.disabled = false;
+    const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=6&addressdetails=1`, { headers: { 'Accept-Language': 'en' } });
+    showSearchResults(await res.json());
+  } catch(e) { showToast('Search failed. Please try again.', 'error'); }
+  btn.textContent = 'Search'; btn.disabled = false;
 }
 
 function showSearchResults(results) {
   const box = document.getElementById('search-results');
   if (!results.length) {
     box.innerHTML = `<div style="padding:1rem;color:var(--text-muted);font-size:0.875rem;text-align:center;">No results found. Try a different search.</div>`;
-    box.style.display = 'block';
-    return;
+    box.style.display = 'block'; return;
   }
   box.innerHTML = results.map((r, i) => `
-    <div onclick="selectSearchResult(${i})" data-lat="${r.lat}" data-lon="${r.lon}" data-display="${encodeURIComponent(r.display_name)}" data-addr='${encodeURIComponent(JSON.stringify(r))}'
-      style="padding:0.75rem 1rem; cursor:pointer; border-bottom:1px solid var(--border); font-size:0.85rem; transition:background 0.15s;"
+    <div onclick="selectSearchResult(${i})" data-lat="${r.lat}" data-lon="${r.lon}"
+      data-display="${encodeURIComponent(r.display_name)}" data-addr='${encodeURIComponent(JSON.stringify(r))}'
+      style="padding:0.75rem 1rem;cursor:pointer;border-bottom:1px solid var(--border);font-size:0.85rem;transition:background 0.15s;"
       onmouseover="this.style.background='var(--cream)'" onmouseout="this.style.background='white'">
-      <div style="font-weight:600; color:var(--charcoal);">📍 ${r.display_name.split(',').slice(0,2).join(',')}</div>
-      <div style="color:var(--text-muted); font-size:0.78rem; margin-top:0.15rem;">${r.display_name.split(',').slice(2,5).join(',')}</div>
+      <div style="font-weight:600;color:var(--charcoal);">📍 ${r.display_name.split(',').slice(0,2).join(',')}</div>
+      <div style="color:var(--text-muted);font-size:0.78rem;margin-top:0.15rem;">${r.display_name.split(',').slice(2,5).join(',')}</div>
     </div>
   `).join('');
   box.style.display = 'block';
 }
 
 function selectSearchResult(i) {
-  const items = document.querySelectorAll('#search-results > div');
-  const item = items[i];
-  const lat = parseFloat(item.dataset.lat);
-  const lon = parseFloat(item.dataset.lon);
+  const item    = document.querySelectorAll('#search-results > div')[i];
+  const lat     = parseFloat(item.dataset.lat);
+  const lon     = parseFloat(item.dataset.lon);
   const rawAddr = JSON.parse(decodeURIComponent(item.dataset.addr));
-
   map.flyTo([lat, lon], 16, { animate: true, duration: 1 });
   placePin(lat, lon);
-
   document.getElementById('confirmed-addr-text').textContent = decodeURIComponent(item.dataset.display);
   document.getElementById('address-confirmed').style.display = 'block';
   document.getElementById('search-results').style.display = 'none';
-
   fillAddressFields(rawAddr);
 }
 
@@ -388,48 +523,40 @@ function clearPin() {
   document.getElementById('addr-lng').value = '';
 }
 
-// Click outside to close search results
 document.addEventListener('click', e => {
   if (!e.target.closest('#search-results') && !e.target.closest('#map-search-input') && !e.target.closest('.btn-search-map'))
     document.getElementById('search-results').style.display = 'none';
 });
 
-// ── PREFILL FORM ──────────────────────────────────────────
 async function prefillForm() {
   const data = await apiCall('/api/auth/me');
   if (!data.success) return;
   const u = data.user;
-
-  document.getElementById('fullName').value = u.fullName || '';
-  document.getElementById('email').value = u.email || '';
-  document.getElementById('phone').value = u.phone || '';
-  document.getElementById('gender').value = u.gender || '';
-  document.getElementById('bio').value = u.bio || '';
-  document.getElementById('specialization').value = u.specialization || '';
-  document.getElementById('experience').value = u.experience || '';
-  document.getElementById('qualification').value = u.qualification || '';
-  document.getElementById('licenseNumber').value = u.licenseNumber || '';
+  document.getElementById('fullName').value        = u.fullName || '';
+  document.getElementById('email').value           = u.email || '';
+  document.getElementById('phone').value           = u.phone || '';
+  document.getElementById('gender').value          = u.gender || '';
+  document.getElementById('bio').value             = u.bio || '';
+  document.getElementById('specialization').value  = u.specialization || '';
+  document.getElementById('experience').value      = u.experience || '';
+  document.getElementById('qualification').value   = u.qualification || '';
+  document.getElementById('licenseNumber').value   = u.licenseNumber || '';
   document.getElementById('consultationFee').value = u.consultationFee || '';
 
   if (u.clinicAddress) {
-    document.getElementById('addr-street').value = u.clinicAddress.street || '';
-    document.getElementById('addr-city').value = u.clinicAddress.city || '';
-    document.getElementById('addr-state').value = u.clinicAddress.state || '';
+    document.getElementById('addr-street').value  = u.clinicAddress.street || '';
+    document.getElementById('addr-city').value    = u.clinicAddress.city || '';
+    document.getElementById('addr-state').value   = u.clinicAddress.state || '';
     document.getElementById('addr-country').value = u.clinicAddress.country || 'Pakistan';
-
-    // If lat/lng saved, restore pin on map
     if (u.clinicAddress.lat && u.clinicAddress.lng) {
-      const lat = parseFloat(u.clinicAddress.lat);
-      const lng = parseFloat(u.clinicAddress.lng);
+      const lat = parseFloat(u.clinicAddress.lat), lng = parseFloat(u.clinicAddress.lng);
       setTimeout(() => {
-        map.setView([lat, lng], 15);
-        placePin(lat, lng);
+        map.setView([lat, lng], 15); placePin(lat, lng);
         const addrText = [u.clinicAddress.street, u.clinicAddress.city, u.clinicAddress.state, u.clinicAddress.country].filter(Boolean).join(', ');
         document.getElementById('confirmed-addr-text').textContent = addrText;
         document.getElementById('address-confirmed').style.display = 'block';
       }, 300);
     } else if (u.clinicAddress.city) {
-      // Try to geocode the saved city to center map
       setTimeout(async () => {
         try {
           const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(u.clinicAddress.city + ', ' + (u.clinicAddress.country || 'Pakistan'))}&format=json&limit=1`);
@@ -444,9 +571,8 @@ async function prefillForm() {
     profileImageUrl = u.profileImage;
     document.getElementById('avatar-display').innerHTML = `<img src="${u.profileImage}" class="avatar-preview">`;
   }
-  if (u.consultationModes?.online) { document.getElementById('card-online').classList.add('selected'); document.getElementById('mode-online').checked = true; }
+  if (u.consultationModes?.online)   { document.getElementById('card-online').classList.add('selected');   document.getElementById('mode-online').checked = true; }
   if (u.consultationModes?.inPerson) { document.getElementById('card-inPerson').classList.add('selected'); document.getElementById('mode-inPerson').checked = true; }
-
   if (u.availableDays?.length > 0) {
     selectedDays = [...u.availableDays];
     const dayMap = { Mon:'Monday', Tue:'Tuesday', Wed:'Wednesday', Thu:'Thursday', Fri:'Friday', Sat:'Saturday', Sun:'Sunday' };
@@ -459,39 +585,32 @@ async function prefillForm() {
   else addSlot();
 }
 
-// ── FORM HELPERS ──────────────────────────────────────────
 async function handleImage(input) {
   const file = input.files[0];
   if (!file) return;
   if (file.size > 5 * 1024 * 1024) { showAlert('form-alert', 'Image must be under 5MB', 'error'); return; }
-
-  // Show local preview immediately
   const reader = new FileReader();
   reader.onload = e => {
     document.getElementById('avatar-display').innerHTML =
       `<div style="position:relative;display:inline-block;">
-         <img src="${e.target.result}" class="avatar-preview" id="avatar-img">
+         <img src="${e.target.result}" class="avatar-preview">
          <div id="upload-overlay" style="position:absolute;inset:0;border-radius:50%;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;">
            <span class="spinner" style="width:20px;height:20px;border-width:2px;border-color:rgba(255,255,255,0.3);border-top-color:white;"></span>
          </div>
        </div>`;
   };
   reader.readAsDataURL(file);
-
-  // Upload to Cloudinary via backend
   try {
     const formData = new FormData();
     formData.append('image', file);
-    const token = Auth.getToken();
     const res = await fetch('/api/upload/profile-image', {
       method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + token },
+      headers: { 'Authorization': 'Bearer ' + Auth.getToken() },
       body: formData
     });
     const data = await res.json();
     if (data.success) {
       profileImageUrl = data.url;
-      // Remove spinner overlay, keep preview
       const overlay = document.getElementById('upload-overlay');
       if (overlay) overlay.remove();
       showToast('✅ Photo uploaded!', 'success');
@@ -536,48 +655,47 @@ function getTimeSlots() {
   const slots = [];
   document.querySelectorAll('.slot-row').forEach(row => {
     const start = row.querySelector('.slot-start').value;
-    const end = row.querySelector('.slot-end').value;
+    const end   = row.querySelector('.slot-end').value;
     if (start && end) slots.push({ start, end });
   });
   return slots;
 }
 
-// ── SUBMIT ────────────────────────────────────────────────
 async function submitProfile() {
-  const fullName = document.getElementById('fullName').value.trim();
-  const phone = document.getElementById('phone').value.trim();
-  const gender = document.getElementById('gender').value;
-  const bio = document.getElementById('bio').value.trim();
-  const specialization = document.getElementById('specialization').value.trim();
-  const experience = document.getElementById('experience').value.trim();
-  const qualification = document.getElementById('qualification').value.trim();
-  const licenseNumber = document.getElementById('licenseNumber').value.trim();
+  const fullName        = document.getElementById('fullName').value.trim();
+  const phone           = document.getElementById('phone').value.trim();
+  const gender          = document.getElementById('gender').value;
+  const bio             = document.getElementById('bio').value.trim();
+  const specialization  = document.getElementById('specialization').value.trim();
+  const experience      = document.getElementById('experience').value.trim();
+  const qualification   = document.getElementById('qualification').value.trim();
+  const licenseNumber   = document.getElementById('licenseNumber').value.trim();
   const consultationFee = document.getElementById('consultationFee').value;
-  const street = document.getElementById('addr-street').value.trim();
-  const city = document.getElementById('addr-city').value.trim();
-  const state = document.getElementById('addr-state').value.trim();
-  const country = document.getElementById('addr-country').value.trim();
-  const lat = document.getElementById('addr-lat').value;
-  const lng = document.getElementById('addr-lng').value;
-  const onlineMode = document.getElementById('mode-online').checked;
-  const inPersonMode = document.getElementById('mode-inPerson').checked;
-  const timeSlots = getTimeSlots();
+  const street          = document.getElementById('addr-street').value.trim();
+  const city            = document.getElementById('addr-city').value.trim();
+  const state           = document.getElementById('addr-state').value.trim();
+  const country         = document.getElementById('addr-country').value.trim();
+  const lat             = document.getElementById('addr-lat').value;
+  const lng             = document.getElementById('addr-lng').value;
+  const onlineMode      = document.getElementById('mode-online').checked;
+  const inPersonMode    = document.getElementById('mode-inPerson').checked;
+  const timeSlots       = getTimeSlots();
 
-  if (!fullName) { showAlert('form-alert','Full name is required.','error'); return; }
-  if (!gender) { showAlert('form-alert','Please select your gender.','error'); return; }
-  if (!phone) { showAlert('form-alert','Phone number is required.','error'); return; }
-  if (!specialization) { showAlert('form-alert','Specialization is required.','error'); return; }
-  if (!experience) { showAlert('form-alert','Experience is required.','error'); return; }
-  if (!qualification) { showAlert('form-alert','Qualification is required.','error'); return; }
-  if (!licenseNumber) { showAlert('form-alert','License number is required.','error'); return; }
+  if (!fullName)        { showAlert('form-alert','Full name is required.','error'); return; }
+  if (!gender)          { showAlert('form-alert','Please select your gender.','error'); return; }
+  if (!phone)           { showAlert('form-alert','Phone number is required.','error'); return; }
+  if (!specialization)  { showAlert('form-alert','Specialization is required.','error'); return; }
+  if (!experience)      { showAlert('form-alert','Experience is required.','error'); return; }
+  if (!qualification)   { showAlert('form-alert','Qualification is required.','error'); return; }
+  if (!licenseNumber)   { showAlert('form-alert','License number is required.','error'); return; }
   if (!street || !city) { showAlert('form-alert','Please set your clinic address (street and city are required).','error'); return; }
   if (!consultationFee) { showAlert('form-alert','Consultation fee is required.','error'); return; }
   if (!onlineMode && !inPersonMode) { showAlert('form-alert','Please select at least one consultation mode.','error'); return; }
-  if (selectedDays.length === 0) { showAlert('form-alert','Please select at least one available day.','error'); return; }
-  if (timeSlots.length === 0) { showAlert('form-alert','Please add at least one time slot.','error'); return; }
+  if (selectedDays.length === 0)    { showAlert('form-alert','Please select at least one available day.','error'); return; }
+  if (timeSlots.length === 0)       { showAlert('form-alert','Please add at least one time slot.','error'); return; }
 
   const btn = document.getElementById('submit-btn');
-  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Saving...';
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Saving…';
 
   const body = {
     fullName, phone, gender, bio,
@@ -591,7 +709,7 @@ async function submitProfile() {
 
   const data = await apiCall('/api/auth/create-profile', 'POST', body);
   if (data.success) {
-    showAlert('form-alert', '✅ Profile saved successfully! Redirecting...', 'success');
+    showAlert('form-alert', '✅ Profile saved successfully! Redirecting…', 'success');
     setTimeout(() => window.location.href = '/dashboard', 1500);
   } else {
     showAlert('form-alert', data.message || 'Failed to save.', 'error');

@@ -1,122 +1,30 @@
-// ===============================
-// Manage Psychiatrists Script
-// ===============================
+const express = require('express');
+const router = express.Router();
+const User = require('../models/User');
 
-const tableBody = document.querySelector("#psyTable tbody");
-
-// -------------------------------
-// Load Psychiatrists
-// -------------------------------
-async function loadPsychiatrists() {
+// Get all psychiatrists — only show those with a completed profile
+router.get('/', async (req, res) => {
   try {
-    const res = await fetch("/api/admin/psychiatrists");
-    const data = await res.json();
-
-    tableBody.innerHTML = "";
-
-    data.forEach(p => {
-      tableBody.innerHTML += `
-        <tr>
-          <td>${p.fullName}</td>
-          <td>${p.email}</td>
-          <td>${p.specialization || ""}</td>
-          <td>${p.status}</td>
-          <td>
-            <button onclick="view('${p._id}')">View</button>
-            <button onclick="approve('${p._id}')">Approve</button>
-            <button onclick="reject('${p._id}')">Reject</button>
-            <button onclick="deleteP('${p._id}')">Delete</button>
-          </td>
-        </tr>
-      `;
-    });
-
-  } catch (error) {
-    console.error("Error loading psychiatrists:", error);
+    const psychiatrists = await User.find({
+      role: 'psychiatrist',
+      profileCreated: true
+    }).select('-password');
+    res.json({ success: true, psychiatrists });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
   }
-}
-
-// -------------------------------
-// Search Function (Safe Version)
-// -------------------------------
-const searchInput = document.getElementById("searchInput");
-
-searchInput.addEventListener("keyup", async function () {
-
-  const value = searchInput.value;
-
-  const res = await fetch(`/api/admin/psychiatrists?search=${value}`);
-  const data = await res.json();
-
-  tableBody.innerHTML = "";
-
-  data.forEach(p => {
-    tableBody.innerHTML += `
-      <tr>
-        <td>${p.fullName}</td>
-        <td>${p.email}</td>
-        <td>${p.specialization || ""}</td>
-        <td>${p.status}</td>
-        <td>
-          <button onclick="view('${p._id}')">View</button>
-          <button onclick="approve('${p._id}')">Approve</button>
-          <button onclick="reject('${p._id}')">Reject</button>
-          <button onclick="delete('${p._id}')">Delete</button>
-        </td>
-      </tr>
-    `;
-  });
-
 });
 
-// -------------------------------
-// Approve
-// -------------------------------
-async function approve(id) {
-  await fetch(`/api/admin/approve/${id}`, {
-    method: "PUT"
-  });
-
-  loadPsychiatrists();
-}
-
-// -------------------------------
-// Reject
-// -------------------------------
-async function reject(id) {
-  await fetch(`/api/admin/reject/${id}`, {
-    method: "PUT"
-  });
-
-  loadPsychiatrists();
-}
-
-// -------------------------------
-// Delete
-// -------------------------------
-async function deleteP(id) {
-  await fetch(`/api/admin/delete/${id}`, {
-    method: "DELETE"
-  });
-
-  loadPsychiatrists();
-}
- function view(id){
-
-window.location.href = "/pages/psychiatrists.html?id=" + id;
-
-
-}
-
-// -------------------------------
-// Initial Load
-// -------------------------------
-loadPsychiatrists();
-document.getElementById("logoutBtn").addEventListener("click", function () {
-  console.log("Logout clicked");
-
-  localStorage.clear();
-  sessionStorage.clear();
-
-  window.location.href = '/';
+// Get single psychiatrist
+router.get('/:id', async (req, res) => {
+  try {
+    const psychiatrist = await User.findById(req.params.id).select('-password');
+    if (!psychiatrist || psychiatrist.role !== 'psychiatrist')
+      return res.status(404).json({ success: false, message: 'Psychiatrist not found' });
+    res.json({ success: true, psychiatrist });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
 });
+
+module.exports = router;

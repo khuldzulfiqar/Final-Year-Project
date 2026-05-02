@@ -4,187 +4,228 @@
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login — MindBridge</title>
   <link rel="stylesheet" href="/css/style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    * { box-sizing: border-box; }
-    body {
-      font-family: 'Inter', sans-serif;
-      background: #f0f4f8;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
+    .login-page {
+      min-height: calc(100vh - 70px);
+      display: flex; align-items: stretch;
     }
-    .ola-nav {
-      background: #fff;
-      border-bottom: 1px solid #e2e8f0;
-      padding: 0 2rem;
-      height: 64px;
-      display: flex; align-items: center; justify-content: space-between;
-      position: sticky; top: 0; z-index: 100;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-    }
-    .ola-brand { display: flex; align-items: center; gap: 0.5rem; text-decoration: none; }
-    .ola-brand-icon {
-      width: 36px; height: 36px;
-      background: linear-gradient(135deg, #0067b8, #00a3e0);
-      border-radius: 8px; display: flex; align-items: center; justify-content: center;
-      color: white; font-size: 1.1rem; font-weight: 700;
-    }
-    .ola-brand-text { font-size: 1.3rem; font-weight: 700; color: #0067b8; letter-spacing: -0.3px; }
-    .ola-brand-text span { color: #00a3e0; }
-    .ola-nav-right { display: flex; align-items: center; gap: 1rem; }
-    .ola-nav-link { font-size: 0.875rem; font-weight: 500; color: #4a5568; text-decoration: none; }
-    .ola-nav-link:hover { color: #0067b8; }
-    .ola-nav-btn {
-      background: #0067b8; color: white; border: none;
-      padding: 0.5rem 1.2rem; border-radius: 6px;
-      font-size: 0.875rem; font-weight: 600; cursor: pointer;
-      text-decoration: none; transition: background 0.2s;
-    }
-    .ola-nav-btn:hover { background: #0056a0; color: white; }
-    .login-page { flex: 1; display: flex; align-items: stretch; min-height: calc(100vh - 64px); }
+
+    /* ── LEFT PANEL ── */
     .login-left {
       flex: 1;
-      background: linear-gradient(160deg, #003f7f 0%, #0067b8 50%, #00a3e0 100%);
+      background: linear-gradient(160deg, var(--teal-dark) 0%, var(--teal) 55%, var(--teal-light) 100%);
       display: flex; flex-direction: column; justify-content: center;
       padding: 4rem 3rem; position: relative; overflow: hidden;
     }
     .login-left::before {
-      content: ''; position: absolute; width: 400px; height: 400px;
-      background: rgba(255,255,255,0.05); border-radius: 50%; top: -100px; right: -100px;
+      content: ''; position: absolute;
+      width: 420px; height: 420px;
+      background: rgba(255,255,255,0.05); border-radius: 50%;
+      top: -120px; right: -100px; pointer-events: none;
     }
     .login-left::after {
-      content: ''; position: absolute; width: 300px; height: 300px;
-      background: rgba(255,255,255,0.04); border-radius: 50%; bottom: -80px; left: -80px;
+      content: ''; position: absolute;
+      width: 280px; height: 280px;
+      background: rgba(255,255,255,0.04); border-radius: 50%;
+      bottom: -70px; left: -70px; pointer-events: none;
     }
-    .left-content { position: relative; z-index: 1; }
+    .left-content { position: relative; z-index: 1; max-width: 420px; }
+
     .left-badge {
-      display: inline-block; background: rgba(255,255,255,0.15); color: rgba(255,255,255,0.9);
-      padding: 0.35rem 1rem; border-radius: 50px; font-size: 0.75rem; font-weight: 600;
-      letter-spacing: 0.5px; margin-bottom: 1.5rem; border: 1px solid rgba(255,255,255,0.2);
-      text-transform: uppercase;
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.22);
+      color: rgba(255,255,255,0.9); padding: 0.35rem 1rem; border-radius: 50px;
+      font-size: 0.75rem; font-weight: 600; letter-spacing: 0.6px;
+      text-transform: uppercase; margin-bottom: 1.75rem;
     }
-    .left-headline { font-size: clamp(1.8rem, 3vw, 2.5rem); font-weight: 700; color: #fff; line-height: 1.25; margin-bottom: 1rem; }
-    .left-sub { font-size: 1rem; color: rgba(255,255,255,0.75); line-height: 1.6; margin-bottom: 2.5rem; max-width: 380px; }
-    .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2.5rem; }
-    .stat-card {
+    .left-headline {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.9rem, 3vw, 2.7rem);
+      font-weight: 700; color: white; line-height: 1.2; margin-bottom: 1rem;
+    }
+    .left-sub {
+      font-size: 0.95rem; color: rgba(255,255,255,0.75);
+      line-height: 1.7; margin-bottom: 2.5rem; max-width: 360px;
+    }
+
+    .stat-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 0.85rem; margin-bottom: 2rem;
+    }
+    .stat-pill {
       background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.18);
-      border-radius: 12px; padding: 1rem; text-align: center; backdrop-filter: blur(8px);
+      border-radius: 14px; padding: 1rem 0.75rem; text-align: center;
+      backdrop-filter: blur(8px);
     }
-    .stat-card .num { font-size: 1.5rem; font-weight: 700; color: #fff; }
-    .stat-card .lbl { font-size: 0.7rem; color: rgba(255,255,255,0.7); margin-top: 0.2rem; }
-    .trust-row {
-      display: flex; align-items: center; gap: 0.75rem;
-      background: rgba(255,255,255,0.1); border-radius: 10px; padding: 0.85rem 1rem;
+    .stat-pill .num {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem; font-weight: 700; color: white; line-height: 1;
     }
-    .trust-icon { font-size: 1.4rem; }
-    .trust-text { font-size: 0.82rem; color: rgba(255,255,255,0.85); line-height: 1.4; }
-    .trust-text strong { color: white; }
+    .stat-pill .lbl { font-size: 0.68rem; color: rgba(255,255,255,0.7); margin-top: 0.3rem; }
+
+    .trust-card {
+      background: rgba(255,255,255,0.1); border-radius: 14px;
+      padding: 1rem 1.25rem; display: flex; align-items: center; gap: 1rem;
+    }
+    .trust-icon { font-size: 1.6rem; flex-shrink: 0; }
+    .trust-text { font-size: 0.82rem; color: rgba(255,255,255,0.85); line-height: 1.5; }
+    .trust-text strong { color: white; display: block; margin-bottom: 0.1rem; }
+
+    /* ── RIGHT PANEL ── */
     .login-right {
-      width: 480px; background: #fff; display: flex; flex-direction: column;
-      justify-content: center; padding: 3rem 2.5rem;
-      box-shadow: -4px 0 24px rgba(0,0,0,0.06);
+      width: 460px; background: white;
+      display: flex; flex-direction: column; justify-content: center;
+      padding: 3rem 2.75rem;
+      box-shadow: -4px 0 32px rgba(0,0,0,0.06);
     }
+    .login-heading {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.75rem; font-weight: 700; color: var(--charcoal); margin-bottom: 0.35rem;
+    }
+    .login-sub { font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1.75rem; }
+
+    /* Role tabs */
     .role-tabs {
-      display: flex; background: #f0f4f8; border-radius: 10px; padding: 4px;
-      margin-bottom: 1.75rem; gap: 0;
+      display: flex; background: var(--cream); border-radius: 12px;
+      padding: 4px; gap: 0; margin-bottom: 1.5rem;
     }
     .role-tab {
-      flex: 1; text-align: center; padding: 0.65rem 0.5rem; border-radius: 8px;
-      font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
-      color: #718096; border: none; background: transparent;
-      font-family: 'Inter', sans-serif;
-      display: flex; align-items: center; justify-content: center; gap: 0.4rem;
+      flex: 1; text-align: center; padding: 0.65rem 0.5rem;
+      border-radius: 9px; font-size: 0.82rem; font-weight: 600;
+      cursor: pointer; transition: all 0.2s; color: var(--text-muted);
+      border: none; background: transparent; font-family: 'DM Sans', sans-serif;
+      display: flex; align-items: center; justify-content: center; gap: 0.35rem;
     }
-    .role-tab:hover { color: #0067b8; }
-    .role-tab.active { background: #fff; color: #0067b8; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-    .login-heading { font-size: 1.5rem; font-weight: 700; color: #1a202c; margin-bottom: 0.4rem; }
-    .login-sub { font-size: 0.875rem; color: #718096; margin-bottom: 1.75rem; }
+    .role-tab:hover { color: var(--teal); }
+    .role-tab.active {
+      background: white; color: var(--teal);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+
+    /* Admin note */
+    .admin-note {
+      background: #fffbeb; border: 1px solid #fbd38d; border-radius: 10px;
+      padding: 0.65rem 1rem; font-size: 0.8rem; color: #744210;
+      margin-bottom: 1rem; display: none;
+    }
+    .admin-note.show { display: block; }
+
+    /* Form fields */
     .form-group { margin-bottom: 1.1rem; }
-    .form-lbl { display: block; font-size: 0.825rem; font-weight: 600; color: #2d3748; margin-bottom: 0.4rem; }
-    .form-inp {
-      width: 100%; padding: 0.7rem 1rem; border: 1.5px solid #e2e8f0;
-      border-radius: 8px; font-size: 0.9rem; font-family: 'Inter', sans-serif;
-      color: #2d3748; transition: border-color 0.2s, box-shadow 0.2s;
-      background: #fdfdfd; outline: none;
+    .form-lbl {
+      display: block; font-size: 0.82rem; font-weight: 600;
+      color: var(--text); margin-bottom: 0.4rem;
     }
-    .form-inp:focus { border-color: #0067b8; box-shadow: 0 0 0 3px rgba(0,103,184,0.1); background: #fff; }
+    .form-inp {
+      width: 100%; padding: 0.75rem 1rem;
+      border: 1.5px solid var(--border); border-radius: 10px;
+      font-size: 0.9rem; font-family: 'DM Sans', sans-serif;
+      color: var(--text); background: var(--cream);
+      transition: border-color 0.2s, box-shadow 0.2s; outline: none;
+    }
+    .form-inp:focus {
+      border-color: var(--teal);
+      box-shadow: 0 0 0 3px rgba(13,115,119,0.1);
+      background: white;
+    }
     .pwd-wrap { position: relative; }
     .pwd-toggle {
       position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
-      background: none; border: none; cursor: pointer; font-size: 1rem; color: #a0aec0; padding: 0;
+      background: none; border: none; cursor: pointer;
+      font-size: 1rem; color: var(--text-muted); padding: 0;
     }
-    .forgot-row { display: flex; justify-content: flex-end; margin-top: 0.3rem; }
-    .forgot-link { font-size: 0.8rem; color: #0067b8; font-weight: 500; text-decoration: none; }
+    .forgot-row { display: flex; justify-content: flex-end; margin-top: 0.35rem; }
+    .forgot-link {
+      font-size: 0.8rem; color: var(--teal); font-weight: 500;
+      text-decoration: none;
+    }
     .forgot-link:hover { text-decoration: underline; }
+
+    /* Submit */
     .btn-login {
-      width: 100%; background: linear-gradient(135deg, #0067b8, #0056a0);
-      color: white; border: none; padding: 0.85rem; border-radius: 8px;
-      font-size: 1rem; font-weight: 700; cursor: pointer;
-      font-family: 'Inter', sans-serif; transition: all 0.2s; margin-top: 0.5rem;
+      width: 100%;
+      background: linear-gradient(135deg, var(--teal), var(--teal-light));
+      color: white; border: none; padding: 0.9rem;
+      border-radius: 10px; font-size: 1rem; font-weight: 600;
+      cursor: pointer; font-family: 'DM Sans', sans-serif;
+      transition: all 0.25s; margin-top: 0.5rem;
     }
-    .btn-login:hover { background: linear-gradient(135deg, #0056a0, #004080); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,103,184,0.3); }
-    .btn-login:disabled { opacity: 0.65; cursor: not-allowed; transform: none; }
+    .btn-login:hover {
+      opacity: 0.9; transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(13,115,119,0.3);
+    }
+    .btn-login:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    /* Divider */
     .divider {
       display: flex; align-items: center; gap: 0.75rem;
-      margin: 1.25rem 0; color: #a0aec0; font-size: 0.8rem;
+      margin: 1.5rem 0; color: var(--text-muted); font-size: 0.78rem;
     }
-    .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: #e2e8f0; }
-    .register-prompt { text-align: center; font-size: 0.875rem; color: #718096; }
-    .register-prompt a { color: #0067b8; font-weight: 600; text-decoration: none; }
+    .divider::before, .divider::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+
+    /* Register prompt */
+    .register-prompt { text-align: center; font-size: 0.875rem; color: var(--text-muted); }
+    .register-prompt a { color: var(--teal); font-weight: 600; text-decoration: none; }
     .register-prompt a:hover { text-decoration: underline; }
-    .alert-oladoc {
-      background: #fff5f5; border: 1px solid #feb2b2; color: #c53030;
-      border-radius: 8px; padding: 0.75rem 1rem; font-size: 0.85rem;
+
+    /* Alert */
+    .login-alert {
+      border-radius: 10px; padding: 0.75rem 1rem;
+      font-size: 0.85rem; font-weight: 500;
       margin-bottom: 1rem; display: none;
     }
-    .alert-oladoc.show { display: block; }
-    .alert-success-ola { background: #f0fff4; border: 1px solid #9ae6b4; color: #276749; }
-    .admin-note {
-      background: #fffbeb; border: 1px solid #fbd38d; border-radius: 8px;
-      padding: 0.6rem 0.9rem; font-size: 0.8rem; color: #744210; margin-bottom: 1rem; display: none;
-    }
+    .login-alert.show { display: block; }
+    .login-alert.error { background: #fff5f5; border: 1px solid #fed7d7; color: #c53030; }
+    .login-alert.success { background: #f0fff4; border: 1px solid #9ae6b4; color: #276749; }
+
+    /* Spinner */
     .spin {
-      display: inline-block; width: 16px; height: 16px;
+      display: inline-block; width: 15px; height: 15px;
       border: 2px solid rgba(255,255,255,0.4); border-top-color: white;
       border-radius: 50%; animation: spin 0.7s linear infinite;
       vertical-align: middle; margin-right: 6px;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+
     @media (max-width: 900px) { .login-left { display: none; } .login-right { width: 100%; } }
-    @media (max-width: 480px) { .login-right { padding: 2rem 1.25rem; } }
+    @media (max-width: 480px) { .login-right { padding: 2rem 1.5rem; } }
   </style>
 </head>
 <body>
-<nav class="ola-nav">
-  <a href="/" class="ola-brand">
-    <div class="ola-brand-icon">M</div>
-    <span class="ola-brand-text">Mind<span>Bridge</span></span>
-  </a>
-  <div class="ola-nav-right">
-    <a href="/psychiatrists" class="ola-nav-link">Find a Psychiatrist</a>
-    <a href="/register" class="ola-nav-btn">Create Account</a>
-  </div>
+
+<nav class="navbar">
+  <a href="/" class="navbar-brand">Mind<span>Bridge</span></a>
+  <div class="nav-links" id="dynamic-nav"></div>
 </nav>
 
 <div class="login-page">
+
+  <!-- LEFT -->
   <div class="login-left">
     <div class="left-content">
       <div class="left-badge">🏥 Pakistan's Mental Health Platform</div>
       <h1 class="left-headline">Access Quality<br>Mental Healthcare</h1>
       <p class="left-sub">Connect with verified psychiatrists, book appointments, and manage your mental health journey — all in one place.</p>
-      <div class="stats-row">
-        <div class="stat-card"><div class="num">200+</div><div class="lbl">Psychiatrists</div></div>
-        <div class="stat-card"><div class="num">50K+</div><div class="lbl">Patients Helped</div></div>
-        <div class="stat-card"><div class="num">4.8★</div><div class="lbl">Avg Rating</div></div>
+
+      <div class="stat-grid">
+        <div class="stat-pill"><div class="num">200+</div><div class="lbl">Psychiatrists</div></div>
+        <div class="stat-pill"><div class="num">50K+</div><div class="lbl">Patients Helped</div></div>
+        <div class="stat-pill"><div class="num">4.8★</div><div class="lbl">Avg Rating</div></div>
       </div>
-      <div class="trust-row">
+
+      <div class="trust-card">
         <div class="trust-icon">🔒</div>
-        <div class="trust-text"><strong>Secure & Private</strong><br>Your health data is encrypted and protected</div>
+        <div class="trust-text">
+          <strong>Secure &amp; Private</strong>
+          Your health data is fully encrypted and protected at all times.
+        </div>
       </div>
     </div>
   </div>
 
+  <!-- RIGHT -->
   <div class="login-right">
     <h2 class="login-heading" id="login-heading">Welcome back</h2>
     <p class="login-sub" id="login-sub">Sign in to continue to your account</p>
@@ -195,18 +236,20 @@
       <button class="role-tab" id="tab-admin" onclick="selectRole('admin')">🛡️ Admin</button>
     </div>
 
-    <div id="admin-note" class="admin-note">⚠️ Admin access is restricted to authorized personnel only.</div>
-    <div id="alert-box" class="alert-oladoc"></div>
+    <div id="admin-note" class="admin-note">⚠️ Admin access is restricted to authorised personnel only.</div>
+    <div id="alert-box" class="login-alert"></div>
 
     <div class="form-group">
       <label class="form-lbl">Email Address</label>
-      <input type="email" id="login-email" class="form-inp" placeholder="Enter your email" onkeydown="if(event.key==='Enter') login()">
+      <input type="email" id="login-email" class="form-inp" placeholder="Enter your email"
+        onkeydown="if(event.key==='Enter') login()">
     </div>
 
     <div class="form-group">
       <label class="form-lbl">Password</label>
       <div class="pwd-wrap">
-        <input type="password" id="login-password" class="form-inp" placeholder="Enter your password" onkeydown="if(event.key==='Enter') login()" style="padding-right:2.5rem;">
+        <input type="password" id="login-password" class="form-inp" placeholder="Enter your password"
+          style="padding-right:2.8rem;" onkeydown="if(event.key==='Enter') login()">
         <button type="button" class="pwd-toggle" onclick="togglePwd()">👁</button>
       </div>
       <div class="forgot-row">
@@ -219,19 +262,22 @@
     <div class="divider">or</div>
     <div class="register-prompt">New to MindBridge? <a href="/register">Create a free account</a></div>
   </div>
+
 </div>
 
 <script src="/js/app.js"></script>
 <script>
 if (Auth.isLoggedIn()) window.location.href = '/dashboard';
+
 let selectedRole = null;
 const roleInfo = {
-  patient:      { icon: '🧑‍💼', label: 'Patient', placeholder: 'e.g. patient@example.com', heading: 'Patient Login', sub: 'Sign in to book and track your appointments' },
-  psychiatrist: { icon: '👨‍⚕️', label: 'Doctor',  placeholder: 'e.g. dr.ahmed@example.com', heading: 'Doctor Login', sub: 'Sign in to manage your practice and appointments' },
-  admin:        { icon: '🛡️',  label: 'Admin',   placeholder: 'admin@mindbridge.pk',       heading: 'Admin Login', sub: 'Restricted access — administrators only' }
+  patient:      { placeholder: 'e.g. example@gmail.com', heading: 'Patient Login',     sub: 'Sign in to book and track your appointments' },
+  psychiatrist: { placeholder: 'e.g. example@gmail.com', heading: 'Doctor Login',     sub: 'Sign in to manage your practice and appointments' },
+  admin:        { placeholder: 'e.g. example@gmail.com', heading: 'Admin Login',      sub: 'Restricted access — administrators only' }
 };
+
 const urlParams = new URLSearchParams(window.location.search);
-const preRole = urlParams.get('role');
+const preRole   = urlParams.get('role');
 selectRole(preRole && roleInfo[preRole] ? preRole : 'patient');
 
 function selectRole(role) {
@@ -239,10 +285,11 @@ function selectRole(role) {
   document.querySelectorAll('.role-tab').forEach(t => t.classList.remove('active'));
   document.getElementById('tab-' + role).classList.add('active');
   const r = roleInfo[role];
-  document.getElementById('login-email').placeholder = r.placeholder;
-  document.getElementById('login-heading').textContent = r.heading;
-  document.getElementById('login-sub').textContent = r.sub;
-  document.getElementById('admin-note').style.display = role === 'admin' ? 'block' : 'none';
+  document.getElementById('login-email').placeholder    = r.placeholder;
+  document.getElementById('login-heading').textContent  = r.heading;
+  document.getElementById('login-sub').textContent      = r.sub;
+  const note = document.getElementById('admin-note');
+  note.className = 'admin-note' + (role === 'admin' ? ' show' : '');
   hideAlert();
 }
 
@@ -254,9 +301,11 @@ function togglePwd() {
 function showAlert(msg, type) {
   const el = document.getElementById('alert-box');
   el.textContent = msg;
-  el.className = 'alert-oladoc show' + (type === 'success' ? ' alert-success-ola' : '');
+  el.className = 'login-alert show ' + type;
 }
-function hideAlert() { document.getElementById('alert-box').className = 'alert-oladoc'; }
+function hideAlert() {
+  document.getElementById('alert-box').className = 'login-alert';
+}
 
 async function login() {
   const email    = document.getElementById('login-email').value.trim();
@@ -264,19 +313,22 @@ async function login() {
   const btn      = document.getElementById('login-btn');
   if (!email)    { showAlert('Please enter your email address.', 'error'); return; }
   if (!password) { showAlert('Please enter your password.', 'error'); return; }
+
   btn.disabled = true;
-  btn.innerHTML = '<span class="spin"></span>Signing in...';
+  btn.innerHTML = '<span class="spin"></span>Signing in…';
   hideAlert();
+
   try {
     const data = await apiCall('/api/auth/login', 'POST', { email, password });
     if (data.success) {
       if (data.user.role !== selectedRole) {
-        const got = roleInfo[data.user.role]?.label || data.user.role;
-        showAlert('This is a "' + got + '" account. Please select the correct tab.', 'error');
+        const labels = { patient: 'Patient', psychiatrist: 'Doctor', admin: 'Admin' };
+        const got = labels[data.user.role] || data.user.role;
+        showAlert(`This is a "${got}" account. Please select the correct tab.`, 'error');
         btn.disabled = false; btn.textContent = 'Sign In'; return;
       }
       Auth.setAuth(data.token, data.user);
-      showAlert('Login successful! Redirecting...', 'success');
+      showAlert('Login successful! Redirecting…', 'success');
       setTimeout(() => {
         if (data.user.role === 'admin') window.location.href = '/admin/admin-dashboard.html';
         else window.location.href = '/dashboard';

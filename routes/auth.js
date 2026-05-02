@@ -165,11 +165,14 @@ router.post('/create-profile', authMiddleware, async (req, res) => {
   }
 });
 
-// Quick profile update
+// Quick profile update (patients + psychiatrists)
 router.put('/profile', authMiddleware, async (req, res) => {
   try {
     const User = require('../models/User');
-    const allowed = ['fullName','phone','specialization','experience','qualification','bio','clinicAddress'];
+    const allowed = [
+      'fullName', 'phone', 'age', 'gender',
+      'specialization', 'experience', 'qualification', 'bio', 'clinicAddress'
+    ];
     const updates = {};
     allowed.forEach(f => { if (req.body[f] !== undefined) updates[f] = req.body[f]; });
     const user = await User.findByIdAndUpdate(req.user.id, updates, { new: true }).select('-password');

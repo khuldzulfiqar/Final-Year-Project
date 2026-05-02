@@ -296,11 +296,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (id) {
       const res = await fetch(`/api/psychiatrist/${id}`);
       const data = await res.json();
-      if (data.success) allPsychiatrists = [data.psychiatrist];
-      else alert('Psychiatrist not found');
+      // Only show if profile is complete
+      if (data.success && data.psychiatrist.profileCreated) allPsychiatrists = [data.psychiatrist];
+      else alert('Psychiatrist profile not found or not yet complete.');
     } else {
       const data = await apiCall('/api/psychiatrist');
-      allPsychiatrists = data.psychiatrists || [];
+      // Extra frontend safety: only show psychiatrists with completed profiles
+      allPsychiatrists = (data.psychiatrists || []).filter(p => p.profileCreated === true);
     }
     await loadAllReviews(allPsychiatrists);
     renderPsychiatrists(allPsychiatrists);
@@ -379,6 +381,25 @@ function renderPsychiatrists(list) {
         <div class="stat-val"><span class="star">★</span> ${revData.avgRating}</div>
         <div class="stat-label">${revData.totalReviews} Review${revData.totalReviews !== 1 ? 's' : ''}</div>
       </div>` : '';
+    const feeHtml = p.consultationFee ? `
+      <div class="stat-block">
+        <div class="stat-val">Rs. ${p.consultationFee.toLocaleString()}</div>
+        <div class="stat-label">Fee</div>
+      </div>` : '';
+    const addr = p.clinicAddress || {};
+    const fullLocation = [addr.street, addr.city, addr.state, addr.country].filter(Boolean).join(', ');
+    const mapsUrl = (addr.lat && addr.lng)
+      ? `https://www.google.com/maps?q=${addr.lat},${addr.lng}`
+      : fullLocation ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullLocation)}` : null;
+    const cityHtml = fullLocation ? `
+      <div class="stat-block">
+        <div class="stat-val">
+          ${mapsUrl
+            ? `<a href="${mapsUrl}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;" title="Open in Google Maps">📍 ${fullLocation} <span style="font-size:0.75rem;color:var(--teal);">↗</span></a>`
+            : `📍 ${fullLocation}`}
+        </div>
+        <div class="stat-label">Location</div>
+      </div>` : '';
 
     let chipHtml = '';
 
@@ -414,7 +435,7 @@ function renderPsychiatrists(list) {
           ${p.specialization ? `<div class="psy-spec">${p.specialization}</div>` : ''}
           ${p.qualification  ? `<div class="psy-qual">${p.qualification}</div>` : ''}
 
-          ${(expHtml || ratHtml) ? `<div class="psy-stats">${expHtml}${ratHtml}</div>` : ''}
+          ${(expHtml || ratHtml || feeHtml || cityHtml) ? `<div class="psy-stats">${expHtml}${ratHtml}${feeHtml}${cityHtml}</div>` : ''}
 
           ${chipHtml}
         </div>

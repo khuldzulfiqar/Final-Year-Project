@@ -40,6 +40,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
   padding: 0.45rem 0.9rem; border-radius: 8px; transition: all 0.2s;
 }
 .nav-link:hover { color: var(--teal); background: rgba(13,115,119,0.06); }
+.nav-link.active { color: var(--teal); background: rgba(13,115,119,0.10); font-weight: 600; }
 .btn-nav {
   padding: 0.45rem 1.1rem; border-radius: 8px; font-weight: 600; font-size: 0.875rem;
   text-decoration: none; transition: all 0.2s; cursor: pointer; border: none; font-family: 'DM Sans', sans-serif;
