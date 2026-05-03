@@ -39,7 +39,7 @@ function displayPatients(data){
 
 function viewProfile(id){
 
-window.location.href = "/pages/patient-profile.html?id=" + id;
+window.location.href = "/patient-profile?id=" + id;
 
 }
 

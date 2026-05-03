@@ -67,11 +67,24 @@ router.delete("/patient/:id", async (req, res) => {
 
 // 1️⃣ Get all psychiatrists
 router.get("/psychiatrists", async (req, res) => {
-  const psychiatrists = await User.find({
-    role: "psychiatrist"
-  });
+  try {
+    const { search } = req.query;
+    let filter = { role: "psychiatrist" };
 
-  res.json(psychiatrists);
+    if (search) {
+      const regex = new RegExp(search, "i");
+      filter["$or"] = [
+        { fullName: regex },
+        { email: regex },
+        { specialization: regex }
+      ];
+    }
+
+    const psychiatrists = await User.find(filter);
+    res.json(psychiatrists);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 });
 
 // 2️⃣ Approve psychiatrist

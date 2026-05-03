@@ -1,30 +1,99 @@
-const express = require('express');
-const router = express.Router();
-const User = require('../models/User');
+// ===============================
+// Manage Psychiatrists Script
+// ===============================
 
-// Get all psychiatrists — only show those with a completed profile
-router.get('/', async (req, res) => {
+// -------------------------------
+// Load Psychiatrists
+// -------------------------------
+async function loadPsychiatrists(search = "") {
   try {
-    const psychiatrists = await User.find({
-      role: 'psychiatrist',
-      profileCreated: true
-    }).select('-password');
-    res.json({ success: true, psychiatrists });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    const url = search
+      ? `/api/admin/psychiatrists?search=${encodeURIComponent(search)}`
+      : `/api/admin/psychiatrists`;
+
+    const res = await fetch(url);
+    const data = await res.json();
+
+    const tableBody = document.querySelector("#psyTable tbody");
+    tableBody.innerHTML = "";
+
+    if (!Array.isArray(data) || data.length === 0) {
+      tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:#718096;padding:1.5rem;">No psychiatrists found.</td></tr>`;
+      return;
+    }
+
+    data.forEach(p => {
+      tableBody.innerHTML += `
+        <tr>
+          <td>${p.fullName || "—"}</td>
+          <td>${p.email || "—"}</td>
+          <td>${p.specialization || "—"}</td>
+          <td>${p.status || "Pending"}</td>
+          <td>
+            <button onclick="approve('${p._id}')">Approve</button>
+            <button onclick="rejectPsy('${p._id}')">Reject</button>
+            <button onclick="deletePsy('${p._id}')">Delete</button>
+          </td>
+        </tr>
+      `;
+    });
+
+  } catch (error) {
+    console.error("Error loading psychiatrists:", error);
+    const tableBody = document.querySelector("#psyTable tbody");
+    if (tableBody) {
+      tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:#e53e3e;padding:1.5rem;">Failed to load psychiatrists. Check console for details.</td></tr>`;
+    }
+  }
+}
+
+// -------------------------------
+// Approve
+// -------------------------------
+async function approve(id) {
+  await fetch(`/api/admin/approve/${id}`, { method: "PUT" });
+  loadPsychiatrists();
+}
+
+// -------------------------------
+// Reject
+// -------------------------------
+async function rejectPsy(id) {
+  await fetch(`/api/admin/reject/${id}`, { method: "PUT" });
+  loadPsychiatrists();
+}
+
+// -------------------------------
+// Delete
+// -------------------------------
+async function deletePsy(id) {
+  if (!confirm("Are you sure you want to delete this psychiatrist?")) return;
+  await fetch(`/api/admin/delete/${id}`, { method: "DELETE" });
+  loadPsychiatrists();
+}
+
+// -------------------------------
+// Init on DOM ready
+// -------------------------------
+document.addEventListener("DOMContentLoaded", function () {
+  // Initial load
+  loadPsychiatrists();
+
+  // Search
+  const searchInput = document.getElementById("searchInput");
+  if (searchInput) {
+    searchInput.addEventListener("keyup", function () {
+      loadPsychiatrists(searchInput.value.trim());
+    });
+  }
+
+  // Logout
+  const logoutBtn = document.getElementById("logoutBtn");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", function () {
+      localStorage.clear();
+      sessionStorage.clear();
+      window.location.href = "/";
+    });
   }
 });
-
-// Get single psychiatrist
-router.get('/:id', async (req, res) => {
-  try {
-    const psychiatrist = await User.findById(req.params.id).select('-password');
-    if (!psychiatrist || psychiatrist.role !== 'psychiatrist')
-      return res.status(404).json({ success: false, message: 'Psychiatrist not found' });
-    res.json({ success: true, psychiatrist });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-});
-
-module.exports = router;

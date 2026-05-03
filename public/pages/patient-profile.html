@@ -2,391 +2,163 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>My Profile – MindBridge</title>
-  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/admin-css/profile.css">
+  <link rel="stylesheet" href="/css/admin-css/admin-dashboard.css">
   <style>
-    * { box-sizing: border-box; }
-    body { background: #f4f6f9; font-family: 'Segoe UI', sans-serif; margin: 0; }
-
-    .profile-page {
-      max-width: 680px;
-      margin: 2.5rem auto 4rem;
-      padding: 0 1.25rem;
-    }
-
-    .back-link {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      color: var(--teal, #0d7377);
-      font-size: 0.88rem;
-      font-weight: 500;
-      text-decoration: none;
-      margin-bottom: 1.5rem;
-    }
-    .back-link:hover { text-decoration: underline; }
-
-    .profile-card {
-      background: #fff;
-      border-radius: 16px;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-      overflow: hidden;
-    }
-
-    .card-banner {
-      background: linear-gradient(135deg, #085255 0%, #0d7377 55%, #14a085 100%);
-      padding: 2rem 2rem 2.5rem;
-      text-align: center;
-    }
     .avatar-circle {
-      width: 88px;
-      height: 88px;
+      width: 72px;
+      height: 72px;
       border-radius: 50%;
-      background: rgba(255,255,255,0.22);
-      border: 3px solid rgba(255,255,255,0.55);
+      background: linear-gradient(135deg, #0067b8, #00b4d8);
       color: #fff;
-      font-size: 2.4rem;
+      font-size: 2rem;
       font-weight: 700;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin: 0 auto 0.75rem;
+      margin: 0 auto 14px;
     }
-    .card-banner h2 { color: #fff; margin: 0 0 0.4rem; font-size: 1.4rem; }
     .badge-patient {
       display: inline-block;
-      background: rgba(255,255,255,0.2);
-      color: #fff;
+      background: #dbeafe;
+      color: #1e40af;
       font-size: 0.72rem;
       font-weight: 700;
-      letter-spacing: 0.5px;
-      padding: 0.25rem 0.9rem;
+      padding: 0.2rem 0.75rem;
       border-radius: 50px;
+      margin-bottom: 18px;
     }
-
-    .card-body { padding: 1.75rem 2rem 2rem; }
-
-    /* VIEW */
-    .info-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1.1rem 1.5rem;
-    }
-    @media (max-width: 520px) { .info-grid { grid-template-columns: 1fr; } }
-
-    .info-item label {
-      font-size: 0.71rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: #9ca3af;
-      display: block;
-      margin-bottom: 3px;
-    }
-    .info-item p { font-size: 0.95rem; color: #1f2937; font-weight: 500; margin: 0; }
-
-    .divider { border: none; border-top: 1px solid #f0f0f0; margin: 1.5rem 0; }
-
-    .btn-edit {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 26px;
-      background: var(--teal, #0d7377);
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      font-size: 0.9rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    .btn-edit:hover { background: #085255; }
-
-    /* EDIT FORM */
-    .edit-form { display: none; }
-    .edit-form.active { display: block; }
-
-    .edit-form h3 {
-      font-size: 1rem;
-      font-weight: 700;
-      color: #1f2937;
-      margin: 0 0 1.25rem;
-    }
-
-    .form-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1rem 1.25rem;
-    }
-    @media (max-width: 520px) { .form-row { grid-template-columns: 1fr; } }
-
-    .form-group { display: flex; flex-direction: column; gap: 5px; }
-
-    .form-group label {
-      font-size: 0.78rem;
-      font-weight: 700;
-      color: #374151;
-      text-transform: uppercase;
-      letter-spacing: 0.4px;
-    }
-    .form-group input,
-    .form-group select {
-      padding: 10px 13px;
-      border: 1.5px solid #e5e7eb;
-      border-radius: 8px;
-      font-size: 0.93rem;
-      color: #1f2937;
-      background: #fafafa;
-      outline: none;
-      width: 100%;
-      transition: border-color 0.2s, background 0.2s;
-    }
-    .form-group input:focus,
-    .form-group select:focus {
-      border-color: var(--teal, #0d7377);
-      background: #fff;
-    }
-    .form-group input:disabled {
-      background: #f3f4f6;
-      color: #9ca3af;
-      cursor: not-allowed;
-    }
-    .field-note { font-size: 0.72rem; color: #9ca3af; }
-
-    .form-actions {
-      display: flex;
-      gap: 0.75rem;
-      margin-top: 1.5rem;
-      flex-wrap: wrap;
-    }
-    .btn-save {
-      padding: 10px 28px;
-      background: var(--teal, #0d7377);
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      font-size: 0.9rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    .btn-save:hover { background: #085255; }
-    .btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
-    .btn-cancel {
+    .edit-link {
+      display: inline-block;
+      margin-top: 20px;
       padding: 10px 24px;
-      background: #f3f4f6;
-      color: #374151;
-      border: none;
+      background: #0067b8;
+      color: #fff;
       border-radius: 8px;
+      text-decoration: none;
       font-size: 0.9rem;
       font-weight: 600;
-      cursor: pointer;
+      transition: background 0.2s;
     }
-    .btn-cancel:hover { background: #e5e7eb; }
+    .edit-link:hover { background: #0052a3; }
+    .back-link {
+      display: inline-block;
+      margin-bottom: 18px;
+      color: #0067b8;
+      font-size: 0.88rem;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .back-link:hover { text-decoration: underline; }
+    .error-msg {
+      color: #dc2626;
+      font-size: 0.9rem;
+      margin-top: 12px;
+    }
   </style>
 </head>
 
 <body>
   <nav class="navbar">
     <a href="/" class="navbar-brand">Mind<span>Bridge</span></a>
-    <div class="nav-links" id="dynamic-nav"></div>
   </nav>
 
-  <div class="profile-page">
-    <a href="/dashboard" class="back-link">← Back to Dashboard</a>
+  <div class="page">
 
-    <div class="profile-card">
+    <a id="back-link" href="/dashboard" class="back-link">← Back</a>
 
-      <!-- BANNER -->
-      <div class="card-banner">
-        <div class="avatar-circle" id="avatar-circle">?</div>
-        <h2 id="banner-name">Loading…</h2>
-        <span class="badge-patient">Patient</span>
-      </div>
+    <h2 class="title">My Profile</h2>
 
-      <!-- BODY -->
-      <div class="card-body">
+    <div class="cardd">
 
-        <!-- VIEW MODE -->
-        <div id="view-mode">
-          <div class="info-grid">
-            <div class="info-item">
-              <label>Full Name</label>
-              <p id="v-name">—</p>
-            </div>
-            <div class="info-item">
-              <label>Email</label>
-              <p id="v-email">—</p>
-            </div>
-            <div class="info-item">
-              <label>CNIC</label>
-              <p id="v-cnic">—</p>
-            </div>
-            <div class="info-item">
-              <label>Phone</label>
-              <p id="v-phone">—</p>
-            </div>
-            <div class="info-item">
-              <label>Age</label>
-              <p id="v-age">—</p>
-            </div>
-            <div class="info-item">
-              <label>Gender</label>
-              <p id="v-gender">—</p>
-            </div>
-            <div class="info-item">
-              <label>Member Since</label>
-              <p id="v-since">—</p>
-            </div>
-          </div>
+      <div class="avatar-circle" id="avatar-circle">?</div>
+      <h3 id="name" class="name">Loading...</h3>
+      <span class="badge-patient">Patient</span>
 
-          <hr class="divider">
-          <button class="btn-edit" onclick="openEdit()">✏️ Edit Profile</button>
+      <div class="info">
+
+        <div class="row">
+          <span>Email</span>
+          <p id="email">—</p>
         </div>
 
-        <!-- EDIT MODE -->
-        <div class="edit-form" id="edit-mode">
-          <h3>Edit Your Profile</h3>
-          <div class="form-row">
+        <div class="row">
+          <span>CNIC</span>
+          <p id="cnic">—</p>
+        </div>
 
-            <div class="form-group">
-              <label>Full Name</label>
-              <input type="text" id="e-name" placeholder="Your full name">
-            </div>
+        <div class="row">
+          <span>Age</span>
+          <p id="age">—</p>
+        </div>
 
-            <div class="form-group">
-              <label>Email</label>
-              <input type="email" id="e-email" disabled>
-              <span class="field-note">Email cannot be changed</span>
-            </div>
-
-            <div class="form-group">
-              <label>CNIC</label>
-              <input type="text" id="e-cnic" disabled>
-              <span class="field-note">CNIC cannot be changed</span>
-            </div>
-
-            <div class="form-group">
-              <label>Phone</label>
-              <input type="tel" id="e-phone" placeholder="03XX-XXXXXXX">
-            </div>
-
-            <div class="form-group">
-              <label>Age</label>
-              <input type="number" id="e-age" placeholder="e.g. 28" min="5" max="120">
-            </div>
-
-            <div class="form-group">
-              <label>Gender</label>
-              <select id="e-gender">
-                <option value="">— Select —</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-
-          </div>
-
-          <div class="form-actions">
-            <button class="btn-save" id="save-btn" onclick="saveProfile()">Save Changes</button>
-            <button class="btn-cancel" onclick="closeEdit()">Cancel</button>
-          </div>
+        <div class="row">
+          <span>Member Since</span>
+          <p id="since">—</p>
         </div>
 
       </div>
+
+      <p id="error-msg" class="error-msg" style="display:none;"></p>
+
+      <a href="/register" class="edit-link">✏️ Edit Profile</a>
+
     </div>
+
   </div>
 
+  <div id="footer-container"></div>
+  <script src="/js/footer.js"></script>
   <script src="/js/app.js"></script>
+
   <script>
-    if (!Auth.isLoggedIn()) window.location.href = '/login';
-
-    let currentUser = null;
-
     async function loadProfile() {
       try {
-        const data = await apiCall('/api/auth/me');
-        if (!data.success) { Auth.clear(); window.location.href = '/login'; return; }
-        currentUser = data.user;
-        renderView(currentUser);
-      } catch (e) {
-        showToast('Could not load profile. Please refresh.', 'error');
-      }
-    }
+        const params = new URLSearchParams(window.location.search);
+        const patientId = params.get('id');
 
-    function renderView(u) {
-      const initial = (u.fullName || 'P').charAt(0).toUpperCase();
-      document.getElementById('avatar-circle').textContent = initial;
-      document.getElementById('banner-name').textContent  = u.fullName || '—';
-      document.getElementById('v-name').textContent   = u.fullName || '—';
-      document.getElementById('v-email').textContent  = u.email    || '—';
-      document.getElementById('v-cnic').textContent   = u.cnic     || '—';
-      document.getElementById('v-phone').textContent  = u.phone    || '—';
-      document.getElementById('v-age').textContent    = u.age ? u.age + ' years' : '—';
-      document.getElementById('v-gender').textContent = u.gender   || '—';
-      document.getElementById('v-since').textContent  = u.createdAt
-        ? new Date(u.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
-        : '—';
-    }
+        let u;
 
-    function openEdit() {
-      const u = currentUser;
-      document.getElementById('e-name').value   = u.fullName || '';
-      document.getElementById('e-email').value  = u.email    || '';
-      document.getElementById('e-cnic').value   = u.cnic     || '';
-      document.getElementById('e-phone').value  = u.phone    || '';
-      document.getElementById('e-age').value    = u.age      || '';
-      document.getElementById('e-gender').value = u.gender   || '';
-      document.getElementById('view-mode').style.display = 'none';
-      document.getElementById('edit-mode').classList.add('active');
-    }
-
-    function closeEdit() {
-      document.getElementById('edit-mode').classList.remove('active');
-      document.getElementById('view-mode').style.display = 'block';
-    }
-
-    async function saveProfile() {
-      const btn = document.getElementById('save-btn');
-      const name = document.getElementById('e-name').value.trim();
-
-      if (!name) { showToast('Full name is required.', 'error'); return; }
-
-      btn.disabled = true;
-      btn.textContent = 'Saving…';
-
-      const payload = {
-        fullName: name,
-        phone:    document.getElementById('e-phone').value.trim() || undefined,
-        age:      parseInt(document.getElementById('e-age').value) || undefined,
-        gender:   document.getElementById('e-gender').value || undefined,
-      };
-
-      try {
-        const res = await apiCall('/api/auth/profile', 'PUT', payload);
-        if (res.success) {
-          currentUser = res.user;
-          // keep localStorage in sync
-          const stored = Auth.getUser();
-          if (stored) { stored.fullName = res.user.fullName; Auth.setAuth(Auth.getToken(), stored); }
-          renderView(currentUser);
-          closeEdit();
-          showToast('Profile updated successfully!', 'success');
+        if (patientId) {
+          // Admin view: load specific patient by ID (no auth check needed)
+          const res = await fetch('/api/admin/patient/' + patientId);
+          if (!res.ok) throw new Error('Patient not found');
+          u = await res.json();
         } else {
-          showToast(res.message || 'Update failed.', 'error');
+          // Self view: must be logged in
+          if (!Auth.isLoggedIn()) { window.location.href = '/login'; return; }
+          const data = await apiCall('/api/auth/me');
+          if (!data.success) { Auth.clear(); window.location.href = '/login'; return; }
+          u = data.user;
         }
-      } catch (e) {
-        showToast('Something went wrong. Please try again.', 'error');
-      }
 
-      btn.disabled = false;
-      btn.textContent = 'Save Changes';
+        const initial = (u.fullName || 'P').charAt(0).toUpperCase();
+        document.getElementById('avatar-circle').textContent = initial;
+        document.getElementById('name').textContent = u.fullName || '—';
+        document.getElementById('email').textContent = u.email || '—';
+        document.getElementById('cnic').textContent = u.cnic || '—';
+        document.getElementById('age').textContent = u.age ? u.age + ' years' : '—';
+        document.getElementById('since').textContent = u.createdAt
+          ? new Date(u.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+          : '—';
+
+      } catch (err) {
+        document.getElementById('name').textContent = 'Failed to load';
+        const errEl = document.getElementById('error-msg');
+        errEl.textContent = 'Could not load patient profile. Please go back and try again.';
+        errEl.style.display = 'block';
+      }
     }
 
-    loadProfile();
+    // Set back link based on context
+        const params2 = new URLSearchParams(window.location.search);
+        if (params2.get('id')) {
+          document.getElementById('back-link').href = '/admin/manage-patients.html';
+          document.getElementById('back-link').textContent = '← Back to Manage Patients';
+        }
+        loadProfile();
   </script>
+
 </body>
 </html>
