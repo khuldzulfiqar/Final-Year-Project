@@ -137,6 +137,35 @@
       text-decoration: none; margin-bottom: 1.5rem; transition: color 0.2s;
     }
     .back-link:hover { color: var(--teal); }
+
+    /* ── FIELD VALIDATION HIGHLIGHTS ── */
+    .field-error {
+      border-color: #e74c3c !important;
+      background: #fff8f8 !important;
+      box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.12) !important;
+      animation: shake 0.35s ease;
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%       { transform: translateX(-5px); }
+      60%       { transform: translateX(5px); }
+      80%       { transform: translateX(-3px); }
+    }
+    .field-error-msg {
+      color: #e74c3c;
+      font-size: 0.78rem;
+      font-weight: 600;
+      margin-top: 0.35rem;
+      margin-bottom: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+    #form-alert {
+      position: sticky;
+      top: 80px;
+      z-index: 100;
+    }
   </style>
 </head>
 <body>
@@ -401,6 +430,23 @@
 <!-- Leaflet JS -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="/js/app.js"></script>
+<script>
+  // Clear field error highlight as soon as user starts correcting it
+  document.addEventListener('input', function(e) {
+    if (e.target.classList.contains('field-error')) {
+      e.target.classList.remove('field-error');
+      const msg = e.target.parentNode.querySelector('.field-error-msg');
+      if (msg) msg.remove();
+    }
+  });
+  document.addEventListener('change', function(e) {
+    if (e.target.classList.contains('field-error')) {
+      e.target.classList.remove('field-error');
+      const msg = e.target.parentNode.querySelector('.field-error-msg');
+      if (msg) msg.remove();
+    }
+  });
+</script>
 <script>
 if (!Auth.isLoggedIn() || !Auth.isPsychiatrist()) window.location.href = '/login';
 
@@ -681,18 +727,36 @@ async function submitProfile() {
   const inPersonMode    = document.getElementById('mode-inPerson').checked;
   const timeSlots       = getTimeSlots();
 
-  if (!fullName)        { showAlert('form-alert','Full name is required.','error'); return; }
-  if (!gender)          { showAlert('form-alert','Please select your gender.','error'); return; }
-  if (!phone)           { showAlert('form-alert','Phone number is required.','error'); return; }
-  if (!specialization)  { showAlert('form-alert','Specialization is required.','error'); return; }
-  if (!experience)      { showAlert('form-alert','Experience is required.','error'); return; }
-  if (!qualification)   { showAlert('form-alert','Qualification is required.','error'); return; }
-  if (!licenseNumber)   { showAlert('form-alert','License number is required.','error'); return; }
-  if (!street || !city) { showAlert('form-alert','Please set your clinic address (street and city are required).','error'); return; }
-  if (!consultationFee) { showAlert('form-alert','Consultation fee is required.','error'); return; }
-  if (!onlineMode && !inPersonMode) { showAlert('form-alert','Please select at least one consultation mode.','error'); return; }
-  if (selectedDays.length === 0)    { showAlert('form-alert','Please select at least one available day.','error'); return; }
-  if (timeSlots.length === 0)       { showAlert('form-alert','Please add at least one time slot.','error'); return; }
+  // Clear any previous field highlights
+  document.querySelectorAll('.field-error').forEach(el => {
+    el.classList.remove('field-error');
+  });
+  document.querySelectorAll('.field-error-msg').forEach(el => el.remove());
+
+  function flagField(fieldId, msg) {
+    const el = document.getElementById(fieldId);
+    if (!el) return;
+    el.classList.add('field-error');
+    const hint = document.createElement('p');
+    hint.className = 'field-error-msg';
+    hint.textContent = '\u26a0\ufe0f ' + msg;
+    el.parentNode.appendChild(hint);
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el.focus();
+  }
+
+  if (!fullName)        { flagField('fullName', 'Full name is required.'); showAlert('form-alert','\u26a0\ufe0f Please fill in all required fields.','error'); return; }
+  if (!gender)          { flagField('gender', 'Please select your gender.'); showAlert('form-alert','\u26a0\ufe0f Please fill in all required fields.','error'); return; }
+  if (!phone)           { flagField('phone', 'Phone number is required.'); showAlert('form-alert','\u26a0\ufe0f Please fill in all required fields.','error'); return; }
+  if (!specialization)  { flagField('specialization', 'Specialization is required.'); showAlert('form-alert','\u26a0\ufe0f Please fill in all required fields.','error'); return; }
+  if (!experience)      { flagField('experience', 'Years of experience is required.'); showAlert('form-alert','\u26a0\ufe0f Please fill in all required fields.','error'); return; }
+  if (!qualification)   { flagField('qualification', 'Qualification is required.'); showAlert('form-alert','\u26a0\ufe0f Please fill in all required fields.','error'); return; }
+  if (!licenseNumber)   { flagField('licenseNumber', 'License number is required.'); showAlert('form-alert','\u26a0\ufe0f Please fill in all required fields.','error'); return; }
+  if (!street || !city) { flagField('addr-street', 'Street and city are required.'); showAlert('form-alert','\u26a0\ufe0f Please set your clinic address.','error'); return; }
+  if (!consultationFee) { flagField('consultationFee', 'Consultation fee is required.'); showAlert('form-alert','\u26a0\ufe0f Please fill in all required fields.','error'); return; }
+  if (!onlineMode && !inPersonMode) { showAlert('form-alert','\u26a0\ufe0f Please select at least one consultation mode (Online or In-Person).','error'); document.getElementById('mode-online').closest('label').scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
+  if (selectedDays.length === 0)    { showAlert('form-alert','\u26a0\ufe0f Please select at least one available day.','error'); document.querySelector('.days-grid') && document.querySelector('.days-grid').scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
+  if (timeSlots.length === 0)       { showAlert('form-alert','\u26a0\ufe0f Please add at least one time slot.','error'); document.getElementById('time-slots-container') && document.getElementById('time-slots-container').scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
 
   const btn = document.getElementById('submit-btn');
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Saving…';

@@ -197,7 +197,10 @@
 
 <nav class="navbar">
   <a href="/" class="navbar-brand">Mind<span>Bridge</span></a>
-  <div class="nav-links" id="dynamic-nav"></div>
+  <div class="nav-links">
+    <a href="/psychiatrists" class="nav-link">Find a Psychiatrist</a>
+    <a href="/register" class="btn-nav btn-nav-primary">Create Account</a>
+  </div>
 </nav>
 
 <div class="login-page">
@@ -269,7 +272,7 @@
 <script>
 if (Auth.isLoggedIn()) window.location.href = '/dashboard';
 
-let selectedRole = null;
+let selectedRole = null;s
 const roleInfo = {
   patient:      { placeholder: 'e.g. example@gmail.com', heading: 'Patient Login',     sub: 'Sign in to book and track your appointments' },
   psychiatrist: { placeholder: 'e.g. example@gmail.com', heading: 'Doctor Login',     sub: 'Sign in to manage your practice and appointments' },

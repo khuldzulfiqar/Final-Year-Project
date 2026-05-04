@@ -11,7 +11,7 @@
     /* Role grid */
     .role-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(2, 1fr);
       gap: 1rem;
       margin: 1.5rem 0;
     }
@@ -73,12 +73,6 @@
     }
     .info-note p { font-size: 0.85rem; color: var(--text-muted); margin: 0; }
 
-    .admin-info-card {
-      text-align: center; padding: 2rem 1rem;
-    }
-    .admin-info-card .big-icon { font-size: 3rem; margin-bottom: 1rem; }
-    .admin-info-card h3 { font-family: 'Playfair Display', serif; font-size: 1.3rem; color: var(--charcoal); margin-bottom: 0.75rem; }
-    .admin-info-card p { font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1.5rem; }
 
     .row { display: flex; gap: 1rem; }
     .col-md-6 { flex: 1; }
@@ -124,11 +118,7 @@
             <div class="role-label">Psychiatrist</div>
             <div class="role-desc">Join as a professional</div>
           </div>
-          <div class="role-card" onclick="selectRegisterRole('admin')" id="rrole-admin">
-            <div class="role-icon">🛡️</div>
-            <div class="role-label">Admin</div>
-            <div class="role-desc">Platform administration</div>
-          </div>
+
         </div>
 
         <button class="btn-continue" id="btn-continue-reg" onclick="goToRegisterForm()">
@@ -173,7 +163,29 @@
         </div>
         <div class="mb-3">
           <label class="form-label">Email Address *</label>
-          <input type="email" id="p-email" class="form-control" placeholder="your@email.com">
+          <div style="display:flex;gap:0.5rem;">
+            <input type="email" id="p-email" class="form-control" placeholder="your@email.com" style="flex:1;">
+            <button type="button" id="btn-send-otp-p" onclick="sendOTP('patient')"
+              style="white-space:nowrap;padding:0 1rem;background:var(--teal);color:white;border:none;border-radius:10px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:0.85rem;">
+              Send OTP
+            </button>
+          </div>
+        </div>
+        <div id="otp-section-patient" style="display:none;" class="mb-3">
+          <label class="form-label">Enter OTP <span style="color:var(--text-muted);font-size:0.8rem;">(sent to your email)</span></label>
+          <div style="display:flex;gap:0.5rem;">
+            <input type="text" id="p-otp" class="form-control" placeholder="6-digit code" maxlength="6" style="flex:1;letter-spacing:4px;font-size:1.1rem;">
+            <button type="button" onclick="verifyOTP('patient')"
+              style="white-space:nowrap;padding:0 1rem;background:#0d7377;color:white;border:none;border-radius:10px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:0.85rem;">
+              Verify
+            </button>
+          </div>
+          <p id="otp-resend-p" style="font-size:0.78rem;color:var(--text-muted);margin-top:0.4rem;">
+            Didn't receive it? <span onclick="sendOTP('patient')" style="color:var(--teal);cursor:pointer;font-weight:600;">Resend OTP</span>
+          </p>
+        </div>
+        <div id="email-verified-badge-p" style="display:none;margin-bottom:0.75rem;">
+          <span style="background:#dcfce7;color:#166534;padding:0.3rem 0.8rem;border-radius:50px;font-size:0.82rem;font-weight:600;">✅ Email verified</span>
         </div>
         <div class="mb-4">
           <label class="form-label">Password *</label>
@@ -222,7 +234,29 @@
         </div>
         <div class="mb-3">
           <label class="form-label">Email Address *</label>
-          <input type="email" id="ps-email" class="form-control" placeholder="your@email.com">
+          <div style="display:flex;gap:0.5rem;">
+            <input type="email" id="ps-email" class="form-control" placeholder="your@email.com" style="flex:1;">
+            <button type="button" id="btn-send-otp-ps" onclick="sendOTP('psychiatrist')"
+              style="white-space:nowrap;padding:0 1rem;background:var(--teal);color:white;border:none;border-radius:10px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:0.85rem;">
+              Send OTP
+            </button>
+          </div>
+        </div>
+        <div id="otp-section-psychiatrist" style="display:none;" class="mb-3">
+          <label class="form-label">Enter OTP <span style="color:var(--text-muted);font-size:0.8rem;">(sent to your email)</span></label>
+          <div style="display:flex;gap:0.5rem;">
+            <input type="text" id="ps-otp" class="form-control" placeholder="6-digit code" maxlength="6" style="flex:1;letter-spacing:4px;font-size:1.1rem;">
+            <button type="button" onclick="verifyOTP('psychiatrist')"
+              style="white-space:nowrap;padding:0 1rem;background:#0d7377;color:white;border:none;border-radius:10px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:0.85rem;">
+              Verify
+            </button>
+          </div>
+          <p style="font-size:0.78rem;color:var(--text-muted);margin-top:0.4rem;">
+            Didn't receive it? <span onclick="sendOTP('psychiatrist')" style="color:var(--teal);cursor:pointer;font-weight:600;">Resend OTP</span>
+          </p>
+        </div>
+        <div id="email-verified-badge-ps" style="display:none;margin-bottom:0.75rem;">
+          <span style="background:#dcfce7;color:#166534;padding:0.3rem 0.8rem;border-radius:50px;font-size:0.82rem;font-weight:600;">✅ Email verified</span>
         </div>
         <div class="mb-3">
           <label class="form-label">Password *</label>
@@ -260,23 +294,7 @@
         <p class="text-sm text-center">Already have an account? <a href="/login" class="form-link">Sign in</a></p>
       </div>
 
-      <!-- ══ STEP 2c: ADMIN INFO ══ -->
-      <div id="step-admin" class="step">
-        <button class="back-link" onclick="backToStep1()">← Go back</button>
 
-        <div class="admin-info-card">
-          <div class="big-icon">🛡️</div>
-          <h3>Admin Accounts Are Not Self-Registered</h3>
-          <p>
-            Admin accounts are created directly by the system administrator and cannot be
-            registered through this form. If you are an admin, please contact your
-            system administrator to get your credentials.
-          </p>
-          <a href="/login?role=admin" class="btn-submit" style="display:inline-block; text-decoration:none; padding:0.75rem 2rem; width:auto;">
-            Go to Admin Login →
-          </a>
-        </div>
-      </div>
 
     </div>
   </div>
@@ -297,7 +315,7 @@ function selectRegisterRole(role) {
   selectedRegisterRole = role;
   document.querySelectorAll('.role-card').forEach(c => c.classList.remove('active'));
   document.getElementById('rrole-' + role).classList.add('active');
-  const labels = { patient: 'Patient', psychiatrist: 'Psychiatrist', admin: 'Admin' };
+  const labels = { patient: 'Patient', psychiatrist: 'Psychiatrist' };
   const btn = document.getElementById('btn-continue-reg');
   btn.classList.add('enabled');
   btn.textContent = 'Continue as ' + labels[role] + ' →';
@@ -307,7 +325,7 @@ function goToRegisterForm() {
   if (!selectedRegisterRole) return;
   if (selectedRegisterRole === 'patient')      showStep('step-patient');
   else if (selectedRegisterRole === 'psychiatrist') showStep('step-psychiatrist');
-  else if (selectedRegisterRole === 'admin')   showStep('step-admin');
+
 }
 
 function backToStep1() {
@@ -317,9 +335,60 @@ function backToStep1() {
 // Support ?role= pre-selection
 const urlParams = new URLSearchParams(window.location.search);
 const preRole = urlParams.get('role');
-if (preRole && ['patient','psychiatrist','admin'].includes(preRole)) {
+if (preRole && ['patient','psychiatrist'].includes(preRole)) {
   selectRegisterRole(preRole);
   goToRegisterForm();
+}
+
+// ── OTP Verification ──
+const emailVerified = { patient: false, psychiatrist: false };
+
+async function sendOTP(role) {
+  const emailId = role === 'patient' ? 'p-email' : 'ps-email';
+  const alertId = role === 'patient' ? 'alert-patient' : 'alert-psychiatrist';
+  const email = document.getElementById(emailId).value.trim();
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    showAlert(alertId, 'Please enter a valid email address first.', 'error'); return;
+  }
+  const btn = document.getElementById(role === 'patient' ? 'btn-send-otp-p' : 'btn-send-otp-ps');
+  btn.disabled = true; btn.textContent = 'Sending...';
+  try {
+    const data = await apiCall('/api/auth/send-otp', 'POST', { email });
+    if (data.success) {
+      document.getElementById('otp-section-' + role).style.display = 'block';
+      document.getElementById(emailId).readOnly = true;
+      showAlert(alertId, '📧 OTP sent! Check your inbox (and spam folder).', 'success');
+      btn.textContent = 'Resend OTP';
+    } else {
+      showAlert(alertId, data.message || 'Failed to send OTP.', 'error');
+    }
+  } catch(e) {
+    showAlert(alertId, 'Server error sending OTP.', 'error');
+  }
+  btn.disabled = false;
+}
+
+async function verifyOTP(role) {
+  const emailId = role === 'patient' ? 'p-email' : 'ps-email';
+  const otpId   = role === 'patient' ? 'p-otp'   : 'ps-otp';
+  const alertId = role === 'patient' ? 'alert-patient' : 'alert-psychiatrist';
+  const badgeId = role === 'patient' ? 'email-verified-badge-p' : 'email-verified-badge-ps';
+  const email   = document.getElementById(emailId).value.trim();
+  const otp     = document.getElementById(otpId).value.trim();
+  if (!otp) { showAlert(alertId, 'Please enter the OTP.', 'error'); return; }
+  try {
+    const data = await apiCall('/api/auth/verify-otp', 'POST', { email, otp });
+    if (data.success) {
+      emailVerified[role] = true;
+      document.getElementById('otp-section-' + role).style.display = 'none';
+      document.getElementById(badgeId).style.display = 'block';
+      showAlert(alertId, '✅ Email verified! You can now complete registration.', 'success');
+    } else {
+      showAlert(alertId, data.message || 'Invalid OTP.', 'error');
+    }
+  } catch(e) {
+    showAlert(alertId, 'Server error verifying OTP.', 'error');
+  }
 }
 
 // ── Patient Registration ──
@@ -334,8 +403,20 @@ async function registerPatient() {
   if (!fullName || !cnic || !age || !email || !password) {
     showAlert('alert-patient', 'All fields are required.', 'error'); return;
   }
+  const cnicRegex = /^\d{5}-\d{7}-\d{1}$/;
+  if (!cnicRegex.test(cnic)) {
+    showAlert('alert-patient', 'Invalid CNIC format. Please use XXXXX-XXXXXXX-X (e.g. 35201-1234567-8).', 'error'); return;
+  }
+  const ageNum = parseInt(age, 10);
+  if (isNaN(ageNum) || ageNum < 18 || ageNum > 100) {
+    showAlert('alert-patient', 'Age must be between 18 and 100.', 'error'); return;
+  }
   if (password.length < 6) {
     showAlert('alert-patient', 'Password must be at least 6 characters.', 'error'); return;
+  }
+
+  if (!emailVerified.patient) {
+    showAlert('alert-patient', 'Please verify your email with OTP first.', 'error'); return;
   }
 
   btn.disabled = true;
@@ -372,8 +453,16 @@ async function registerPsychiatrist() {
   if (!fullName || !cnic || !email || !password) {
     showAlert('alert-psychiatrist', 'Please fill in all required fields (Name, CNIC, Email, Password).', 'error'); return;
   }
+  const cnicRegex = /^\d{5}-\d{7}-\d{1}$/;
+  if (!cnicRegex.test(cnic)) {
+    showAlert('alert-psychiatrist', 'Invalid CNIC format. Please use XXXXX-XXXXXXX-X (e.g. 35201-1234567-8).', 'error'); return;
+  }
   if (password.length < 6) {
     showAlert('alert-psychiatrist', 'Password must be at least 6 characters.', 'error'); return;
+  }
+
+  if (!emailVerified.psychiatrist) {
+    showAlert('alert-psychiatrist', 'Please verify your email with OTP first.', 'error'); return;
   }
 
   btn.disabled = true;
@@ -394,6 +483,18 @@ async function registerPsychiatrist() {
     btn.disabled = false; btn.textContent = 'Create Psychiatrist Account';
   }
 }
+
+// ── CNIC Auto-format (XXXXX-XXXXXXX-X) ──
+function formatCnic(e) {
+  let v = e.target.value.replace(/\D/g, '').substring(0, 13);
+  if (v.length > 12) v = v.substring(0, 5) + '-' + v.substring(5, 12) + '-' + v.substring(12);
+  else if (v.length > 5) v = v.substring(0, 5) + '-' + v.substring(5);
+  e.target.value = v;
+}
+['p-cnic', 'ps-cnic'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', formatCnic);
+});
 </script>
 </body>
 </html>

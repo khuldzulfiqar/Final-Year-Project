@@ -38,6 +38,11 @@ const userSchema = new mongoose.Schema({
   bio: { type: String, trim: true },
   profileCreated: { type: Boolean, default: false },
 
+  // Email verification OTP
+  emailOTP:           { type: String },
+  emailOTPExpires:    { type: Date },
+  isEmailVerified:    { type: Boolean, default: false },
+
   // Password reset fields
   resetPasswordToken:   { type: String },
   resetPasswordExpires: { type: Date },

@@ -73,7 +73,8 @@ function showAlert(id, msg, type = 'error') {
   el.className = `alert-box alert-${type}`;
   el.textContent = msg;
   el.style.display = 'block';
-  setTimeout(() => el.style.display = 'none', 5000);
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  setTimeout(() => { el.style.display = 'none'; }, 6000);
 }
 
 document.addEventListener('DOMContentLoaded', () => { buildNavbar(); });

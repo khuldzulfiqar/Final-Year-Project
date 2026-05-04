@@ -30,19 +30,9 @@
         <label class="form-label">Full Name *</label>
         <input type="text" id="fullName" class="form-control" placeholder="Dr. Your Full Name">
       </div>
-      <div class="row">
-        <div class="col-md-6">
-          <div class="mb-3">
-            <label class="form-label">CNIC *</label>
-            <input type="text" id="cnic" class="form-control" placeholder="XXXXX-XXXXXXX-X">
-          </div>
-        </div>
-        <div class="col-md-6">
-          <div class="mb-3">
-            <label class="form-label">Phone Number</label>
-            <input type="text" id="phone" class="form-control" placeholder="+92 XXX XXXXXXX">
-          </div>
-        </div>
+      <div class="mb-3">
+        <label class="form-label">CNIC *</label>
+        <input type="text" id="cnic" class="form-control" placeholder="XXXXX-XXXXXXX-X">
       </div>
       <div class="mb-3">
         <label class="form-label">Email Address *</label>
@@ -96,7 +86,6 @@ async function handleRegister() {
   const cnic = document.getElementById('cnic').value.trim();
   const email = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value;
-  const phone = document.getElementById('phone').value.trim();
   const specialization = document.getElementById('specialization').value.trim();
   const experience = document.getElementById('experience').value.trim();
   const qualification = document.getElementById('qualification').value.trim();
@@ -105,6 +94,10 @@ async function handleRegister() {
 
   if (!fullName || !cnic || !email || !password) {
     showAlert('alert-box', 'Please fill in all required fields (Name, CNIC, Email, Password).', 'error'); return;
+  }
+  const cnicRegex = /^\d{5}-\d{7}-\d{1}$/;
+  if (!cnicRegex.test(cnic)) {
+    showAlert('alert-box', 'Invalid CNIC format. Please use XXXXX-XXXXXXX-X (e.g. 35201-1234567-8).', 'error'); return;
   }
   if (password.length < 6) {
     showAlert('alert-box', 'Password must be at least 6 characters.', 'error'); return;
@@ -115,7 +108,7 @@ async function handleRegister() {
 
   try {
     const data = await apiCall('/api/auth/register-psychiatrist', 'POST', {
-      fullName, cnic, email, password, phone, specialization, experience, qualification, bio
+      fullName, cnic, email, password, specialization, experience, qualification, bio
     });
     if (data.success) {
       showAlert('alert-box', '✅ Account created successfully! Redirecting to login...', 'success');
