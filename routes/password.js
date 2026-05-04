@@ -13,128 +13,98 @@ function createTransporter() {
   });
 }
 
-// POST /api/password/forgot
+function generateOTP() {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+// POST /api/password/forgot  — send OTP to email
 router.post('/forgot', async (req, res) => {
   try {
     const User = require('../models/User');
     const { email } = req.body;
 
-    console.log('🔑 Forgot password request for:', email);
-    console.log('📧 EMAIL_USER:', process.env.EMAIL_USER);
-    console.log('🔐 EMAIL_PASS loaded:', process.env.EMAIL_PASS ? process.env.EMAIL_PASS.length + ' chars' : 'MISSING');
-
     if (!email) return res.status(400).json({ success: false, message: 'Email is required' });
 
     const user = await User.findOne({ email: email.toLowerCase().trim() });
-    console.log('👤 User found:', user ? user.fullName : 'NOT FOUND');
 
+    // Don't reveal if email exists or not
     if (!user) {
-      // Don't reveal if email exists
-      return res.json({ success: true, message: 'If this email is registered, a reset link has been sent.' });
+      return res.json({ success: true, message: 'If this email is registered, an OTP has been sent.' });
     }
 
-    // Generate token
-    const token = crypto.randomBytes(32).toString('hex');
-    const expires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    const otp = generateOTP();
+    const expires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
-    user.resetPasswordToken = token;
+    user.resetPasswordToken = otp;
     user.resetPasswordExpires = expires;
     await user.save();
-    console.log('✅ Token saved to user');
 
-    const baseUrl = process.env.BASE_URL || `http://localhost:${process.env.PORT || 3000}`;
-    const resetUrl = `${baseUrl}/reset-password?token=${token}`;
-    console.log('🔗 Reset URL:', resetUrl);
-
-    // Send email
-    const transporter = createTransporter();
-    const mailOptions = {
+    await createTransporter().sendMail({
       from: `"MindBridge" <${process.env.EMAIL_USER}>`,
       to: user.email,
-      subject: 'Reset Your MindBridge Password',
+      subject: 'Your MindBridge Password Reset OTP',
       html: `
-        <!DOCTYPE html>
-        <html>
-        <head><meta charset="UTF-8"></head>
-        <body style="margin:0;padding:0;background:#f0f4f8;font-family:'Segoe UI',Arial,sans-serif;">
-          <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f4f8;padding:40px 20px;">
-            <tr><td align="center">
-              <table width="560" cellpadding="0" cellspacing="0" style="background:white;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
-                <tr><td style="background:linear-gradient(135deg,#0d7377,#14a085);padding:36px 40px;text-align:center;">
-                  <h1 style="color:white;margin:0;font-size:26px;font-family:Georgia,serif;">MindBridge</h1>
-                  <p style="color:rgba(255,255,255,0.85);margin:6px 0 0;font-size:14px;">Mental Health Platform</p>
-                </td></tr>
-                <tr><td style="padding:40px;">
-                  <h2 style="color:#1a2e2e;margin:0 0 12px;font-size:22px;">Reset Your Password 🔐</h2>
-                  <p style="color:#555;font-size:15px;line-height:1.6;margin:0 0 8px;">Hi <strong>${user.fullName}</strong>,</p>
-                  <p style="color:#555;font-size:15px;line-height:1.6;margin:0 0 28px;">We received a request to reset your MindBridge password. Click the button below:</p>
-                  <div style="text-align:center;margin-bottom:28px;">
-                    <a href="${resetUrl}" style="display:inline-block;background:linear-gradient(135deg,#0d7377,#14a085);color:white;text-decoration:none;padding:14px 36px;border-radius:10px;font-size:16px;font-weight:600;">Reset My Password</a>
-                  </div>
-                  <p style="color:#888;font-size:13px;margin:0 0 8px;">Or copy this link into your browser:</p>
-                  <p style="background:#f5f8fa;border:1px solid #e0e7ef;border-radius:8px;padding:10px 14px;font-size:12px;color:#0d7377;word-break:break-all;margin:0 0 28px;">${resetUrl}</p>
-                  <div style="background:#fff8e1;border:1px solid #ffe082;border-radius:10px;padding:14px 18px;">
-                    <p style="margin:0;font-size:13px;color:#856404;">⏰ <strong>This link expires in 1 hour.</strong> If you did not request this, ignore this email.</p>
-                  </div>
-                </td></tr>
-                <tr><td style="background:#f8fafc;padding:20px 40px;text-align:center;border-top:1px solid #e8ecf0;">
-                  <p style="color:#aaa;font-size:12px;margin:0;">© 2024 MindBridge</p>
-                </td></tr>
-              </table>
-            </td></tr>
-          </table>
-        </body>
-        </html>
+        <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:480px;margin:auto;padding:32px;border:1px solid #e2e8f0;border-radius:12px;">
+          <h2 style="color:#0d7377;margin-bottom:8px;">Password Reset OTP</h2>
+          <p style="color:#555;">Hi <strong>${user.fullName}</strong>,</p>
+          <p style="color:#555;margin-bottom:24px;">Use the code below to reset your password. It expires in <strong>10 minutes</strong>.</p>
+          <div style="background:#f0fafa;border:2px dashed #0d7377;border-radius:10px;padding:20px;text-align:center;">
+            <span style="font-size:2.5rem;font-weight:700;letter-spacing:12px;color:#0d7377;">${otp}</span>
+          </div>
+          <p style="color:#999;font-size:0.85rem;margin-top:24px;">If you didn't request this, please ignore this email.</p>
+        </div>
       `
-    };
+    });
 
-    await transporter.sendMail(mailOptions);
-    console.log('✅ Reset email sent to:', user.email);
-
-    res.json({ success: true, message: 'If this email is registered, a reset link has been sent.' });
+    console.log('✅ Password reset OTP sent to:', user.email);
+    res.json({ success: true, message: 'OTP sent to your email.' });
 
   } catch (err) {
     console.error('❌ Forgot password error:', err.message);
-    console.error(err);
-    res.status(500).json({ success: false, message: 'Failed to send email: ' + err.message });
+    res.status(500).json({ success: false, message: 'Failed to send OTP: ' + err.message });
   }
 });
 
-// GET /api/password/verify-token
-router.get('/verify-token', async (req, res) => {
+// POST /api/password/verify-otp  — verify OTP only (don't reset yet)
+router.post('/verify-otp', async (req, res) => {
   try {
     const User = require('../models/User');
-    const { token } = req.query;
-    if (!token) return res.json({ success: false, message: 'Token is required' });
+    const { email, otp } = req.body;
+
+    if (!email || !otp) return res.status(400).json({ success: false, message: 'Email and OTP are required' });
 
     const user = await User.findOne({
-      resetPasswordToken: token,
+      email: email.toLowerCase().trim(),
+      resetPasswordToken: otp,
       resetPasswordExpires: { $gt: new Date() }
     });
 
-    if (!user) return res.json({ success: false, message: 'Reset link is invalid or has expired.' });
-    res.json({ success: true, email: user.email });
+    if (!user) return res.status(400).json({ success: false, message: 'Invalid or expired OTP.' });
+
+    res.json({ success: true, message: 'OTP verified.' });
+
   } catch (err) {
-    console.error('❌ Verify token error:', err.message);
+    console.error('❌ Verify OTP error:', err.message);
     res.status(500).json({ success: false, message: err.message });
   }
 });
 
-// POST /api/password/reset
+// POST /api/password/reset  — reset password after OTP verified
 router.post('/reset', async (req, res) => {
   try {
     const User = require('../models/User');
-    const { token, password } = req.body;
+    const { email, otp, password } = req.body;
 
-    if (!token || !password) return res.status(400).json({ success: false, message: 'Token and password are required' });
+    if (!email || !otp || !password) return res.status(400).json({ success: false, message: 'All fields are required' });
     if (password.length < 6) return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
 
     const user = await User.findOne({
-      resetPasswordToken: token,
+      email: email.toLowerCase().trim(),
+      resetPasswordToken: otp,
       resetPasswordExpires: { $gt: new Date() }
     });
 
-    if (!user) return res.status(400).json({ success: false, message: 'Reset link is invalid or has expired.' });
+    if (!user) return res.status(400).json({ success: false, message: 'Invalid or expired OTP.' });
 
     user.password = password;
     user.resetPasswordToken = undefined;

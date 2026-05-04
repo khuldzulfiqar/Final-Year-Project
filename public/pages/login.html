@@ -256,7 +256,7 @@
         <button type="button" class="pwd-toggle" onclick="togglePwd()">👁</button>
       </div>
       <div class="forgot-row">
-        <a href="/forgot-password" class="forgot-link">Forgot password?</a>
+        <a href="#" class="forgot-link" onclick="goForgot(); return false;">Forgot password?</a>
       </div>
     </div>
 
@@ -308,6 +308,12 @@ function showAlert(msg, type) {
 }
 function hideAlert() {
   document.getElementById('alert-box').className = 'login-alert';
+}
+
+function goForgot() {
+  const email = document.getElementById('login-email').value.trim();
+  const url = email ? `/forgot-password?email=${encodeURIComponent(email)}` : '/forgot-password';
+  window.location.href = url;
 }
 
 async function login() {
