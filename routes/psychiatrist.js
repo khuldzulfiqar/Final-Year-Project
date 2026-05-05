@@ -5,7 +5,7 @@ const User = require('../models/User');
 // Get all psychiatrists
 router.get('/', async (req, res) => {
   try {
-    const psychiatrists = await User.find({ role: 'psychiatrist', }).select('-password');
+    const psychiatrists = await User.find({ role: 'psychiatrist' }).select('-password');
     res.json({ success: true, psychiatrists });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
