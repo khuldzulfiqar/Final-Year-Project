@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 const Appointment = require('../models/Appointment');
 const User = require('../models/User');
 const nodemailer = require('nodemailer');
-
+const Prescription = require('../models/Prescription');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'mindbridge-jwt-secret';
 
@@ -190,6 +190,8 @@ router.get('/patient', async (req, res) => {
   }
 });
 
+
+
 // FR_17-04 & FR_17-05: Accept or Reject
 router.put('/:id/action', async (req, res) => {
   try {
@@ -278,5 +280,77 @@ router.put('/:id/action', async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 });
+router.put('/:id/complete', async (req, res) => {
+  try {
+    const decoded = getUser(req);
+    if (!decoded) return res.status(401).json({ success: false, message: 'Not authenticated' });
 
+    const appointment = await Appointment.findById(req.params.id);
+
+    if (!appointment)
+      return res.status(404).json({ success: false, message: 'Appointment not found' });
+
+    // only psychiatrist can mark complete
+    if (appointment.psychiatrist.toString() !== decoded.id)
+      return res.status(403).json({ success: false, message: 'Not authorized' });
+
+    appointment.status = 'completed';
+    await appointment.save();
+
+    res.json({ success: true, message: 'Appointment marked as completed', appointment });
+
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+router.post('/:id/prescription', async (req, res) => {
+  try {
+    const decoded = getUser(req);
+    if (!decoded) return res.status(401).json({ message: 'Not authenticated' });
+
+    const appointment = await Appointment.findById(req.params.id);
+
+    if (!appointment)
+      return res.status(404).json({ message: 'Appointment not found' });
+
+    if (appointment.status !== 'completed')
+      return res.status(400).json({ message: 'Complete appointment first' });
+
+    if (appointment.psychiatrist.toString() !== decoded.id)
+      return res.status(403).json({ message: 'Not authorized' });
+
+    const { diagnosis, medicines, notes } = req.body;
+
+    const prescription = new Prescription({
+      appointment: appointment._id,
+      patient: appointment.patient,
+      psychiatrist: appointment.psychiatrist,
+      diagnosis,
+      medicines,
+      notes
+    });
+
+    await prescription.save();
+
+    res.json({ success: true, message: 'Prescription created', prescription });
+
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+router.get('/prescriptions/patient', async (req, res) => {
+  try {
+    const decoded = getUser(req);
+    if (!decoded) return res.status(401).json({ message: 'Not authenticated' });
+
+    const prescriptions = await Prescription.find({ patient: decoded.id })
+      .populate('psychiatrist', 'fullName')
+      .sort({ createdAt: -1 });
+
+    res.json({ success: true, prescriptions });
+
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 module.exports = router;

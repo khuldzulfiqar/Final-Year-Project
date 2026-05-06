@@ -8,7 +8,7 @@ const appointmentSchema = new mongoose.Schema({
   date: { type: String, required: true },
   timeSlot: { type: String, required: true },
   consultationMode: { type: String, enum: ['online', 'inPerson'], required: true },
-  status: { type: String, enum: ['pending', 'accepted', 'rejected'], default: 'pending' },
+  status: { type: String, enum: ['pending', 'accepted', 'rejected', 'completed'], default: 'pending' },
   rejectionReason: { type: String, default: '' },
   notes: { type: String, default: '' },
   createdAt: { type: Date, default: Date.now }

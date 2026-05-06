@@ -45,11 +45,20 @@ function buildNavbar() {
     html += `<a href="/admin/admin-dashboard.html" class="nav-link">My Dashboard</a>`;
     html += `<button onclick="logout()" class="btn-nav btn-nav-danger">Logout</button>`;
   } else {
+
     html += link('/dashboard', 'My Dashboard');
+
     const user = Auth.getUser();
     const name = user?.fullName || 'User';
     const email = user?.email || 'user@email.com';
+    const role = user?.role;
+
     const initial = name.charAt(0).toUpperCase();
+
+    const profileLink =
+      role === "psychiatrist"
+          ? "/psy-profile"
+          : "/patient-profile.html";
 
     html += `
 <div class="account-container">
@@ -70,7 +79,7 @@ function buildNavbar() {
 
     <div class="dropdown-divider"></div>
 
-    <a href="/patient-profile">👤 Profile</a>
+    <a href="${profileLink}">👤 Profile</a>
     <a href="#" onclick="logout()">🚪 Logout</a>
 
   </div>
@@ -113,7 +122,7 @@ function toggleDropdown() {
   menu.style.display = menu.style.display === "block" ? "none" : "block";
 }
 
-window.onclick = function(e) {
+window.onclick = function (e) {
   if (!e.target.closest('.account-container')) {
     const menu = document.getElementById("accountDropdown");
     if (menu) menu.style.display = "none";

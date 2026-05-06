@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>My Prescriptions - MindBridge</title>
+    <link rel="stylesheet" href="/css/style.css">
+
+    <style>
+        body {
+            background: var(--cream);
+            font-family: 'DM Sans', sans-serif;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            color: var(--teal);
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            border-left: 5px solid var(--teal);
+        }
+
+        .doctor {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #0d7377;
+        }
+
+        .item {
+            margin-bottom: 6px;
+        }
+
+        .label {
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            border-left: 5px solid var(--teal);
+            transition: all 0.25s ease;
+            cursor: pointer;
+        }
+
+        /* 🔥 HOVER EFFECT */
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(13, 115, 119, 0.2);
+            border-left: 5px solid #0b5e61;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <a href="/dashboard" style="display:inline-flex; align-items:center; gap:6px;
+            color:var(--teal); font-weight:600;
+            text-decoration:none; margin-bottom:15px;">
+            ← Back to Dashboard
+        </a>
+
+        <h1>📄 My Prescriptions</h1>
+
+        <div id="prescriptionList"></div>
+
+    </div>
+
+    <script src="/js/app.js"></script>
+
+    <script>
+        async function loadPrescriptions() {
+            try {
+                const res = await apiCall('/api/appointments/prescriptions/patient');
+
+                const container = document.getElementById("prescriptionList");
+
+                if (!res.prescriptions || res.prescriptions.length === 0) {
+                    container.innerHTML = "<p>No prescriptions found.</p>";
+                    return;
+                }
+
+                container.innerHTML = res.prescriptions.map(p => `
+      <div class="card">
+        <div class="doctor">👨‍⚕️ Dr. ${p.psychiatrist?.fullName || "Doctor"}</div>
+
+        <div class="item">
+          <span class="label">Diagnosis:</span> ${p.diagnosis}
+        </div>
+
+        <div class="item">
+          <span class="label">Medicines:</span> ${p.medicines}
+        </div>
+
+        <div class="item">
+          <span class="label">Notes:</span> ${p.notes || "N/A"}
+        </div>
+      </div>
+    `).join('');
+
+            } catch (err) {
+                document.getElementById("prescriptionList").innerHTML =
+                    "<p>Error loading prescriptions</p>";
+            }
+        }
+
+        loadPrescriptions();
+    </script>
+
+</body>
+
+</html>
