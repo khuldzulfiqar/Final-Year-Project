@@ -346,7 +346,7 @@
         </div>
         <div class="mb-4">
           <label class="form-label">Consultation Fee (PKR) *</label>
-          <input type="number" id="consultationFee" class="form-control" placeholder="e.g. 2000" style="max-width:220px;">
+          <input type="number" id="consultationFee" class="form-control" min="1" step="1"placeholder="e.g. 2000" style="max-width:220px;">
         </div>
         <div class="mb-3">
           <label class="form-label">Consultation Mode *</label>
@@ -754,6 +754,13 @@ async function submitProfile() {
   if (!licenseNumber)   { flagField('licenseNumber', 'License number is required.'); showAlert('form-alert','\u26a0\ufe0f Please fill in all required fields.','error'); return; }
   if (!street || !city) { flagField('addr-street', 'Street and city are required.'); showAlert('form-alert','\u26a0\ufe0f Please set your clinic address.','error'); return; }
   if (!consultationFee) { flagField('consultationFee', 'Consultation fee is required.'); showAlert('form-alert','\u26a0\ufe0f Please fill in all required fields.','error'); return; }
+  const feeValue = Number(consultationFee);
+
+  if (isNaN(feeValue) || feeValue <= 0) {
+    flagField('consultationFee', 'Fee must be a positive number.');
+    showAlert('form-alert',' Consultation fee must be greater than 0.','error');
+    return;
+  }
   if (!onlineMode && !inPersonMode) { showAlert('form-alert','\u26a0\ufe0f Please select at least one consultation mode (Online or In-Person).','error'); document.getElementById('mode-online').closest('label').scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
   if (selectedDays.length === 0)    { showAlert('form-alert','\u26a0\ufe0f Please select at least one available day.','error'); document.querySelector('.days-grid') && document.querySelector('.days-grid').scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
   if (timeSlots.length === 0)       { showAlert('form-alert','\u26a0\ufe0f Please add at least one time slot.','error'); document.getElementById('time-slots-container') && document.getElementById('time-slots-container').scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }

@@ -262,6 +262,16 @@ router.post('/create-profile', authMiddleware, async (req, res) => {
       availableDays, timeSlots,
       clinicAddress
     } = req.body;
+    const fee = Number(consultationFee);
+
+    if (consultationFee !== undefined) {
+      if (isNaN(fee) || fee <= 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Consultation fee must be a positive number'
+      });
+    }
+  }
 
     const updateData = {
       fullName, phone, gender, bio,
