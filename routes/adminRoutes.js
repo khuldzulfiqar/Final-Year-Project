@@ -4,6 +4,17 @@ const router = express.Router();
 const User = require("../models/User");
 const Appointment = require("../models/Appointment");
 const Review = require("../models/Review");
+const nodemailer = require("nodemailer");
+
+function createTransporter() {
+  return nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS
+    }
+  });
+}
 
 
 /* =========================
@@ -40,13 +51,30 @@ router.get("/patient/:id", async (req, res) => {
 // delete patient
 router.delete("/patient/:id", async (req, res) => {
   try {
-    const patient = await User.findByIdAndDelete(req.params.id);
+    const user = await User.findById(req.params.id);
 
-    if (!patient) {
+    if (!user) {
       return res.status(404).json({ success: false, message: "Not found" });
     }
 
-    res.json({ message: "Patient deleted" });
+    await User.findByIdAndDelete(req.params.id);
+
+    // 📩 EMAIL SEND
+    await createTransporter().sendMail({
+      from: `"MindBridge Admin" <${process.env.EMAIL_USER}>`,
+      to: user.email,
+      subject: "Account Deleted - MindBridge",
+      html: `
+        <div style="font-family:Arial;padding:20px">
+          <h2>Hello ${user.fullName}</h2>
+          <p>Your <b>patient account</b> has been deleted by admin.</p>
+          <p>If you think this is a mistake, please contact support.</p>
+        </div>
+      `
+    });
+
+    res.json({ message: "Patient deleted + email sent" });
+
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -90,11 +118,30 @@ router.get("/psychiatrists", async (req, res) => {
 // 2️⃣ Approve psychiatrist
 router.put("/approve/:id", async (req, res) => {
   try {
-    await User.findByIdAndUpdate(req.params.id, {
-      status: "Approved"
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { status: "Approved" },
+      { new: true }
+    );
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // 📩 EMAIL SEND
+    await createTransporter().sendMail({
+      from: `"MindBridge Admin" <${process.env.EMAIL_USER}>`,
+      to: user.email,
+      subject: "🎉 Account Approved - MindBridge",
+      html: `
+        <div style="font-family:Arial;padding:20px">
+          <h2>Congratulations ${user.fullName}</h2>
+          <p>Your psychiatrist account has been <b>APPROVED</b> by admin.</p>
+          <p>You can now login and start receiving appointments.</p>
+        </div>
+      `
     });
 
-    res.json({ message: "Psychiatrist approved" });
+    res.json({ message: "Psychiatrist approved + email sent" });
+
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -103,11 +150,30 @@ router.put("/approve/:id", async (req, res) => {
 // 3️⃣ Reject psychiatrist
 router.put("/reject/:id", async (req, res) => {
   try {
-    await User.findByIdAndUpdate(req.params.id, {
-      status: "Rejected"
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { status: "Rejected" },
+      { new: true }
+    );
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // 📩 EMAIL SEND
+    await createTransporter().sendMail({
+      from: `"MindBridge Admin" <${process.env.EMAIL_USER}>`,
+      to: user.email,
+      subject: "Account Rejected - MindBridge",
+      html: `
+        <div style="font-family:Arial;padding:20px">
+          <h2>Hello ${user.fullName}</h2>
+          <p>Sorry, your psychiatrist account has been <b>REJECTED</b> by admin.</p>
+          <p>You may contact support for more details.</p>
+        </div>
+      `
     });
 
-    res.json({ message: "Psychiatrist rejected" });
+    res.json({ message: "Psychiatrist rejected + email sent" });
+
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -116,8 +182,30 @@ router.put("/reject/:id", async (req, res) => {
 // 4️⃣ Delete psychiatrist
 router.delete("/delete/:id", async (req, res) => {
   try {
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({ message: "Psychiatrist not found" });
+    }
+
     await User.findByIdAndDelete(req.params.id);
-    res.json({ message: "Psychiatrist deleted" });
+
+    // 📩 EMAIL SEND
+    await createTransporter().sendMail({
+      from: `"MindBridge Admin" <${process.env.EMAIL_USER}>`,
+      to: user.email,
+      subject: "Account Deleted - MindBridge",
+      html: `
+        <div style="font-family:Arial;padding:20px">
+          <h2>Hello Dr. ${user.fullName}</h2>
+          <p>Your <b>psychiatrist account</b> has been deleted by admin.</p>
+          <p>You will no longer be able to access the system.</p>
+        </div>
+      `
+    });
+
+    res.json({ message: "Psychiatrist deleted + email sent" });
+
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

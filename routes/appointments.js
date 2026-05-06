@@ -3,6 +3,8 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const Appointment = require('../models/Appointment');
 const User = require('../models/User');
+const nodemailer = require('nodemailer');
+
 
 const JWT_SECRET = process.env.JWT_SECRET || 'mindbridge-jwt-secret';
 
@@ -31,6 +33,15 @@ function generateHourlySlots(timeSlots) {
     }
   });
   return slots;
+}
+function createTransporter() {
+  return nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS
+    }
+  });
 }
 
 // FR_11-03: Get available time slots for a psychiatrist on a date
@@ -94,9 +105,9 @@ router.post('/book', async (req, res) => {
 
     if (existing) {
       return res.status(400).json({
-      success: false,
-      message: 'This slot is already booked. Please choose another time.'
-    });
+        success: false,
+        message: 'This slot is already booked. Please choose another time.'
+      });
     }
     if (existing) return res.status(400).json({ success: false, message: 'This slot is already booked. Please choose another.' });
     const [sh, sm] = timeSlot.split('–')[0].trim().split(':').map(Number);
@@ -106,11 +117,11 @@ router.post('/book', async (req, res) => {
     const endMin = eh * 60 + em;
 
     if (endMin - startMin < 60) {
-     return res.status(400).json({
-      success: false,
-      message: 'Appointment must be at least 1 hour'
-    });
-  }
+      return res.status(400).json({
+        success: false,
+        message: 'Appointment must be at least 1 hour'
+      });
+    }
 
     const appointment = new Appointment({
       patient: decoded.id,
@@ -128,21 +139,21 @@ router.post('/book', async (req, res) => {
         success: true,
         message: 'Appointment booked successfully!',
         appointment
-    });
+      });
 
     } catch (err) {
       if (err.code === 11000) {
         return res.status(400).json({
+          success: false,
+          message: 'This time slot is already booked by another patient'
+        });
+      }
+
+      return res.status(500).json({
         success: false,
-        message: 'This time slot is already booked by another patient'
+        message: err.message
       });
     }
-
-    return res.status(500).json({
-      success: false,
-      message: err.message
-    });
-  }
     res.json({ success: true, message: 'Appointment request submitted successfully!', appointment });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -200,8 +211,67 @@ router.put('/:id/action', async (req, res) => {
       return res.status(403).json({ success: false, message: 'Not authorized' });
 
     appointment.status = action;
-    if (action === 'rejected') appointment.rejectionReason = rejectionReason;
+
+    if (action === 'rejected') {
+      appointment.rejectionReason = rejectionReason;
+    }
+
     await appointment.save();
+
+    // 👇 PATIENT FETCH
+    const patient = await User.findById(appointment.patient);
+
+    // 👇 EMAIL ON ACCEPT
+    if (action === 'accepted' && patient) {
+      await createTransporter().sendMail({
+        from: `"MindBridge" <${process.env.EMAIL_USER}>`,
+        to: patient.email,
+        subject: 'Appointment Confirmed - MindBridge',
+        html: `
+      <div style="font-family:Arial;padding:20px">
+        <h2 style="color:#0d7377;">Appointment Confirmed ✅</h2>
+
+        <p>Hi <b>${patient.fullName}</b>,</p>
+
+        <p>Your appointment has been <b>ACCEPTED</b>.</p>
+
+        <h3>Details:</h3>
+        <ul>
+          <li><b>Date:</b> ${appointment.date}</li>
+          <li><b>Time:</b> ${appointment.timeSlot}</li>
+          <li><b>Mode:</b> ${appointment.consultationMode}</li>
+        </ul>
+
+        <p>Thank you for using MindBridge 💙</p>
+      </div>
+    `
+      });
+    }
+
+    // 👇 EMAIL ON REJECT
+    if (action === 'rejected' && patient) {
+      await createTransporter().sendMail({
+        from: `"MindBridge" <${process.env.EMAIL_USER}>`,
+        to: patient.email,
+        subject: 'Appointment Rejected - MindBridge',
+        html: `
+      <div style="font-family:Arial;padding:20px">
+        <h2 style="color:#dc3545;">Appointment Rejected ❌</h2>
+
+        <p>Hi <b>${patient.fullName}</b>,</p>
+
+        <p>Your appointment has been rejected by the psychiatrist.</p>
+
+        <h3>Reason:</h3>
+        <p style="background:#fff0f0;padding:10px;border-radius:8px;">
+          ${rejectionReason || 'No reason provided'}
+        </p>
+
+        <p>Please book another available slot.</p>
+      </div>
+    `
+      });
+    }
 
     res.json({ success: true, message: `Appointment ${action} successfully!`, appointment });
   } catch (err) {

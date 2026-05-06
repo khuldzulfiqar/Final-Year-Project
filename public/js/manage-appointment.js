@@ -60,14 +60,33 @@ async function loadAppointments() {
     tableBody.innerHTML = "";
 
     data.forEach(app => {
+
+      function formatTime12(timeStr) {
+        const [start, end] = timeStr.trim().split('–');
+
+        const convert = (t) => {
+          let [h, m] = t.trim().split(':');
+          h = parseInt(h);
+          const ampm = h >= 12 ? 'PM' : 'AM';
+          h = h % 12 || 12;
+          return `${h}:${m} ${ampm}`;
+        };
+
+        return `${convert(start)} – ${convert(end)}`;
+      }
+
+      const formattedTime = app.timeSlot
+        ? formatTime12(app.timeSlot)
+        : "";
+
       tableBody.innerHTML += `
-        <tr style="border-top:1px solid #eee;">
-          <td style="padding:12px;">${app.patient?.fullName || ""}</td>
-          <td style="padding:12px;">${app.psychiatrist?.fullName || ""}</td>
-          <td style="padding:12px;">${new Date(app.date).toLocaleString()}</td>
-          <td style="padding:12px; font-weight:500;">${app.status}</td>
-        </tr>
-      `;
+    <tr style="border-top:1px solid #eee;">
+      <td style="padding:12px;">${app.patient?.fullName || ""}</td>
+      <td style="padding:12px;">${app.psychiatrist?.fullName || ""}</td>
+      <td style="padding:12px;">${app.date} | ${formattedTime}</td>
+      <td style="padding:12px; font-weight:500;">${app.status}</td>
+    </tr>
+  `;
     });
 
   } catch (err) {
