@@ -271,6 +271,39 @@ router.post('/create-profile', authMiddleware, async (req, res) => {
           message: 'Consultation fee must be a positive number'
       });
     }
+    }
+    // Validate time slots
+    if (!Array.isArray(timeSlots) || timeSlots.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'At least one time slot is required'
+      });
+  }
+
+  for (const slot of timeSlots) {
+    const [sh, sm] = slot.start.split(':').map(Number);
+    const [eh, em] = slot.end.split(':').map(Number);
+
+    const startMin = sh * 60 + sm;
+    const endMin   = eh * 60 + em;
+
+    const duration = endMin - startMin;
+
+  // ❌ End must be after start
+    if (duration <= 0) {
+      return res.status(400).json({
+       success: false,
+       message: 'End time must be after start time'
+      });
+    }
+
+  // ❌ Minimum 2 hours
+   if (duration < 120) {
+      return res.status(400).json({
+        success: false,
+        message: 'Each slot must be at least 2 hours'
+      });
+    }
   }
 
     const updateData = {

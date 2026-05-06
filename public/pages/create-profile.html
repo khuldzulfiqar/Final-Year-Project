@@ -695,15 +695,48 @@ function addSlot(start='', end='') {
     <input type="time" class="form-control slot-end" value="${end}">
     <button type="button" class="remove-slot" onclick="document.getElementById('${id}').remove()" title="Remove">✕</button>`;
   document.getElementById('slots-list').appendChild(div);
+  const startInput = div.querySelector('.slot-start');
+  const endInput   = div.querySelector('.slot-end');
+
+  startInput.addEventListener('change', function() {
+    endInput.min = this.value; // end time cannot go before start
+  });
 }
 
 function getTimeSlots() {
   const slots = [];
+
   document.querySelectorAll('.slot-row').forEach(row => {
     const start = row.querySelector('.slot-start').value;
     const end   = row.querySelector('.slot-end').value;
-    if (start && end) slots.push({ start, end });
+
+    if (start && end) {
+      const [sh, sm] = start.split(':').map(Number);
+      const [eh, em] = end.split(':').map(Number);
+
+      const startMin = sh * 60 + sm;
+      const endMin   = eh * 60 + em;
+
+      const duration = endMin - startMin;
+
+      // ❌ End must be AFTER start
+      if (duration <= 0) {
+        showAlert('form-alert', '⚠️ End time must be after start time', 'error');
+        row.querySelector('.slot-end').classList.add('field-error');
+        throw new Error('Invalid time');
+      }
+
+      // ❌ Minimum 2 hours
+      if (duration < 120) {
+        showAlert('form-alert', '⚠️ Each slot must be at least 2 hours', 'error');
+        row.querySelector('.slot-end').classList.add('field-error');
+        throw new Error('Too short');
+      }
+
+      slots.push({ start, end });
+    }
   });
+
   return slots;
 }
 
@@ -725,7 +758,12 @@ async function submitProfile() {
   const lng             = document.getElementById('addr-lng').value;
   const onlineMode      = document.getElementById('mode-online').checked;
   const inPersonMode    = document.getElementById('mode-inPerson').checked;
-  const timeSlots       = getTimeSlots();
+  let timeSlots;
+  try {
+    timeSlots = getTimeSlots();
+  } catch (e) {
+    return; // stop form submit if invalid
+  }
 
   // Clear any previous field highlights
   document.querySelectorAll('.field-error').forEach(el => {

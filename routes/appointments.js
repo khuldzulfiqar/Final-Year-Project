@@ -89,6 +89,18 @@ router.post('/book', async (req, res) => {
       psychiatrist: psychiatristId, date, timeSlot, status: { $ne: 'rejected' }
     });
     if (existing) return res.status(400).json({ success: false, message: 'This slot is already booked. Please choose another.' });
+    const [sh, sm] = timeSlot.split('–')[0].trim().split(':').map(Number);
+    const [eh, em] = timeSlot.split('–')[1].trim().split(':').map(Number);
+
+    const startMin = sh * 60 + sm;
+    const endMin = eh * 60 + em;
+
+    if (endMin - startMin < 60) {
+     return res.status(400).json({
+      success: false,
+      message: 'Appointment must be at least 1 hour'
+    });
+  }
 
     const appointment = new Appointment({
       patient: decoded.id,
