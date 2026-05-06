@@ -1,58 +1,117 @@
-const tableBody = document.querySelector("#reviewTable tbody");
+console.log("Manage Reviews Loaded");
 
+// =====================
+// ELEMENTS
+// =====================
+const tableBody = document.querySelector("#reviewTable tbody");
 const searchInput = document.getElementById("searchInput");
 
-async function loadReviews() {
+// =====================
+// SIDEBAR TOGGLE (if exists globally)
+// =====================
+const toggleBtn = document.getElementById('toggleBtn');
+const sidebar = document.getElementById('sidebar');
+const mainContent = document.getElementById('mainContent');
 
-  const search = searchInput.value;
+toggleBtn?.addEventListener('click', () => {
+  sidebar.classList.toggle('hidden');
+  mainContent.classList.toggle('expanded');
+});
 
-  const res = await fetch(`/api/admin/reviews?search=${search}`);
-  const data = await res.json();
+// =====================
+// AVATAR DROPDOWN
+// =====================
+const avatarBtn = document.getElementById('avatarBtn');
+const avatarDropdown = document.getElementById('avatarDropdown');
 
-  tableBody.innerHTML = "";
+avatarBtn?.addEventListener('click', (e) => {
+  e.stopPropagation();
+  avatarDropdown.classList.toggle('show');
+});
 
-  data.forEach(r => {
+document.addEventListener('click', () => {
+  avatarDropdown?.classList.remove('show');
+});
 
-    tableBody.innerHTML += `
-      <tr>
-        <td>${r.patient?.fullName || ""}</td>
-        <td>${r.psychiatrist?.fullName || ""}</td>
-        <td>${r.rating} ⭐</td>
-        <td>${r.comment}</td>
-        <td>${new Date(r.createdAt).toLocaleDateString()}</td>
-        <td>
-          <button onclick="deleteReview('${r._id}')">Delete</button>
-        </td>
-      </tr>
-    `;
-
-  });
-
+// =====================
+// LOGOUT
+// =====================
+function logout() {
+  localStorage.clear();
+  sessionStorage.clear();
+  window.location.href = "/";
 }
 
-// live search
-searchInput.addEventListener("keyup", loadReviews);
+document.getElementById("logoutBtn")?.addEventListener("click", logout);
+document.getElementById("dropdownLogout")?.addEventListener("click", logout);
 
-loadReviews();
+// =====================
+// LOAD REVIEWS
+// =====================
+async function loadReviews() {
+  try {
+    const search = searchInput.value.trim();
 
+    const res = await fetch(`/api/admin/reviews?search=${search}`);
+    const data = await res.json();
+
+    tableBody.innerHTML = "";
+
+    if (!data.length) {
+      tableBody.innerHTML = `
+        <tr>
+          <td colspan="6" style="text-align:center; padding:20px; color:#888;">
+            No reviews found
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    data.forEach(r => {
+      tableBody.innerHTML += `
+        <tr style="border-top:1px solid #eee;">
+          <td style="padding:12px;">${r.patient?.fullName || "—"}</td>
+          <td style="padding:12px;">${r.psychiatrist?.fullName || "—"}</td>
+          <td style="padding:12px;">${r.rating} ⭐</td>
+          <td style="padding:12px;">${r.comment || "—"}</td>
+          <td style="padding:12px;">${new Date(r.createdAt).toLocaleDateString()}</td>
+          <td style="padding:12px;">
+            <button onclick="deleteReview('${r._id}')"
+              style="background:#e74c3c; color:white; border:none; padding:6px 10px; border-radius:6px; cursor:pointer;">
+              Delete
+            </button>
+          </td>
+        </tr>
+      `;
+    });
+
+  } catch (err) {
+    console.log("Error loading reviews:", err);
+  }
+}
+
+// =====================
+// DELETE REVIEW
+// =====================
 async function deleteReview(id) {
+  if (!confirm("Delete this review?")) return;
 
-  if(confirm("Delete this review?")){
-
+  try {
     await fetch(`/api/admin/reviews/delete/${id}`, {
       method: "DELETE"
     });
 
     loadReviews();
-
+  } catch (err) {
+    console.log("Delete error:", err);
   }
-
 }
-document.getElementById("logoutBtn").addEventListener("click", function () {
-  console.log("Logout clicked");
 
-  localStorage.clear();
-  sessionStorage.clear();
+// =====================
+// SEARCH
+// =====================
+searchInput?.addEventListener("keyup", loadReviews);
 
-  window.location.href = '/';
-});
+// INITIAL LOAD
+loadReviews();

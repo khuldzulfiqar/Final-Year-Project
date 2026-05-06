@@ -2,82 +2,103 @@
 <html lang="en">
 
 <head>
-<meta charset="UTF-8">
-<title>Admin Dashboard</title>
-
-<link rel="stylesheet" href="../css/admin-css/admin-dashboard.css">
-
+  <meta charset="UTF-8">
+  <title>Admin Dashboard</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <link rel="stylesheet" href="../css/admin-css/admin-dashboard.css">
 </head>
 
 <body>
-    <nav class="navbar">
-  <a href="/" class="navbar-brand">Mind<span>Bridge</span></a>
-</nav>
 
-<div class="dashboard">
-
-    <!-- Sidebar -->
-
-    <div class="sidebar">
-
-        <h2>Admin Panel</h2>
-
-        <ul>
-
-            <li><a href="/admin/admin-dashboard.html" class="active">Dashboard</a></li>
-
-            <li><a href="/admin/manage-patients.html">Manage Patients</a></li>
-
-            <li><a href="/admin/manage-psychiatrists.html">ManagePsychiatrists</a></li>
-
-            <li><a href="/admin/manage-appointments.html">Manage Appointments</a></li>
-
-            <li><a href="/admin/manage-reviews.html">Manage Reviews</a></li>
-
-            <li><button id="logoutBtn">Logout</button></li>
-
-        </ul>
-
-    </div>
-
-    <!-- Main Content -->
-
-    <div class="main-content">
-
-        <h1>Admin Dashboard</h1>
-
-        <div class="cards">
-
-            <div class="card">
-                <h3> Patients</h3>
-                <p id="patientsCount">0</p>
-            </div>
-
-            <div class="card">
-                <h3> Psychiatrists</h3>
-                <p id="psychiatristsCount">0</p>
-            </div>
-
-            <div class="card">
-                <h3>Appointments</h3>
-                <p id="appointmentsCount">0</p>
-            </div>
-
-            <div class="card">
-                <h3> Reviews</h3>
-                <p id="reviewsCount">0</p>
-            </div>
-
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <button class="toggle-btn" id="toggleBtn" aria-label="Toggle sidebar">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+    <a href="/" class="navbar-brand">Mind<span>Bridge</span></a>
+    <div class="nav-right">
+      <button class="avatar-btn" id="avatarBtn" aria-label="Account menu">A</button>
+      <div class="avatar-dropdown" id="avatarDropdown">
+        <div class="dropdown-user">
+          <p>Admin</p>
+          <span>admin@mindbridge.com</span>
         </div>
+        <div class="dropdown-item logout-item" id="dropdownLogout">
+          <i class="ti ti-logout"></i> Logout
+        </div>
+      </div>
+    </div>
+  </nav>
 
+  <!-- LAYOUT -->
+  <div class="layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-section">
+        <label>Main</label>
+        <a href="/admin/admin-dashboard.html" class="nav-link active">
+          <i class="ti ti-layout-dashboard"></i> Dashboard
+        </a>
+      </div>
+      <div class="sidebar-section">
+        <label>Management</label>
+        <a href="/admin/manage-patients.html" class="nav-link">
+          <i class="ti ti-users"></i>  Patients
+        </a>
+        <a href="/admin/manage-psychiatrists.html" class="nav-link">
+          <i class="ti ti-user-heart"></i> Psychiatrists
+        </a>
+        <a href="/admin/manage-appointments.html" class="nav-link">
+          <i class="ti ti-calendar-event"></i>  Appointments
+        </a>
+        <a href="/admin/manage-reviews.html" class="nav-link">
+          <i class="ti ti-star"></i>  Reviews
+        </a>
+      </div>
+      <div class="sidebar-footer">
+        <div class="logout-link" id="logoutBtn">
+          <i class="ti ti-logout"></i> Logout
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content" id="mainContent">
+      <div class="page-header">
+        <h1>Admin Dashboard</h1>
+        <p>Welcome back — here's what's happening today.</p>
+      </div>
+
+      <div class="cards">
+        <div class="card">
+          <div class="card-icon"><i class="ti ti-users"></i></div>
+          <h3>Patients</h3>
+          <p id="patientsCount">0</p>
+        </div>
+        <div class="card">
+          <div class="card-icon"><i class="ti ti-user-heart"></i></div>
+          <h3>Psychiatrists</h3>
+          <p id="psychiatristsCount">0</p>
+        </div>
+        <div class="card">
+          <div class="card-icon"><i class="ti ti-calendar-event"></i></div>
+          <h3>Appointments</h3>
+          <p id="appointmentsCount">0</p>
+        </div>
+        <div class="card">
+          <div class="card-icon"><i class="ti ti-star"></i></div>
+          <h3>Reviews</h3>
+          <p id="reviewsCount">0</p>
+        </div>
+      </div>
     </div>
 
-</div>
-<div id="footer-container"></div>
+  </div>
 
-<script src="/js/footer.js"></script>
-
-<script src="../js/admin-dashboard.js"></script>
+  <script src="../js/admin-dashboard.js"></script>
 
 </body>
 </html>
