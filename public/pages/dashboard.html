@@ -337,6 +337,7 @@
       margin-top: 0.85rem;
       border-left: 4px solid var(--border);
       transition: box-shadow 0.2s;
+      cursor: pointer;
     }
 
     .appt-card:hover {
@@ -831,7 +832,7 @@
         <div class="mb-card">
           <div class="mb-card-header">
             <div class="mb-card-title">Recent Appointment Requests</div>
-            <a href="/appointments" class="link-btn">View All →</a>
+
           </div>
           <div class="mb-card-body" id="psy-appt-list">
             <div class="loading-center" style="padding:2rem;">
@@ -984,13 +985,19 @@
           return;
         }
         container.innerHTML = recent.map(a => `
-      <div class="appt-card ${a.status}">
+      <div class="appt-card ${a.status}"  onclick="openAppointments()">
         <div class="appt-top">
           <div>
             <div class="appt-name">👤 ${a.patientName}</div>
             <div class="appt-mode">${a.consultationMode === 'online' ? '🌐 Online' : '🏥 In-Person'}</div>
           </div>
-          <span class="badge-status badge-${a.status}">${a.status.charAt(0).toUpperCase() + a.status.slice(1)}</span>
+          <span class="badge-status badge-${a.status}">
+  ${a.status === 'accepted'
+            ? '✅ Accepted'
+            : a.status === 'rejected'
+              ? '❌ Rejected'
+              : '⏳ Pending'}
+</span>
         </div>
         <div class="appt-meta-row">
           <span class="appt-meta-item">📅 ${a.date}</span>
@@ -1031,6 +1038,9 @@
 
     // optional: click anywhere in main also closes
     document.querySelector('.dash-main').addEventListener('click', closeSidebar);
+    function openAppointments() {
+      window.location.href = "/appointments";
+    }
   </script>
 </body>
 

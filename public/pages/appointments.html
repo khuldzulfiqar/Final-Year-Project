@@ -153,7 +153,12 @@ function renderAppointments() {
           <div class="appt-patient">👤 ${a.patientName}</div>
           <div style="font-size:0.82rem; color:var(--text-muted); margin-top:0.2rem;">Requested on ${new Date(a.createdAt).toLocaleDateString('en-US', {year:'numeric',month:'long',day:'numeric'})}</div>
         </div>
-        <span class="status-badge status-${a.status}">${a.status}</span>
+        <span class="status-badge status-${a.status}">
+          ${a.status === 'accepted'
+            ? '✅ Accepted'
+            : a.status === 'rejected'
+              ? '❌ Rejected'
+              : '⏳ Pending'}
       </div>
 
       <div class="appt-details">
