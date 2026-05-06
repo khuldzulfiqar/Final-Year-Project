@@ -1,409 +1,873 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard — MindBridge</title>
   <link rel="stylesheet" href="/css/style.css">
   <style>
     /* ── LAYOUT ── */
     .dash-layout {
-      display: flex; min-height: calc(100vh - 70px);
+      display: flex;
+      min-height: calc(100vh - 70px);
     }
 
     /* ── SIDEBAR ── */
     .dash-sidebar {
-      width: 248px; min-width: 248px;
-      background: white; border-right: 1px solid var(--border);
-      display: flex; flex-direction: column;
+      width: 248px;
+      background: white;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
       padding: 1.75rem 0;
-      position: sticky; top: 70px;
+
+      position: fixed;
+      top: 70px;
+      left: 0;
       height: calc(100vh - 70px);
-      overflow-y: auto;
+
+      transform: translateX(-100%);
+      transition: 0.3s ease;
+      z-index: 1000;
     }
+
+    .dash-sidebar.open {
+      transform: translateX(0);
+    }
+
     .sidebar-section-lbl {
-      font-size: 0.68rem; font-weight: 700; color: #a0aec0;
-      text-transform: uppercase; letter-spacing: 1px;
-      padding: 0.5rem 1.5rem; margin-top: 0.5rem;
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: #a0aec0;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 0.5rem 1.5rem;
+      margin-top: 0.5rem;
     }
+
     .sidebar-link {
-      display: flex; align-items: center; gap: 0.8rem;
-      padding: 0.7rem 1.5rem; font-size: 0.875rem; font-weight: 500;
-      color: var(--text-muted); text-decoration: none; cursor: pointer;
-      transition: all 0.15s; border: none; background: none; width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      padding: 0.7rem 1.5rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.15s;
+      border: none;
+      background: none;
+      width: 100%;
       font-family: 'DM Sans', sans-serif;
       border-left: 3px solid transparent;
+
     }
-    .sidebar-link:hover { background: rgba(13,115,119,0.06); color: var(--teal); }
+
+    .sidebar-link:hover {
+      background: rgba(13, 115, 119, 0.06);
+      color: var(--teal);
+    }
+
     .sidebar-link.active {
-      background: rgba(13,115,119,0.08); color: var(--teal);
-      font-weight: 700; border-left-color: var(--teal);
+      background: rgba(13, 115, 119, 0.08);
+      color: var(--teal);
+      font-weight: 700;
+      border-left-color: var(--teal);
     }
-    .sidebar-link .s-icon { font-size: 1.05rem; width: 20px; text-align: center; flex-shrink: 0; }
-    .sidebar-bottom { margin-top: auto; padding: 1rem 1.5rem; border-top: 1px solid var(--border); }
+
+    .sidebar-link .s-icon {
+      font-size: 1.05rem;
+      width: 20px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .sidebar-bottom {
+      margin-top: auto;
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--border);
+    }
+
+    #sidebar-overlay {
+      position: fixed;
+      top: 70px;
+      left: 0;
+      width: 100%;
+      height: calc(100vh - 70px);
+      background: rgba(0, 0, 0, 0.3);
+      display: none;
+      z-index: 999;
+    }
+
+    #sidebar-overlay.show {
+      display: block;
+    }
+
+
 
     /* ── MAIN ── */
-    .dash-main { flex: 1; padding: 2.5rem; overflow-x: hidden; background: var(--cream); }
+    .dash-main {
+      flex: 1;
+      padding: 2.5rem;
+      overflow-x: hidden;
+      background: var(--cream);
+    }
 
     /* ── WELCOME BANNER ── */
     .welcome-banner {
       background: linear-gradient(135deg, var(--teal-dark) 0%, var(--teal) 60%, var(--teal-light) 100%);
-      border-radius: 20px; padding: 2rem 2.25rem;
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;
-      position: relative; overflow: hidden;
+      border-radius: 20px;
+      padding: 2rem 2.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+      position: relative;
+      overflow: hidden;
     }
+
     .welcome-banner::before {
-      content: ''; position: absolute;
-      width: 300px; height: 300px; border-radius: 50%;
-      background: rgba(255,255,255,0.05);
-      top: -100px; right: -60px; pointer-events: none;
+      content: '';
+      position: absolute;
+      width: 300px;
+      height: 300px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.05);
+      top: -100px;
+      right: -60px;
+      pointer-events: none;
     }
-    .welcome-text { position: relative; z-index: 1; }
+
+    .welcome-text {
+      position: relative;
+      z-index: 1;
+    }
+
     .welcome-text h2 {
       font-family: 'Playfair Display', serif;
-      font-size: 1.5rem; font-weight: 700; color: white; margin-bottom: 0.3rem;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 0.3rem;
     }
-    .welcome-text p { font-size: 0.875rem; color: rgba(255,255,255,0.75); }
-    .welcome-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; position: relative; z-index: 1; }
+
+    .welcome-text p {
+      font-size: 0.875rem;
+      color: rgba(255, 255, 255, 0.75);
+    }
+
+    .welcome-actions {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      position: relative;
+      z-index: 1;
+    }
+
     .btn-banner-primary {
-      background: white; color: var(--teal); padding: 0.6rem 1.3rem;
-      border-radius: 10px; font-size: 0.875rem; font-weight: 700;
-      text-decoration: none; border: none; cursor: pointer;
-      font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+      background: white;
+      color: var(--teal);
+      padding: 0.6rem 1.3rem;
+      border-radius: 10px;
+      font-size: 0.875rem;
+      font-weight: 700;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      transition: all 0.2s;
     }
-    .btn-banner-primary:hover { background: var(--cream); color: var(--teal-dark); }
+
+    .btn-banner-primary:hover {
+      background: var(--cream);
+      color: var(--teal-dark);
+    }
+
     .btn-banner-outline {
-      background: rgba(255,255,255,0.15); border: 1.5px solid rgba(255,255,255,0.4);
-      color: white; padding: 0.6rem 1.3rem; border-radius: 10px;
-      font-size: 0.875rem; font-weight: 600; text-decoration: none;
-      cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+      background: rgba(255, 255, 255, 0.15);
+      border: 1.5px solid rgba(255, 255, 255, 0.4);
+      color: white;
+      padding: 0.6rem 1.3rem;
+      border-radius: 10px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      transition: all 0.2s;
     }
-    .btn-banner-outline:hover { background: rgba(255,255,255,0.25); }
+
+    .btn-banner-outline:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
 
     /* ── STAT CARDS ── */
     .stats-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 1rem; margin-bottom: 2rem;
+      gap: 1rem;
+      margin-bottom: 2rem;
     }
+
     .stat-tile {
-      background: white; border-radius: 16px; padding: 1.4rem;
-      border: 1px solid var(--border); transition: all 0.2s;
+      background: white;
+      border-radius: 16px;
+      padding: 1.4rem;
+      border: 1px solid var(--border);
+      transition: all 0.2s;
     }
-    .stat-tile:hover { box-shadow: var(--shadow); transform: translateY(-2px); }
+
+    .stat-tile:hover {
+      box-shadow: var(--shadow);
+      transform: translateY(-2px);
+    }
+
     .stat-tile-icon {
-      width: 44px; height: 44px; border-radius: 12px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.2rem; margin-bottom: 0.9rem;
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      margin-bottom: 0.9rem;
     }
-    .icon-teal    { background: rgba(13,115,119,0.1); }
-    .icon-sage    { background: rgba(132,169,140,0.15); }
-    .icon-amber   { background: rgba(245,158,11,0.1); }
-    .icon-charcoal{ background: rgba(26,26,46,0.07); }
+
+    .icon-teal {
+      background: rgba(13, 115, 119, 0.1);
+    }
+
+    .icon-sage {
+      background: rgba(132, 169, 140, 0.15);
+    }
+
+    .icon-amber {
+      background: rgba(245, 158, 11, 0.1);
+    }
+
+    .icon-charcoal {
+      background: rgba(26, 26, 46, 0.07);
+    }
+
     .stat-tile-val {
       font-family: 'Playfair Display', serif;
-      font-size: 1.75rem; font-weight: 700; color: var(--charcoal); line-height: 1;
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--charcoal);
+      line-height: 1;
     }
-    .stat-tile-lbl { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.4rem; font-weight: 500; }
+
+    .stat-tile-lbl {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 0.4rem;
+      font-weight: 500;
+    }
 
     /* ── CARD ── */
     .mb-card {
-      background: white; border-radius: 18px;
-      border: 1px solid var(--border); overflow: hidden; margin-bottom: 1.5rem;
+      background: white;
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      margin-bottom: 1.5rem;
     }
+
     .mb-card-header {
-      padding: 1.1rem 1.5rem; border-bottom: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;
+      padding: 1.1rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
     }
+
     .mb-card-title {
       font-family: 'Playfair Display', serif;
-      font-size: 1.05rem; font-weight: 700; color: var(--charcoal);
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--charcoal);
     }
-    .mb-card-body { padding: 1.5rem; }
+
+    .mb-card-body {
+      padding: 1.5rem;
+    }
 
     /* ── FILTER PILLS ── */
-    .filter-pills { display: flex; gap: 0.4rem; flex-wrap: wrap; }
-    .filter-pill {
-      padding: 0.3rem 0.9rem; border-radius: 50px;
-      font-size: 0.78rem; font-weight: 600; cursor: pointer;
-      border: 1.5px solid var(--border); background: white; color: var(--text-muted);
-      font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+    .filter-pills {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
     }
-    .filter-pill.active { background: var(--teal); color: white; border-color: var(--teal); }
-    .filter-pill:hover:not(.active) { border-color: var(--teal); color: var(--teal); }
+
+    .filter-pill {
+      padding: 0.3rem 0.9rem;
+      border-radius: 50px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1.5px solid var(--border);
+      background: white;
+      color: var(--text-muted);
+      font-family: 'DM Sans', sans-serif;
+      transition: all 0.2s;
+    }
+
+    .filter-pill.active {
+      background: var(--teal);
+      color: white;
+      border-color: var(--teal);
+    }
+
+    .filter-pill:hover:not(.active) {
+      border-color: var(--teal);
+      color: var(--teal);
+    }
 
     /* ── APPOINTMENT CARDS ── */
     .appt-card {
-      border: 1px solid var(--border); border-radius: 14px;
-      padding: 1.1rem 1.25rem; margin-top: 0.85rem;
-      border-left: 4px solid var(--border); transition: box-shadow 0.2s;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.1rem 1.25rem;
+      margin-top: 0.85rem;
+      border-left: 4px solid var(--border);
+      transition: box-shadow 0.2s;
     }
-    .appt-card:hover { box-shadow: var(--shadow); }
-    .appt-card.pending  { border-left-color: #f59e0b; }
-    .appt-card.accepted { border-left-color: var(--teal); }
-    .appt-card.rejected { border-left-color: #e17055; }
 
-    .appt-top { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
-    .appt-name { font-weight: 700; font-size: 0.9rem; color: var(--charcoal); }
-    .appt-mode { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.15rem; }
-    .appt-meta-row { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.4rem; }
-    .appt-meta-item { font-size: 0.78rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.3rem; }
+    .appt-card:hover {
+      box-shadow: var(--shadow);
+    }
+
+    .appt-card.pending {
+      border-left-color: #f59e0b;
+    }
+
+    .appt-card.accepted {
+      border-left-color: var(--teal);
+    }
+
+    .appt-card.rejected {
+      border-left-color: #e17055;
+    }
+
+    .appt-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .appt-name {
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: var(--charcoal);
+    }
+
+    .appt-mode {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 0.15rem;
+    }
+
+    .appt-meta-row {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-top: 0.4rem;
+    }
+
+    .appt-meta-item {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
 
     .badge-status {
-      padding: 0.2rem 0.75rem; border-radius: 50px;
-      font-size: 0.7rem; font-weight: 700;
-      text-transform: uppercase; letter-spacing: 0.3px; white-space: nowrap;
+      padding: 0.2rem 0.75rem;
+      border-radius: 50px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      white-space: nowrap;
     }
-    .badge-pending  { background: #fef3c7; color: #92400e; }
-    .badge-accepted { background: rgba(13,115,119,0.1); color: var(--teal-dark); }
-    .badge-rejected { background: #fee2e2; color: #991b1b; }
+
+    .badge-pending {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .badge-accepted {
+      background: rgba(13, 115, 119, 0.1);
+      color: var(--teal-dark);
+    }
+
+    .badge-rejected {
+      background: #fee2e2;
+      color: #991b1b;
+    }
 
     .rejection-box {
-      background: #fff5f5; border-radius: 8px; padding: 0.55rem 0.85rem;
-      font-size: 0.78rem; color: #c53030; margin-top: 0.5rem;
+      background: #fff5f5;
+      border-radius: 8px;
+      padding: 0.55rem 0.85rem;
+      font-size: 0.78rem;
+      color: #c53030;
+      margin-top: 0.5rem;
       border-left: 3px solid #e17055;
     }
+
     .confirm-box {
-      background: rgba(13,115,119,0.07); border-radius: 8px; padding: 0.55rem 0.85rem;
-      font-size: 0.78rem; color: var(--teal-dark); margin-top: 0.5rem;
+      background: rgba(13, 115, 119, 0.07);
+      border-radius: 8px;
+      padding: 0.55rem 0.85rem;
+      font-size: 0.78rem;
+      color: var(--teal-dark);
+      margin-top: 0.5rem;
       border-left: 3px solid var(--teal);
     }
 
     /* ── PROFILE CARD ── */
     .profile-avatar-wrap {
-      width: 64px; height: 64px; border-radius: 50%; flex-shrink: 0;
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      flex-shrink: 0;
       background: linear-gradient(135deg, var(--teal), var(--teal-light));
-      display: flex; align-items: center; justify-content: center;
-      font-family: 'Playfair Display', serif; font-size: 1.5rem; color: white; font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      color: white;
+      font-weight: 700;
       overflow: hidden;
     }
-    .profile-avatar-wrap img { width: 100%; height: 100%; object-fit: cover; }
-    .profile-name { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 700; color: var(--charcoal); }
-    .profile-email { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.15rem; }
-    .profile-badge {
-      display: inline-block; background: rgba(13,115,119,0.08); color: var(--teal);
-      padding: 0.2rem 0.7rem; border-radius: 50px; font-size: 0.72rem; font-weight: 700;
-      margin-top: 0.35rem; text-transform: uppercase; letter-spacing: 0.3px;
+
+    .profile-avatar-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
+
+    .profile-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--charcoal);
+    }
+
+    .profile-email {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 0.15rem;
+    }
+
+    .profile-badge {
+      display: inline-block;
+      background: rgba(13, 115, 119, 0.08);
+      color: var(--teal);
+      padding: 0.2rem 0.7rem;
+      border-radius: 50px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      margin-top: 0.35rem;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
     .info-table-row {
-      display: flex; padding: 0.55rem 0; border-bottom: 1px solid var(--cream);
+      display: flex;
+      padding: 0.55rem 0;
+      border-bottom: 1px solid var(--cream);
       font-size: 0.85rem;
     }
-    .info-table-row:last-child { border-bottom: none; }
-    .info-key { color: var(--text-muted); font-weight: 500; min-width: 130px; font-size: 0.82rem; }
-    .info-val { color: var(--text); font-weight: 500; flex: 1; }
+
+    .info-table-row:last-child {
+      border-bottom: none;
+    }
+
+    .info-key {
+      color: var(--text-muted);
+      font-weight: 500;
+      min-width: 130px;
+      font-size: 0.82rem;
+    }
+
+    .info-val {
+      color: var(--text);
+      font-weight: 500;
+      flex: 1;
+    }
 
     /* ── LINK BUTTON ── */
     .link-btn {
-      display: inline-flex; align-items: center; gap: 0.35rem;
-      color: var(--teal); font-size: 0.82rem; font-weight: 600;
-      text-decoration: none; background: none; border: none;
-      cursor: pointer; font-family: 'DM Sans', sans-serif; padding: 0; transition: color 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      color: var(--teal);
+      font-size: 0.82rem;
+      font-weight: 600;
+      text-decoration: none;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      padding: 0;
+      transition: color 0.2s;
     }
-    .link-btn:hover { color: var(--teal-dark); }
+
+    .link-btn:hover {
+      color: var(--teal-dark);
+    }
 
     /* ── QUICK EDIT ── */
-    .qe-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-    .qe-group.full { grid-column: 1 / -1; }
-    .qe-lbl { display: block; font-size: 0.8rem; font-weight: 600; color: var(--text); margin-bottom: 0.35rem; }
-    .qe-inp, .qe-textarea {
-      width: 100%; padding: 0.65rem 1rem;
-      border: 1.5px solid var(--border); border-radius: 10px;
-      font-size: 0.875rem; font-family: 'DM Sans', sans-serif; color: var(--text);
-      background: var(--cream); outline: none; transition: border-color 0.2s;
+    .qe-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
     }
-    .qe-inp:focus, .qe-textarea:focus {
-      border-color: var(--teal); background: white;
-      box-shadow: 0 0 0 3px rgba(13,115,119,0.08);
+
+    .qe-group.full {
+      grid-column: 1 / -1;
     }
-    .qe-textarea { resize: vertical; min-height: 80px; }
+
+    .qe-lbl {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 0.35rem;
+    }
+
+    .qe-inp,
+    .qe-textarea {
+      width: 100%;
+      padding: 0.65rem 1rem;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      font-size: 0.875rem;
+      font-family: 'DM Sans', sans-serif;
+      color: var(--text);
+      background: var(--cream);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .qe-inp:focus,
+    .qe-textarea:focus {
+      border-color: var(--teal);
+      background: white;
+      box-shadow: 0 0 0 3px rgba(13, 115, 119, 0.08);
+    }
+
+    .qe-textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
     .btn-save {
       background: linear-gradient(135deg, var(--teal), var(--teal-light));
-      color: white; border: none; padding: 0.7rem 2rem; border-radius: 10px;
-      font-size: 0.875rem; font-weight: 600; cursor: pointer;
-      font-family: 'DM Sans', sans-serif; transition: all 0.2s; margin-top: 1rem;
+      color: white;
+      border: none;
+      padding: 0.7rem 2rem;
+      border-radius: 10px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      transition: all 0.2s;
+      margin-top: 1rem;
     }
-    .btn-save:hover { opacity: 0.88; transform: translateY(-1px); }
-    .btn-save:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+    .btn-save:hover {
+      opacity: 0.88;
+      transform: translateY(-1px);
+    }
+
+    .btn-save:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      transform: none;
+    }
+
     .alert-save {
-      font-size: 0.82rem; padding: 0.65rem 1rem; border-radius: 10px;
-      margin-top: 0.75rem; display: none;
+      font-size: 0.82rem;
+      padding: 0.65rem 1rem;
+      border-radius: 10px;
+      margin-top: 0.75rem;
+      display: none;
     }
-    .alert-save.show { display: block; }
-    .alert-save.success { background: rgba(13,115,119,0.08); color: var(--teal-dark); border: 1px solid rgba(13,115,119,0.2); }
-    .alert-save.error   { background: #fff5f5; color: #c53030; border: 1px solid #fed7d7; }
+
+    .alert-save.show {
+      display: block;
+    }
+
+    .alert-save.success {
+      background: rgba(13, 115, 119, 0.08);
+      color: var(--teal-dark);
+      border: 1px solid rgba(13, 115, 119, 0.2);
+    }
+
+    .alert-save.error {
+      background: #fff5f5;
+      color: #c53030;
+      border: 1px solid #fed7d7;
+    }
 
     /* ── LAYOUT 2-COL ── */
-    .row-2 { display: grid; grid-template-columns: 1fr 1.7fr; gap: 1.5rem; }
+    .row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1.7fr;
+      gap: 1.5rem;
+    }
 
     /* ── EMPTY STATE ── */
-    .empty-state { text-align: center; padding: 2.5rem 1rem; color: var(--text-muted); }
-    .empty-state .es-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
-    .empty-state p { font-size: 0.875rem; }
-    .empty-state a { color: var(--teal); font-weight: 600; text-decoration: none; }
+    .empty-state {
+      text-align: center;
+      padding: 2.5rem 1rem;
+      color: var(--text-muted);
+    }
+
+    .empty-state .es-icon {
+      font-size: 2.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .empty-state p {
+      font-size: 0.875rem;
+    }
+
+    .empty-state a {
+      color: var(--teal);
+      font-weight: 600;
+      text-decoration: none;
+    }
 
     /* ── LOADING ── */
-    .loading-center { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 5rem 2rem; color: var(--text-muted); }
-    .mb-spinner {
-      width: 32px; height: 32px;
-      border: 3px solid var(--border); border-top-color: var(--teal);
-      border-radius: 50%; animation: spin 0.75s linear infinite; margin-bottom: 1rem;
+    .loading-center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 5rem 2rem;
+      color: var(--text-muted);
     }
-    .spin-sm {
-      display: inline-block; width: 14px; height: 14px;
-      border: 2px solid rgba(255,255,255,0.4); border-top-color: white;
-      border-radius: 50%; animation: spin 0.7s linear infinite;
-      vertical-align: middle; margin-right: 5px;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
 
-    @media (max-width: 960px) { .row-2 { grid-template-columns: 1fr; } }
-    @media (max-width: 800px) { .dash-sidebar { display: none; } .qe-grid { grid-template-columns: 1fr; } }
-    @media (max-width: 600px) { .dash-main { padding: 1.5rem 1rem; } }
+    .mb-spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid var(--border);
+      border-top-color: var(--teal);
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
+      margin-bottom: 1rem;
+    }
+
+    .spin-sm {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255, 255, 255, 0.4);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 5px;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    @media (max-width: 960px) {
+      .row-2 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 800px) {
+      .dash-sidebar {
+        display: none;
+      }
+
+      .qe-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .dash-main {
+        padding: 1.5rem 1rem;
+      }
+    }
   </style>
 </head>
+
 <body>
 
-<!-- NAVBAR -->
-<nav class="navbar">
-  <a href="/" class="navbar-brand">Mind<span>Bridge</span></a>
-  <div class="nav-links" id="dynamic-nav"></div>
-</nav>
+  <!-- NAVBAR -->
+  <nav class="navbar">
 
-<div class="dash-layout">
-
-  <!-- SIDEBAR -->
-  <aside class="dash-sidebar" id="sidebar"></aside>
-
-  <!-- MAIN -->
-  <main class="dash-main">
-    <div class="loading-center" id="loading-state">
-      <div class="mb-spinner"></div>
-      <p>Loading your dashboard…</p>
+    <!-- LEFT SIDE -->
+    <div class="nav-left">
+      <button id="sidebarToggle" class="nav-toggle">☰</button>
+      <a href="/" class="navbar-brand">Mind<span>Bridge</span></a>
     </div>
 
-    <!-- ===== PATIENT DASHBOARD ===== -->
-    <div id="patient-dashboard" style="display:none;">
-      <div class="welcome-banner">
-        <div class="welcome-text">
-          <h2>Hello, <span id="patient-name">Patient</span> 👋</h2>
-          <p>Manage your mental health appointments</p>
-        </div>
-        <div class="welcome-actions">
-          <a href="/psychiatrists" class="btn-banner-primary">🔍 Find Psychiatrist</a>
-          <a href="/appointments" class="btn-banner-outline">📋 All Appointments</a>
-        </div>
-      </div>
-
-      <div class="stats-grid">
-        <div class="stat-tile">
-          <div class="stat-tile-icon icon-teal">📅</div>
-          <div class="stat-tile-val" id="stat-total">—</div>
-          <div class="stat-tile-lbl">Total Appointments</div>
-        </div>
-        <div class="stat-tile">
-          <div class="stat-tile-icon icon-amber">⏳</div>
-          <div class="stat-tile-val" id="stat-pending">—</div>
-          <div class="stat-tile-lbl">Pending</div>
-        </div>
-        <div class="stat-tile">
-          <div class="stat-tile-icon icon-sage">✅</div>
-          <div class="stat-tile-val" id="stat-accepted">—</div>
-          <div class="stat-tile-lbl">Confirmed</div>
-        </div>
-
-      </div>
-
-      <div class="mb-card">
-        <div class="mb-card-header">
-          <div class="mb-card-title">My Appointments</div>
-          <div class="filter-pills">
-            <button class="filter-pill active" onclick="filterAppts('all',this)">All</button>
-            <button class="filter-pill" onclick="filterAppts('pending',this)">Pending</button>
-            <button class="filter-pill" onclick="filterAppts('accepted',this)">Confirmed</button>
-            <button class="filter-pill" onclick="filterAppts('rejected',this)">Declined</button>
-          </div>
-        </div>
-        <div class="mb-card-body" id="appt-list">
-          <div class="loading-center" style="padding:2rem;">
-            <div class="mb-spinner" style="width:24px;height:24px;border-width:2px;"></div>
-          </div>
-        </div>
-      </div>
+    <!-- RIGHT SIDE -->
+    <div class="nav-right">
+      <div class="nav-links" id="dynamic-nav"></div>
     </div>
 
-    <!-- ===== PSYCHIATRIST DASHBOARD ===== -->
-    <div id="psychiatrist-dashboard" style="display:none;">
-      <div class="welcome-banner">
-        <div class="welcome-text">
-          <h2>Hello, Dr. <span id="psy-name">Doctor</span> 👋</h2>
-          <p>Manage your practice and patient appointments</p>
-        </div>
-        <div class="welcome-actions">
-          <a href="/create-profile" class="btn-banner-primary">✏️ Update Profile</a>
-          <a href="/appointments" class="btn-banner-outline">📋 View Appointments</a>
-        </div>
+  </nav>
+
+  <div class="dash-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="dash-sidebar" id="sidebar"></aside>
+    <div id="sidebar-overlay"></div>
+
+    <!-- MAIN -->
+    <main class="dash-main">
+      <div class="loading-center" id="loading-state">
+        <div class="mb-spinner"></div>
+        <p>Loading your dashboard…</p>
       </div>
 
-      <div class="stats-grid">
-        <div class="stat-tile">
-          <div class="stat-tile-icon icon-teal">📋</div>
-          <div class="stat-tile-val" id="psy-stat-total">—</div>
-          <div class="stat-tile-lbl">Total Requests</div>
-        </div>
-        <div class="stat-tile">
-          <div class="stat-tile-icon icon-amber">⏳</div>
-          <div class="stat-tile-val" id="psy-stat-pending">—</div>
-          <div class="stat-tile-lbl">Awaiting Review</div>
-        </div>
-        <div class="stat-tile">
-          <div class="stat-tile-icon icon-sage">✅</div>
-          <div class="stat-tile-val" id="psy-stat-accepted">—</div>
-          <div class="stat-tile-lbl">Confirmed</div>
+      <!-- ===== PATIENT DASHBOARD ===== -->
+      <div id="patient-dashboard" style="display:none;">
+        <div class="welcome-banner">
+          <div class="welcome-text">
+            <h2>Hello, <span id="patient-name">Patient</span> 👋</h2>
+            <p>Manage your mental health appointments</p>
+          </div>
+          <div class="welcome-actions">
+            <a href="/psychiatrists" class="btn-banner-primary">🔍 Find Psychiatrist</a>
+            <a href="/appointments" class="btn-banner-outline">📋 All Appointments</a>
+          </div>
         </div>
 
-      </div>
+        <div class="stats-grid">
+          <div class="stat-tile">
+            <div class="stat-tile-icon icon-teal">📅</div>
+            <div class="stat-tile-val" id="stat-total">—</div>
+            <div class="stat-tile-lbl">Total Appointments</div>
+          </div>
+          <div class="stat-tile">
+            <div class="stat-tile-icon icon-amber">⏳</div>
+            <div class="stat-tile-val" id="stat-pending">—</div>
+            <div class="stat-tile-lbl">Pending</div>
+          </div>
+          <div class="stat-tile">
+            <div class="stat-tile-icon icon-sage">✅</div>
+            <div class="stat-tile-val" id="stat-accepted">—</div>
+            <div class="stat-tile-lbl">Confirmed</div>
+          </div>
 
-      <div class="mb-card">
-        <div class="mb-card-header">
-          <div class="mb-card-title">Recent Appointment Requests</div>
-          <a href="/appointments" class="link-btn">View All →</a>
         </div>
-        <div class="mb-card-body" id="psy-appt-list">
-          <div class="loading-center" style="padding:2rem;">
-            <div class="mb-spinner" style="width:24px;height:24px;border-width:2px;"></div>
+
+        <div class="mb-card">
+          <div class="mb-card-header">
+            <div class="mb-card-title">My Appointments</div>
+            <div class="filter-pills">
+              <button class="filter-pill active" onclick="filterAppts('all',this)">All</button>
+              <button class="filter-pill" onclick="filterAppts('pending',this)">Pending</button>
+              <button class="filter-pill" onclick="filterAppts('accepted',this)">Confirmed</button>
+              <button class="filter-pill" onclick="filterAppts('rejected',this)">Declined</button>
+            </div>
+          </div>
+          <div class="mb-card-body" id="appt-list">
+            <div class="loading-center" style="padding:2rem;">
+              <div class="mb-spinner" style="width:24px;height:24px;border-width:2px;"></div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-  </main>
-</div>
+      <!-- ===== PSYCHIATRIST DASHBOARD ===== -->
+      <div id="psychiatrist-dashboard" style="display:none;">
+        <div class="welcome-banner">
+          <div class="welcome-text">
+            <h2>Hello, Dr. <span id="psy-name">Doctor</span> 👋</h2>
+            <p>Manage your practice and patient appointments</p>
+          </div>
+          <div class="welcome-actions">
+            <a href="/create-profile" class="btn-banner-primary">✏️ Update Profile</a>
+            <a href="/appointments" class="btn-banner-outline">📋 View Appointments</a>
+          </div>
+        </div>
 
-<script src="/js/app.js"></script>
-<script>
-if (!Auth.isLoggedIn()) window.location.href = '/login';
+        <div class="stats-grid">
+          <div class="stat-tile">
+            <div class="stat-tile-icon icon-teal">📋</div>
+            <div class="stat-tile-val" id="psy-stat-total">—</div>
+            <div class="stat-tile-lbl">Total Requests</div>
+          </div>
+          <div class="stat-tile">
+            <div class="stat-tile-icon icon-amber">⏳</div>
+            <div class="stat-tile-val" id="psy-stat-pending">—</div>
+            <div class="stat-tile-lbl">Awaiting Review</div>
+          </div>
+          <div class="stat-tile">
+            <div class="stat-tile-icon icon-sage">✅</div>
+            <div class="stat-tile-val" id="psy-stat-accepted">—</div>
+            <div class="stat-tile-lbl">Confirmed</div>
+          </div>
 
-let allPatientAppts = [];
+        </div>
 
-function logout() { Auth.clear(); window.location.href = '/login'; }
+        <div class="mb-card">
+          <div class="mb-card-header">
+            <div class="mb-card-title">Recent Appointment Requests</div>
+            <a href="/appointments" class="link-btn">View All →</a>
+          </div>
+          <div class="mb-card-body" id="psy-appt-list">
+            <div class="loading-center" style="padding:2rem;">
+              <div class="mb-spinner" style="width:24px;height:24px;border-width:2px;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-function buildSidebar(role) {
-  const patientLinks = [
-    { icon: '🏠', label: 'Dashboard',          href: '/dashboard',      active: true },
-    { icon: '📅', label: 'My Appointments',     href: '/appointments' },
-    { icon: '🔍', label: 'Find Psychiatrist',   href: '/psychiatrists' },
-    { icon: '👤', label: 'My Profile',          href: '/patient-profile' },
-  ];
-  const psyLinks = [
-    { icon: '🏠', label: 'Dashboard',     href: '/dashboard',      active: true },
-    { icon: '📋', label: 'Appointments',  href: '/appointments' },
-    { icon: '👤', label: 'My Profile',    href: '/psy-profile' },
-    { icon: '✏️', label: 'Edit Profile',  href: '/create-profile' },
-    { icon: '⭐', label: 'Reviews',       href: '/reviews' },
-  ];
-  const links = role === 'psychiatrist' ? psyLinks : patientLinks;
-  document.getElementById('sidebar').innerHTML = `
+    </main>
+  </div>
+
+  <script src="/js/app.js"></script>
+  <script>
+    if (!Auth.isLoggedIn()) window.location.href = '/login';
+
+    let allPatientAppts = [];
+
+    function logout() { Auth.clear(); window.location.href = '/login'; }
+
+    function buildSidebar(role) {
+      const patientLinks = [
+        { icon: '🏠', label: 'Dashboard', href: '/dashboard', active: true },
+        { icon: '📅', label: 'My Appointments', href: '/appointments' },
+        { icon: '🔍', label: 'Find Psychiatrist', href: '/psychiatrists' },
+        { icon: '👤', label: 'My Profile', href: '/patient-profile' },
+      ];
+      const psyLinks = [
+        { icon: '🏠', label: 'Dashboard', href: '/dashboard', active: true },
+        { icon: '📋', label: 'Appointments', href: '/appointments' },
+        { icon: '👤', label: 'My Profile', href: '/psy-profile' },
+        { icon: '✏️', label: 'Edit Profile', href: '/create-profile' },
+        { icon: '⭐', label: 'Reviews', href: '/reviews' },
+      ];
+      const links = role === 'psychiatrist' ? psyLinks : patientLinks;
+      document.getElementById('sidebar').innerHTML = `
     <div class="sidebar-section-lbl">Menu</div>
     ${links.map(l => `
       <a href="${l.href}" class="sidebar-link ${l.active ? 'active' : ''}">
@@ -413,75 +877,75 @@ function buildSidebar(role) {
     <div class="sidebar-section-lbl" style="margin-top:1rem;">Account</div>
     <button class="sidebar-link" onclick="logout()"><span class="s-icon">🚪</span>Sign Out</button>
   `;
-}
-
-document.addEventListener('DOMContentLoaded', async () => {
-  const user = Auth.getUser();
-  if (!user) { window.location.href = '/login'; return; }
-
-  try {
-    const data = await apiCall('/api/auth/me');
-    if (!data.success) { Auth.clear(); window.location.href = '/login'; return; }
-    const u = data.user;
-
-    const navName = document.getElementById('nav-name'); if (navName) navName.textContent = u.fullName.split(' ')[0];
-    const navRole = document.getElementById('nav-role'); if (navRole) navRole.textContent = u.role.charAt(0).toUpperCase() + u.role.slice(1);
-    document.getElementById('loading-state').style.display = 'none';
-
-    buildSidebar(u.role);
-
-    if (u.role === 'patient') {
-      document.getElementById('patient-dashboard').style.display = 'block';
-      document.getElementById('patient-name').textContent = u.fullName.split(' ')[0];
-      loadPatientAppointments();
-    } else if (u.role === 'psychiatrist') {
-      document.getElementById('psychiatrist-dashboard').style.display = 'block';
-      document.getElementById('psy-name').textContent = u.fullName.split(' ').slice(-1)[0];
-      loadPsyAppointments();
     }
-  } catch(e) {
-    document.getElementById('loading-state').innerHTML =
-      '<p style="color:var(--text-muted);">Error loading dashboard. <a href="/login" class="form-link">Log in again</a></p>';
-  }
-});
 
-/* ── PATIENT ── */
-async function loadPatientAppointments() {
-  try {
-    const data = await apiCall('/api/appointments/patient');
-    allPatientAppts = data.appointments || [];
-    const pending  = allPatientAppts.filter(a => a.status === 'pending').length;
-    const accepted = allPatientAppts.filter(a => a.status === 'accepted').length;
-    document.getElementById('stat-total').textContent    = allPatientAppts.length;
-    document.getElementById('stat-pending').textContent  = pending;
-    document.getElementById('stat-accepted').textContent = accepted;
-    renderPatientAppts('all');
-  } catch(e) {
-    document.getElementById('appt-list').innerHTML = `<div class="empty-state"><p>Could not load appointments.</p></div>`;
-  }
-}
+    document.addEventListener('DOMContentLoaded', async () => {
+      const user = Auth.getUser();
+      if (!user) { window.location.href = '/login'; return; }
 
-function filterAppts(status, btn) {
-  document.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  renderPatientAppts(status);
-}
+      try {
+        const data = await apiCall('/api/auth/me');
+        if (!data.success) { Auth.clear(); window.location.href = '/login'; return; }
+        const u = data.user;
 
-function renderPatientAppts(filter) {
-  const list = filter === 'all' ? allPatientAppts : allPatientAppts.filter(a => a.status === filter);
-  const container = document.getElementById('appt-list');
-  if (list.length === 0) {
-    const msgs = {
-      all:      { icon: '📭', txt: 'No appointments yet.',     link: '<a href="/psychiatrists">Book one now!</a>' },
-      pending:  { icon: '⏳', txt: 'No pending appointments.', link: '' },
-      accepted: { icon: '✅', txt: 'No confirmed appointments yet.', link: '' },
-      rejected: { icon: '❌', txt: 'No declined appointments.', link: '' }
-    };
-    const m = msgs[filter] || { icon: '📭', txt: 'None found.', link: '' };
-    container.innerHTML = `<div class="empty-state"><div class="es-icon">${m.icon}</div><p>${m.txt} ${m.link}</p></div>`;
-    return;
-  }
-  container.innerHTML = list.map(a => `
+        const navName = document.getElementById('nav-name'); if (navName) navName.textContent = u.fullName.split(' ')[0];
+        const navRole = document.getElementById('nav-role'); if (navRole) navRole.textContent = u.role.charAt(0).toUpperCase() + u.role.slice(1);
+        document.getElementById('loading-state').style.display = 'none';
+
+        buildSidebar(u.role);
+
+        if (u.role === 'patient') {
+          document.getElementById('patient-dashboard').style.display = 'block';
+          document.getElementById('patient-name').textContent = u.fullName.split(' ')[0];
+          loadPatientAppointments();
+        } else if (u.role === 'psychiatrist') {
+          document.getElementById('psychiatrist-dashboard').style.display = 'block';
+          document.getElementById('psy-name').textContent = u.fullName.split(' ').slice(-1)[0];
+          loadPsyAppointments();
+        }
+      } catch (e) {
+        document.getElementById('loading-state').innerHTML =
+          '<p style="color:var(--text-muted);">Error loading dashboard. <a href="/login" class="form-link">Log in again</a></p>';
+      }
+    });
+
+    /* ── PATIENT ── */
+    async function loadPatientAppointments() {
+      try {
+        const data = await apiCall('/api/appointments/patient');
+        allPatientAppts = data.appointments || [];
+        const pending = allPatientAppts.filter(a => a.status === 'pending').length;
+        const accepted = allPatientAppts.filter(a => a.status === 'accepted').length;
+        document.getElementById('stat-total').textContent = allPatientAppts.length;
+        document.getElementById('stat-pending').textContent = pending;
+        document.getElementById('stat-accepted').textContent = accepted;
+        renderPatientAppts('all');
+      } catch (e) {
+        document.getElementById('appt-list').innerHTML = `<div class="empty-state"><p>Could not load appointments.</p></div>`;
+      }
+    }
+
+    function filterAppts(status, btn) {
+      document.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderPatientAppts(status);
+    }
+
+    function renderPatientAppts(filter) {
+      const list = filter === 'all' ? allPatientAppts : allPatientAppts.filter(a => a.status === filter);
+      const container = document.getElementById('appt-list');
+      if (list.length === 0) {
+        const msgs = {
+          all: { icon: '📭', txt: 'No appointments yet.', link: '<a href="/psychiatrists">Book one now!</a>' },
+          pending: { icon: '⏳', txt: 'No pending appointments.', link: '' },
+          accepted: { icon: '✅', txt: 'No confirmed appointments yet.', link: '' },
+          rejected: { icon: '❌', txt: 'No declined appointments.', link: '' }
+        };
+        const m = msgs[filter] || { icon: '📭', txt: 'None found.', link: '' };
+        container.innerHTML = `<div class="empty-state"><div class="es-icon">${m.icon}</div><p>${m.txt} ${m.link}</p></div>`;
+        return;
+      }
+      container.innerHTML = list.map(a => `
     <div class="appt-card ${a.status}">
       <div class="appt-top">
         <div>
@@ -493,33 +957,33 @@ function renderPatientAppts(filter) {
       <div class="appt-meta-row">
         <span class="appt-meta-item">📅 ${a.date}</span>
         <span class="appt-meta-item">🕐 ${a.timeSlot}</span>
-        <span class="appt-meta-item">🗓 ${new Date(a.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</span>
+        <span class="appt-meta-item">🗓 ${new Date(a.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
       </div>
       ${a.notes ? `<div class="appt-meta-item" style="margin-top:0.4rem;">📝 ${a.notes}</div>` : ''}
       ${a.status === 'rejected' && a.rejectionReason ? `<div class="rejection-box">❌ Reason: ${a.rejectionReason}</div>` : ''}
       ${a.status === 'accepted' ? `<div class="confirm-box">✅ Your appointment has been confirmed!</div>` : ''}
     </div>
   `).join('');
-}
-
-/* ── PSYCHIATRIST ── */
-async function loadPsyAppointments() {
-  try {
-    const data = await apiCall('/api/appointments/psychiatrist');
-    const appts   = data.appointments || [];
-    const pending  = appts.filter(a => a.status === 'pending').length;
-    const accepted = appts.filter(a => a.status === 'accepted').length;
-    document.getElementById('psy-stat-total').textContent    = appts.length;
-    document.getElementById('psy-stat-pending').textContent  = pending;
-    document.getElementById('psy-stat-accepted').textContent = accepted;
-
-    const recent    = appts.slice(0, 8);
-    const container = document.getElementById('psy-appt-list');
-    if (recent.length === 0) {
-      container.innerHTML = `<div class="empty-state"><div class="es-icon">📭</div><p>No appointment requests yet.</p></div>`;
-      return;
     }
-    container.innerHTML = recent.map(a => `
+
+    /* ── PSYCHIATRIST ── */
+    async function loadPsyAppointments() {
+      try {
+        const data = await apiCall('/api/appointments/psychiatrist');
+        const appts = data.appointments || [];
+        const pending = appts.filter(a => a.status === 'pending').length;
+        const accepted = appts.filter(a => a.status === 'accepted').length;
+        document.getElementById('psy-stat-total').textContent = appts.length;
+        document.getElementById('psy-stat-pending').textContent = pending;
+        document.getElementById('psy-stat-accepted').textContent = accepted;
+
+        const recent = appts.slice(0, 8);
+        const container = document.getElementById('psy-appt-list');
+        if (recent.length === 0) {
+          container.innerHTML = `<div class="empty-state"><div class="es-icon">📭</div><p>No appointment requests yet.</p></div>`;
+          return;
+        }
+        container.innerHTML = recent.map(a => `
       <div class="appt-card ${a.status}">
         <div class="appt-top">
           <div>
@@ -534,10 +998,40 @@ async function loadPsyAppointments() {
         </div>
       </div>
     `).join('');
-  } catch(e) {
-    document.getElementById('psy-appt-list').innerHTML = `<div class="empty-state"><p>Could not load appointments.</p></div>`;
-  }
-}
-</script>
+      } catch (e) {
+        document.getElementById('psy-appt-list').innerHTML = `<div class="empty-state"><p>Could not load appointments.</p></div>`;
+      }
+    }
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    const toggleBtn = document.getElementById('sidebarToggle');
+
+    function openSidebar() {
+      sidebar.classList.add('open');
+      overlay.classList.add('show');
+    }
+
+    function closeSidebar() {
+      sidebar.classList.remove('open');
+      overlay.classList.remove('show');
+    }
+
+    // toggle button click
+    toggleBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (sidebar.classList.contains('open')) {
+        closeSidebar();
+      } else {
+        openSidebar();
+      }
+    });
+
+    // click outside (screen click → close)
+    overlay.addEventListener('click', closeSidebar);
+
+    // optional: click anywhere in main also closes
+    document.querySelector('.dash-main').addEventListener('click', closeSidebar);
+  </script>
 </body>
+
 </html>
