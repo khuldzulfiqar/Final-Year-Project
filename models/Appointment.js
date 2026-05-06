@@ -13,6 +13,10 @@ const appointmentSchema = new mongoose.Schema({
   notes: { type: String, default: '' },
   createdAt: { type: Date, default: Date.now }
 });
+appointmentSchema.index(
+  { psychiatrist: 1, date: 1, timeSlot: 1 },
+  { unique: true }
+);
 
 const Appointment = mongoose.model('Appointment', appointmentSchema);
 module.exports = Appointment;

@@ -86,8 +86,18 @@ router.post('/book', async (req, res) => {
 
     // Check slot not already booked
     const existing = await Appointment.findOne({
-      psychiatrist: psychiatristId, date, timeSlot, status: { $ne: 'rejected' }
+      psychiatrist: psychiatristId,
+      date,
+      timeSlot,
+      status: { $in: ['pending', 'accepted'] }
     });
+
+    if (existing) {
+      return res.status(400).json({
+      success: false,
+      message: 'This slot is already booked. Please choose another time.'
+    });
+    }
     if (existing) return res.status(400).json({ success: false, message: 'This slot is already booked. Please choose another.' });
     const [sh, sm] = timeSlot.split('–')[0].trim().split(':').map(Number);
     const [eh, em] = timeSlot.split('–')[1].trim().split(':').map(Number);
@@ -111,7 +121,28 @@ router.post('/book', async (req, res) => {
       notes: notes || ''
     });
 
-    await appointment.save();
+    try {
+      await appointment.save();
+
+      return res.json({
+        success: true,
+        message: 'Appointment booked successfully!',
+        appointment
+    });
+
+    } catch (err) {
+      if (err.code === 11000) {
+        return res.status(400).json({
+        success: false,
+        message: 'This time slot is already booked by another patient'
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: err.message
+    });
+  }
     res.json({ success: true, message: 'Appointment request submitted successfully!', appointment });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
