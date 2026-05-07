@@ -28,7 +28,7 @@ const userSchema = new mongoose.Schema({
     lat:     { type: String },
     lng:     { type: String }
   },
-  consultationFee: { type: Number },
+  consultationFee: { type: Number ,  min: [1, 'Consultation fee must be greater than 0']},
   consultationModes: {
     online:   { type: Boolean, default: false },
     inPerson: { type: Boolean, default: false }

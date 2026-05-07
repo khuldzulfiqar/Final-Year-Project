@@ -1,20 +1,42 @@
-// console.log("Admin JS Loaded");
-// function logout() {
-//   Auth.clear();
-//   showToast('Logged out successfully', 'success');
-//   setTimeout(() => window.location.href = '/login', 800);
-// }
-console.log("JS Loaded");
+console.log("Admin Dashboard JS Loaded");
 
-document.getElementById("logoutBtn").addEventListener("click", function () {
-  console.log("Logout clicked");
+// Toggle Sidebar
+const toggleBtn = document.getElementById('toggleBtn');
+const sidebar = document.getElementById('sidebar');
+const mainContent = document.getElementById('mainContent');
 
+toggleBtn.addEventListener('click', function () {
+  sidebar.classList.toggle('hidden');
+  mainContent.classList.toggle('expanded');
+});
+
+// Avatar Dropdown
+const avatarBtn = document.getElementById('avatarBtn');
+const avatarDropdown = document.getElementById('avatarDropdown');
+
+avatarBtn.addEventListener('click', function (e) {
+  e.stopPropagation();
+  avatarDropdown.classList.toggle('show');
+});
+
+document.addEventListener('click', function () {
+  avatarDropdown.classList.remove('show');
+});
+
+// Logout buttons
+document.getElementById('logoutBtn').addEventListener('click', function () {
   localStorage.clear();
   sessionStorage.clear();
-
   window.location.href = '/';
 });
 
+document.getElementById('dropdownLogout').addEventListener('click', function () {
+  localStorage.clear();
+  sessionStorage.clear();
+  window.location.href = '/';
+});
+
+// Load dashboard counts
 async function loadCounts() {
   try {
     const res = await fetch("/api/admin/dashboard-counts");
@@ -26,7 +48,7 @@ async function loadCounts() {
     document.getElementById("reviewsCount").textContent = data.reviews;
 
   } catch (err) {
-    console.log(err);
+    console.log("Could not load counts:", err);
   }
 }
 

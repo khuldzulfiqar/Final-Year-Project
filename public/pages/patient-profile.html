@@ -3,162 +3,153 @@
 <head>
   <meta charset="UTF-8">
   <title>My Profile – MindBridge</title>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
   <link rel="stylesheet" href="/css/admin-css/profile.css">
   <link rel="stylesheet" href="/css/admin-css/admin-dashboard.css">
-  <style>
-    .avatar-circle {
-      width: 72px;
-      height: 72px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #0067b8, #00b4d8);
-      color: #fff;
-      font-size: 2rem;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 14px;
-    }
-    .badge-patient {
-      display: inline-block;
-      background: #dbeafe;
-      color: #1e40af;
-      font-size: 0.72rem;
-      font-weight: 700;
-      padding: 0.2rem 0.75rem;
-      border-radius: 50px;
-      margin-bottom: 18px;
-    }
-    .edit-link {
-      display: inline-block;
-      margin-top: 20px;
-      padding: 10px 24px;
-      background: #0067b8;
-      color: #fff;
-      border-radius: 8px;
-      text-decoration: none;
-      font-size: 0.9rem;
-      font-weight: 600;
-      transition: background 0.2s;
-    }
-    .edit-link:hover { background: #0052a3; }
-    .back-link {
-      display: inline-block;
-      margin-bottom: 18px;
-      color: #0067b8;
-      font-size: 0.88rem;
-      text-decoration: none;
-      font-weight: 500;
-    }
-    .back-link:hover { text-decoration: underline; }
-    .error-msg {
-      color: #dc2626;
-      font-size: 0.9rem;
-      margin-top: 12px;
-    }
-  </style>
 </head>
 
 <body>
-  <nav class="navbar">
-    <a href="/" class="navbar-brand">Mind<span>Bridge</span></a>
-  </nav>
 
-  <div class="page">
+<!-- NAVBAR -->
+<nav class="navbar">
+  <a href="/" class="navbar-brand">Mind<span>Bridge</span></a>
 
-    <a id="back-link" href="/dashboard" class="back-link">← Back</a>
+  <div class="nav-right">
+    <button class="avatar-btn" id="avatarBtn">U</button>
 
-    <h2 class="title">My Profile</h2>
-
-    <div class="cardd">
-
-      <div class="avatar-circle" id="avatar-circle">?</div>
-      <h3 id="name" class="name">Loading...</h3>
-      <span class="badge-patient">Patient</span>
-
-      <div class="info">
-
-        <div class="row">
-          <span>Email</span>
-          <p id="email">—</p>
-        </div>
-
-        <div class="row">
-          <span>CNIC</span>
-          <p id="cnic">—</p>
-        </div>
-
-        <div class="row">
-          <span>Age</span>
-          <p id="age">—</p>
-        </div>
-
-        <div class="row">
-          <span>Member Since</span>
-          <p id="since">—</p>
-        </div>
-
+    <div class="avatar-dropdown" id="avatarDropdown">
+      <div class="dropdown-user">
+        <p id="nav-name">User</p>
+        <span id="nav-email">email</span>
       </div>
 
-      <p id="error-msg" class="error-msg" style="display:none;"></p>
+      <div class="dropdown-item logout-item" id="logoutBtn">
+        <i class="ti ti-logout"></i> Logout
+      </div>
+    </div>
+  </div>
+</nav>
 
-      <a href="/register" class="edit-link">✏️ Edit Profile</a>
+<!-- PAGE -->
+<div class="page">
 
+  <a href="#" onclick="goBack(event)" class="back-link">← Back</a>
+
+  <h2 class="title">My Profile</h2>
+
+  <div class="cardd">
+    <div class="avatar-circle" id="avatar-circle">?</div>
+
+    <h3 id="name" class="name">Loading...</h3>
+
+    <span class="badge-patient" id="role-badge">User</span>
+
+    <div class="info">
+      <div class="row">
+        <span>Email</span>
+        <p id="email">—</p>
+      </div>
+
+      <div class="row">
+        <span>CNIC</span>
+        <p id="cnic">—</p>
+      </div>
+
+      <div class="row">
+        <span>Age</span>
+        <p id="age">—</p>
+      </div>
+
+      <div class="row">
+        <span>Member Since</span>
+        <p id="since">—</p>
+      </div>
     </div>
 
+    <p id="error-msg" class="error-msg" style="display:none;"></p>
   </div>
+</div>
 
-  <div id="footer-container"></div>
-  <script src="/js/footer.js"></script>
-  <script src="/js/app.js"></script>
+<script src="/js/app.js"></script>
 
-  <script>
-    async function loadProfile() {
-      try {
-        const params = new URLSearchParams(window.location.search);
-        const patientId = params.get('id');
+<script>
+// ================= DROPDOWN =================
+const avatarBtn = document.getElementById('avatarBtn');
+const avatarDropdown = document.getElementById('avatarDropdown');
 
-        let u;
+avatarBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  avatarDropdown.classList.toggle('show');
+});
 
-        if (patientId) {
-          // Admin view: load specific patient by ID (no auth check needed)
-          const res = await fetch('/api/admin/patient/' + patientId);
-          if (!res.ok) throw new Error('Patient not found');
-          u = await res.json();
-        } else {
-          // Self view: must be logged in
-          if (!Auth.isLoggedIn()) { window.location.href = '/login'; return; }
-          const data = await apiCall('/api/auth/me');
-          if (!data.success) { Auth.clear(); window.location.href = '/login'; return; }
-          u = data.user;
-        }
+document.addEventListener('click', () => {
+  avatarDropdown.classList.remove('show');
+});
 
-        const initial = (u.fullName || 'P').charAt(0).toUpperCase();
-        document.getElementById('avatar-circle').textContent = initial;
-        document.getElementById('name').textContent = u.fullName || '—';
-        document.getElementById('email').textContent = u.email || '—';
-        document.getElementById('cnic').textContent = u.cnic || '—';
-        document.getElementById('age').textContent = u.age ? u.age + ' years' : '—';
-        document.getElementById('since').textContent = u.createdAt
-          ? new Date(u.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
-          : '—';
+// ================= LOGOUT =================
+document.getElementById("logoutBtn").addEventListener("click", function () {
+  localStorage.clear();
+  window.location.href = "/";
+});
 
-      } catch (err) {
-        document.getElementById('name').textContent = 'Failed to load';
-        const errEl = document.getElementById('error-msg');
-        errEl.textContent = 'Could not load patient profile. Please go back and try again.';
-        errEl.style.display = 'block';
-      }
-    }
+// ================= BACK =================
+function goBack(e) {
+  e.preventDefault();
 
-    // Set back link based on context
-        const params2 = new URLSearchParams(window.location.search);
-        if (params2.get('id')) {
-          document.getElementById('back-link').href = '/admin/manage-patients.html';
-          document.getElementById('back-link').textContent = '← Back to Manage Patients';
-        }
-        loadProfile();
-  </script>
+  const user = JSON.parse(localStorage.getItem("user"));
+
+  if (!user) return window.location.href = "/login";
+
+  if (user.role === "admin") {
+    window.location.href = "/admin/manage-patients.html";
+  } 
+  else if (user.role === "psychiatrist") {
+    window.location.href = "/appointments.html";
+  } 
+  else {
+    window.location.href = "/dashboard";
+  }
+}
+
+// ================= LOAD PROFILE =================
+async function loadProfile() {
+  try {
+    const res = await apiCall('/api/auth/me'); // 🔥 IMPORTANT
+    const user = res.user;
+
+    if (!user) throw new Error("No user");
+
+    // NAVBAR
+    document.getElementById("nav-name").textContent = user.fullName;
+    document.getElementById("nav-email").textContent = user.email;
+
+    // AVATAR
+    const initial = user.fullName?.charAt(0).toUpperCase() || "U";
+    document.getElementById("avatarBtn").textContent = initial;
+    document.getElementById("avatar-circle").textContent = initial;
+
+    // PROFILE
+    document.getElementById('name').textContent = user.fullName || '—';
+    document.getElementById('email').textContent = user.email || '—';
+    document.getElementById('cnic').textContent = user.cnic || '—';
+    document.getElementById('age').textContent = user.age ? user.age + ' years' : '—';
+    document.getElementById('since').textContent = user.createdAt
+      ? new Date(user.createdAt).toLocaleDateString()
+      : '—';
+
+    document.getElementById('role-badge').textContent =
+      user.role.charAt(0).toUpperCase() + user.role.slice(1);
+
+  } catch (err) {
+    document.getElementById('name').textContent = 'Failed to load';
+    document.getElementById('error-msg').style.display = 'block';
+    document.getElementById('error-msg').textContent = "Could not load profile.";
+  }
+}
+
+loadProfile();
+</script>
 
 </body>
 </html>

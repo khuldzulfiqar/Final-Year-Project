@@ -26,30 +26,36 @@ mongoose.connect(MONGO_URI)
 
 
 app.use("/api/admin", require("./routes/adminRoutes"));
-app.use('/api/auth',         require('./routes/auth'));
+app.use('/api/auth', require('./routes/auth'));
 app.use('/api/psychiatrist', require('./routes/psychiatrist'));
 app.use('/api/appointments', require('./routes/appointments'));
-app.use('/api/reviews',      require('./routes/reviews'));
-app.use('/api/upload',       require('./routes/upload'));
-app.use('/api/password',     require('./routes/password'));
+app.use('/api/reviews', require('./routes/reviews'));
+app.use('/api/upload', require('./routes/upload'));
+app.use('/api/password', require('./routes/password'));
 
 
 const p = (file) => path.join(__dirname, 'public', 'pages', file);
 
-app.get('/',                      (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
-app.get('/login',                 (req, res) => res.sendFile(p('login.html')));
-app.get('/register',              (req, res) => res.sendFile(p('register.html')));
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+app.get('/login', (req, res) => res.sendFile(p('login.html')));
+app.get('/register', (req, res) => res.sendFile(p('register.html')));
 app.get('/register-psychiatrist', (req, res) => res.sendFile(p('register-psychiatrist.html')));
-app.get('/psychiatrists',         (req, res) => res.sendFile(p('psychiatrists.html')));
-app.get('/dashboard',             (req, res) => res.sendFile(p('dashboard.html')));
-app.get('/about',                 (req, res) => res.sendFile(p('about.html')));
-app.get('/create-profile',        (req, res) => res.sendFile(p('create-profile.html')));
-app.get('/appointments',          (req, res) => res.sendFile(p('appointments.html')));
-app.get('/reviews',               (req, res) => res.sendFile(p('reviews.html')));
-app.get('/forgot-password',       (req, res) => res.sendFile(p('forgot-password.html')));
-app.get('/reset-password',        (req, res) => res.sendFile(p('reset-password.html')));
-app.get('/patient-profile',        (req, res) => res.sendFile(p('patient-profile.html')));
-app.get('/psy-profile',            (req, res) => res.sendFile(p('psy-profile.html'))); 
+app.get('/psychiatrists', (req, res) => res.sendFile(p('psychiatrists.html')));
+app.get('/dashboard', (req, res) => res.sendFile(p('dashboard.html')));
+app.get('/about', (req, res) => res.sendFile(p('about.html')));
+app.get('/create-profile', (req, res) => res.sendFile(p('create-profile.html')));
+app.get('/appointments', (req, res) => res.sendFile(p('appointments.html')));
+app.get('/reviews', (req, res) => res.sendFile(p('reviews.html')));
+app.get('/forgot-password', (req, res) => res.sendFile(p('forgot-password.html')));
+app.get('/reset-password', (req, res) => res.sendFile(p('reset-password.html')));
+app.get('/patient-profile', (req, res) => res.sendFile(p('patient-profile.html')));
+app.get('/psy-profile', (req, res) => res.sendFile(p('psy-profile.html')));
+app.get('/patient-prescriptions', (req, res) => {
+  res.sendFile(p('patient-prescriptions.html'));
+});
+app.get('/add-prescription.html', (req, res) => {
+  res.sendFile(p('add-prescription.html'));
+});
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));

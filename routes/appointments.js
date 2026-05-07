@@ -3,6 +3,8 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const Appointment = require('../models/Appointment');
 const User = require('../models/User');
+const nodemailer = require('nodemailer');
+const Prescription = require('../models/Prescription');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'mindbridge-jwt-secret';
 
@@ -31,6 +33,15 @@ function generateHourlySlots(timeSlots) {
     }
   });
   return slots;
+}
+function createTransporter() {
+  return nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS
+    }
+  });
 }
 
 // FR_11-03: Get available time slots for a psychiatrist on a date
@@ -87,9 +98,31 @@ router.post('/book', async (req, res) => {
 
     // Check slot not already booked
     const existing = await Appointment.findOne({
-      psychiatrist: psychiatristId, date, timeSlot, status: { $ne: 'rejected' }
+      psychiatrist: psychiatristId,
+      date,
+      timeSlot,
+      status: { $in: ['pending', 'accepted'] }
     });
+
+    if (existing) {
+      return res.status(400).json({
+        success: false,
+        message: 'This slot is already booked. Please choose another time.'
+      });
+    }
     if (existing) return res.status(400).json({ success: false, message: 'This slot is already booked. Please choose another.' });
+    const [sh, sm] = timeSlot.split('–')[0].trim().split(':').map(Number);
+    const [eh, em] = timeSlot.split('–')[1].trim().split(':').map(Number);
+
+    const startMin = sh * 60 + sm;
+    const endMin = eh * 60 + em;
+
+    if (endMin - startMin < 60) {
+      return res.status(400).json({
+        success: false,
+        message: 'Appointment must be at least 1 hour'
+      });
+    }
 
     const appointment = new Appointment({
       patient: decoded.id,
@@ -100,7 +133,28 @@ router.post('/book', async (req, res) => {
       notes: notes || ''
     });
 
-    await appointment.save();
+    try {
+      await appointment.save();
+
+      return res.json({
+        success: true,
+        message: 'Appointment booked successfully!',
+        appointment
+      });
+
+    } catch (err) {
+      if (err.code === 11000) {
+        return res.status(400).json({
+          success: false,
+          message: 'This time slot is already booked by another patient'
+        });
+      }
+
+      return res.status(500).json({
+        success: false,
+        message: err.message
+      });
+    }
     res.json({ success: true, message: 'Appointment request submitted successfully!', appointment });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -137,6 +191,8 @@ router.get('/patient', async (req, res) => {
   }
 });
 
+
+
 // FR_17-04 & FR_17-05: Accept or Reject
 router.put('/:id/action', async (req, res) => {
   try {
@@ -158,13 +214,144 @@ router.put('/:id/action', async (req, res) => {
       return res.status(403).json({ success: false, message: 'Not authorized' });
 
     appointment.status = action;
-    if (action === 'rejected') appointment.rejectionReason = rejectionReason;
+
+    if (action === 'rejected') {
+      appointment.rejectionReason = rejectionReason;
+    }
+
     await appointment.save();
+
+    // 👇 PATIENT FETCH
+    const patient = await User.findById(appointment.patient);
+
+    // 👇 EMAIL ON ACCEPT
+    if (action === 'accepted' && patient) {
+      await createTransporter().sendMail({
+        from: `"MindBridge" <${process.env.EMAIL_USER}>`,
+        to: patient.email,
+        subject: 'Appointment Confirmed - MindBridge',
+        html: `
+      <div style="font-family:Arial;padding:20px">
+        <h2 style="color:#0d7377;">Appointment Confirmed ✅</h2>
+
+        <p>Hi <b>${patient.fullName}</b>,</p>
+
+        <p>Your appointment has been <b>ACCEPTED</b>.</p>
+
+        <h3>Details:</h3>
+        <ul>
+          <li><b>Date:</b> ${appointment.date}</li>
+          <li><b>Time:</b> ${appointment.timeSlot}</li>
+          <li><b>Mode:</b> ${appointment.consultationMode}</li>
+        </ul>
+
+        <p>Thank you for using MindBridge 💙</p>
+      </div>
+    `
+      });
+    }
+
+    // 👇 EMAIL ON REJECT
+    if (action === 'rejected' && patient) {
+      await createTransporter().sendMail({
+        from: `"MindBridge" <${process.env.EMAIL_USER}>`,
+        to: patient.email,
+        subject: 'Appointment Rejected - MindBridge',
+        html: `
+      <div style="font-family:Arial;padding:20px">
+        <h2 style="color:#dc3545;">Appointment Rejected ❌</h2>
+
+        <p>Hi <b>${patient.fullName}</b>,</p>
+
+        <p>Your appointment has been rejected by the psychiatrist.</p>
+
+        <h3>Reason:</h3>
+        <p style="background:#fff0f0;padding:10px;border-radius:8px;">
+          ${rejectionReason || 'No reason provided'}
+        </p>
+
+        <p>Please book another available slot.</p>
+      </div>
+    `
+      });
+    }
 
     res.json({ success: true, message: `Appointment ${action} successfully!`, appointment });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 });
+router.put('/:id/complete', async (req, res) => {
+  try {
+    const decoded = getUser(req);
+    if (!decoded) return res.status(401).json({ success: false, message: 'Not authenticated' });
 
+    const appointment = await Appointment.findById(req.params.id);
+
+    if (!appointment)
+      return res.status(404).json({ success: false, message: 'Appointment not found' });
+
+    // only psychiatrist can mark complete
+    if (appointment.psychiatrist.toString() !== decoded.id)
+      return res.status(403).json({ success: false, message: 'Not authorized' });
+
+    appointment.status = 'completed';
+    await appointment.save();
+
+    res.json({ success: true, message: 'Appointment marked as completed', appointment });
+
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+router.post('/:id/prescription', async (req, res) => {
+  try {
+    const decoded = getUser(req);
+    if (!decoded) return res.status(401).json({ message: 'Not authenticated' });
+
+    const appointment = await Appointment.findById(req.params.id);
+
+    if (!appointment)
+      return res.status(404).json({ message: 'Appointment not found' });
+
+    if (appointment.status !== 'completed')
+      return res.status(400).json({ message: 'Complete appointment first' });
+
+    if (appointment.psychiatrist.toString() !== decoded.id)
+      return res.status(403).json({ message: 'Not authorized' });
+
+    const { diagnosis, medicines, notes } = req.body;
+
+    const prescription = new Prescription({
+      appointment: appointment._id,
+      patient: appointment.patient,
+      psychiatrist: appointment.psychiatrist,
+      diagnosis,
+      medicines,
+      notes
+    });
+
+    await prescription.save();
+
+    res.json({ success: true, message: 'Prescription created', prescription });
+
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+router.get('/prescriptions/patient', async (req, res) => {
+  try {
+    const decoded = getUser(req);
+    if (!decoded) return res.status(401).json({ message: 'Not authenticated' });
+
+    const prescriptions = await Prescription.find({ patient: decoded.id })
+      .populate('psychiatrist', 'fullName')
+      .sort({ createdAt: -1 });
+
+    res.json({ success: true, prescriptions });
+
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 module.exports = router;

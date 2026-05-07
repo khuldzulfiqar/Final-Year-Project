@@ -45,8 +45,47 @@ function buildNavbar() {
     html += `<a href="/admin/admin-dashboard.html" class="nav-link">My Dashboard</a>`;
     html += `<button onclick="logout()" class="btn-nav btn-nav-danger">Logout</button>`;
   } else {
+
     html += link('/dashboard', 'My Dashboard');
-    html += `<button onclick="logout()" class="btn-nav btn-nav-danger">Logout</button>`;
+
+    const user = Auth.getUser();
+    const name = user?.fullName || 'User';
+    const email = user?.email || 'user@email.com';
+    const role = user?.role;
+
+    const initial = name.charAt(0).toUpperCase();
+
+    const profileLink =
+      role === "psychiatrist"
+          ? "/psy-profile"
+          : "/patient-profile.html";
+
+    html += `
+<div class="account-container">
+
+  <div class="avatar-btn" onclick="toggleDropdown()">
+    ${initial}
+  </div>
+
+  <div class="dropdown profile-dropdown" id="accountDropdown">
+    
+    <div class="dropdown-header">
+      <div class="avatar-large">${initial}</div>
+      <div class="user-info">
+        <div class="user-name">${name}</div>
+        <div class="user-email">${email}</div>
+      </div>
+    </div>
+
+    <div class="dropdown-divider"></div>
+
+    <a href="${profileLink}">👤 Profile</a>
+    <a href="#" onclick="logout()">🚪 Logout</a>
+
+  </div>
+
+</div>
+`;
   }
 
   nav.innerHTML = html;
@@ -78,3 +117,14 @@ function showAlert(id, msg, type = 'error') {
 }
 
 document.addEventListener('DOMContentLoaded', () => { buildNavbar(); });
+function toggleDropdown() {
+  const menu = document.getElementById("accountDropdown");
+  menu.style.display = menu.style.display === "block" ? "none" : "block";
+}
+
+window.onclick = function (e) {
+  if (!e.target.closest('.account-container')) {
+    const menu = document.getElementById("accountDropdown");
+    if (menu) menu.style.display = "none";
+  }
+}
