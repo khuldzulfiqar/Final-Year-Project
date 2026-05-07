@@ -40,7 +40,8 @@ router.get('/slots/:psychiatristId', async (req, res) => {
     if (!psy) return res.status(404).json({ success: false, message: 'Psychiatrist not found' });
 
     const { date } = req.query;
-    const dayName = date ? new Date(date).toLocaleDateString('en-US', { weekday: 'long' }) : null;
+    const [_y,_m,_d] = date ? date.split("-").map(Number) : [];
+    const dayName = date ? new Date(_y, _m-1, _d).toLocaleDateString("en-US", { weekday: "long" }) : null;
 
     // Check if psychiatrist works on this day
     if (dayName && psy.availableDays && !psy.availableDays.includes(dayName)) {

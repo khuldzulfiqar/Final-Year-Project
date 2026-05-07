@@ -475,7 +475,8 @@ function selectMode(mode) {
 async function loadSlots() {
   const date = document.getElementById('booking-date').value;
   if (!date || !currentPsychiatrist) return;
-  const dayName = new Date(date).toLocaleDateString('en-US', { weekday: 'long' });
+  const [y,m,d] = date.split('-').map(Number);
+  const dayName = new Date(y, m-1, d).toLocaleDateString('en-US', { weekday: 'long' });
   const dayWarning = document.getElementById('day-warning');
   if (currentPsychiatrist.availableDays && !currentPsychiatrist.availableDays.includes(dayName)) {
     dayWarning.textContent = `⚠️ Not available on ${dayName}s.`; dayWarning.style.display = 'block';
