@@ -15,25 +15,27 @@
 
     /* ── SIDEBAR ── */
     .dash-sidebar {
-      width: 248px;
+      width: 0;
+      min-width: 0;
       background: white;
       border-right: 1px solid var(--border);
       display: flex;
       flex-direction: column;
       padding: 1.75rem 0;
+      overflow: hidden;
 
-      position: fixed;
+      position: sticky;
       top: 70px;
-      left: 0;
       height: calc(100vh - 70px);
+      flex-shrink: 0;
 
-      transform: translateX(-100%);
-      transition: 0.3s ease;
-      z-index: 1000;
+      transition: width 0.3s ease, min-width 0.3s ease, padding 0.3s ease;
+      z-index: 100;
     }
 
     .dash-sidebar.open {
-      transform: translateX(0);
+      width: 248px;
+      min-width: 248px;
     }
 
     .sidebar-section-lbl {
@@ -91,18 +93,7 @@
     }
 
     #sidebar-overlay {
-      position: fixed;
-      top: 70px;
-      left: 0;
-      width: 100%;
-      height: calc(100vh - 70px);
-      background: rgba(0, 0, 0, 0.3);
       display: none;
-      z-index: 999;
-    }
-
-    #sidebar-overlay.show {
-      display: block;
     }
 
 
@@ -1017,12 +1008,10 @@
 
     function openSidebar() {
       sidebar.classList.add('open');
-      overlay.classList.add('show');
     }
 
     function closeSidebar() {
       sidebar.classList.remove('open');
-      overlay.classList.remove('show');
     }
 
     // toggle button click
@@ -1034,12 +1023,6 @@
         openSidebar();
       }
     });
-
-    // click outside (screen click → close)
-    overlay.addEventListener('click', closeSidebar);
-
-    // optional: click anywhere in main also closes
-    document.querySelector('.dash-main').addEventListener('click', closeSidebar);
     function openAppointments() {
       window.location.href = "/appointments";
     }

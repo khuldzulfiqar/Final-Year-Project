@@ -110,7 +110,22 @@ router.post('/book', async (req, res) => {
         message: 'This slot is already booked. Please choose another time.'
       });
     }
-    if (existing) return res.status(400).json({ success: false, message: 'This slot is already booked. Please choose another.' });
+
+    // Check patient does not already have an appointment at the same date + time with a DIFFERENT doctor
+    const timeConflict = await Appointment.findOne({
+      patient: decoded.id,
+      date,
+      timeSlot,
+      psychiatrist: { $ne: psychiatristId },
+      status: { $in: ['pending', 'accepted'] }
+    });
+
+    if (timeConflict) {
+      return res.status(400).json({
+        success: false,
+        message: `You already have an appointment with Dr. ${timeConflict.psychiatristName} at ${timeSlot} on ${date}. Please choose a different time slot.`
+      });
+    }
     const [sh, sm] = timeSlot.split('–')[0].trim().split(':').map(Number);
     const [eh, em] = timeSlot.split('–')[1].trim().split(':').map(Number);
 
