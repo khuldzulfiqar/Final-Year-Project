@@ -9,8 +9,8 @@ mongoose.connect(MONGO_URI)
 async function createAdmin() {
   const admin = new Admin({
     fullName: 'Admin',
-    email: 'admin@mindbridge.com',
-    password: 'mindbridge@123'
+    email: 'admin@gmail.com',
+    password: '123456'
   });
 
   await admin.save();

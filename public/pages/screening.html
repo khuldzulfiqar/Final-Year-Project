@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Symptom Screening — MindBridge</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .screen-wrap {
+      min-height: 75vh;
+      background: var(--cream);
+      padding: 3rem 1rem;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+    }
+
+    .screen-card {
+      width: 100%;
+      max-width: 560px;
+      background: white;
+      border-radius: 20px;
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--border);
+      padding: 2.25rem 2rem 1.75rem;
+    }
+
+    .screen-eyebrow {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--teal);
+      margin-bottom: 0.6rem;
+    }
+
+    .screen-question {
+      font-family: 'Playfair Display', serif;
+      font-weight: 700;
+      font-size: 1.5rem;
+      line-height: 1.35;
+      color: var(--charcoal);
+      margin: 0 0 1.5rem;
+    }
+
+    .screen-sub {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      line-height: 1.6;
+      margin-bottom: 1.25rem;
+    }
+
+    .screen-progress {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 1.5rem;
+    }
+
+    .screen-progress-seg {
+      flex: 1;
+      height: 5px;
+      border-radius: 3px;
+      background: var(--border);
+      overflow: hidden;
+    }
+
+    .screen-progress-seg>i {
+      display: block;
+      height: 100%;
+      width: 0%;
+      background: var(--teal);
+      transition: width .3s ease;
+    }
+
+    .screen-choices {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .screen-choice {
+      flex: 1;
+      padding: 1rem;
+      border-radius: 12px;
+      border: 1.5px solid var(--border);
+      background: var(--cream);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text);
+      cursor: pointer;
+      text-align: center;
+      transition: all .15s ease;
+    }
+
+    .screen-choice:hover {
+      border-color: var(--teal);
+    }
+
+    .screen-choice.selected {
+      background: var(--teal);
+      border-color: var(--teal);
+      color: white;
+      box-shadow: 0 8px 18px -8px rgba(13, 115, 119, 0.55);
+    }
+
+    .screen-choice:focus-visible {
+      outline: 3px solid var(--teal-light);
+      outline-offset: 2px;
+    }
+
+    .screen-card {
+      animation: screenFadeIn .25s ease;
+    }
+
+    @keyframes screenFadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .screen-card { animation: none; }
+    }
+
+    .screen-field {
+      width: 100%;
+      padding: 0.9rem 1rem;
+      border-radius: 10px;
+      border: 1.5px solid var(--border);
+      background: var(--cream);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1rem;
+      color: var(--text);
+      margin-bottom: 1rem;
+    }
+
+    .screen-field:focus {
+      outline: none;
+      border-color: var(--teal);
+      background: white;
+    }
+
+    .screen-gender-row {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+
+    .screen-gender-row .screen-choice {
+      flex: 1 1 auto;
+      padding: 0.7rem 0.6rem;
+      font-size: 0.85rem;
+    }
+
+    .screen-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 1.25rem;
+    }
+
+    .screen-btn-ghost {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      padding: 0.7rem;
+    }
+
+    .intro-badge {
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--teal), var(--teal-light));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.1rem;
+      box-shadow: 0 8px 20px -8px rgba(13, 115, 119, 0.55);
+    }
+
+    .screen-disclaimer {
+      display: flex;
+      gap: 0.7rem;
+      align-items: flex-start;
+      background: rgba(132, 169, 140, 0.12);
+      border: 1px solid rgba(13, 115, 119, 0.18);
+      border-left: 3px solid var(--teal);
+      border-radius: 10px;
+      padding: 0.85rem 1rem;
+      font-size: 0.82rem;
+      line-height: 1.55;
+      color: var(--text-muted);
+      margin-bottom: 1.25rem;
+    }
+
+    .screen-disclaimer svg {
+      flex-shrink: 0;
+      margin-top: 0.15rem;
+      color: var(--teal);
+    }
+
+    .screen-disclaimer strong {
+      color: var(--text);
+    }
+
+    .crisis-panel {
+      background: #fff0ee;
+      border: 1.5px solid #f3c9c0;
+      border-radius: 12px;
+      padding: 1.1rem 1.1rem;
+      margin: 1rem 0;
+    }
+
+    .crisis-panel h4 {
+      font-family: 'Playfair Display', serif;
+      color: #b3402c;
+      margin: 0 0 0.4rem;
+      font-size: 1.05rem;
+    }
+
+    .crisis-panel p {
+      font-size: 0.85rem;
+      color: #8a3b24;
+      line-height: 1.55;
+      margin: 0 0 0.7rem;
+    }
+
+    .crisis-line {
+      display: flex;
+      justify-content: space-between;
+      background: white;
+      border-radius: 8px;
+      padding: 0.55rem 0.85rem;
+      margin-bottom: 0.5rem;
+      font-size: 0.85rem;
+    }
+
+    .crisis-line strong {
+      color: #b3402c;
+    }
+
+    .section-score-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.7rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.9rem;
+    }
+
+    .section-score-row:last-child {
+      border-bottom: none;
+    }
+
+    .score-pill {
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+      font-size: 0.8rem;
+      padding: 0.25rem 0.7rem;
+      border-radius: 50px;
+      background: var(--teal-light);
+      color: white;
+    }
+  </style>
+</head>
+
+<body>
+  <nav class="navbar">
+    <a href="/" class="navbar-brand">Mind<span>Bridge</span></a>
+    <div class="nav-links" id="dynamic-nav"></div>
+  </nav>
+
+  <div class="screen-wrap">
+    <div class="screen-card" id="screenCard"></div>
+  </div>
+
+  <script src="/js/app.js"></script>
+  <script>
+    const S = {
+      step: 'intro',      // intro | name | demo | question | done
+      sessionId: null,
+      name: '', age: '', gender: '',
+      currentQuestion: null,
+      progress: { asked: 0, min: 11, max: 20 },
+      crisisNote: null
+    };
+
+    const card = document.getElementById('screenCard');
+
+    function render() {
+      card.classList.remove('screen-card');
+      void card.offsetWidth; // reflow, so the animation replays on every step
+      card.classList.add('screen-card');
+      if (S.step === 'intro') return renderIntro();
+      if (S.step === 'name') return renderName();
+      if (S.step === 'demo') return renderDemographics();
+      if (S.step === 'question') return renderQuestion();
+      if (S.step === 'done') return renderDone();
+    }
+
+    function renderIntro() {
+      const user = Auth.getUser();
+      card.innerHTML = `
+        <div class="intro-badge">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 21s-6.7-4.35-9.3-8.6C.8 8.9 2.1 5 5.6 4.2c2-.45 3.9.4 5 2 1.1-1.6 3-2.45 5-2C18.9 5 20.2 8.9 18.3 12.4 15.7 16.65 12 21 12 21z"
+              stroke="white" stroke-width="1.6" stroke-linejoin="round" fill="rgba(255,255,255,0.15)"/>
+          </svg>
+        </div>
+        <h2 class="screen-question">Let's check in on how you've been feeling</h2>
+        <p class="screen-sub">
+          A few short questions about the last two weeks. Just answer Yes or No
+          as honestly as you can — there are no right or wrong answers.
+        </p>
+        <div class="screen-disclaimer">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/>
+            <path d="M12 11v5.5M12 8v.01" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+          <span><strong>Please note:</strong> this tool is not a diagnosis. Please consult a licensed mental health professional for a full evaluation.</span>
+        </div>
+        <div class="screen-nav" style="justify-content:flex-end;">
+          <button class="btn-nav btn-nav-primary" id="beginBtn">Continue</button>
+        </div>
+      `;
+      document.getElementById('beginBtn').onclick = () => {
+        if (user) { S.name = user.fullName || ''; S.step = 'demo'; }
+        else { S.step = 'name'; }
+        render();
+      };
+    }
+
+    function renderName() {
+      card.innerHTML = `
+        <p class="screen-eyebrow">Step 1 of 2</p>
+        <h2 class="screen-question">What's your name?</h2>
+        <input class="screen-field" id="nameInput" type="text" placeholder="Full name" value="${S.name}">
+        <div class="screen-nav">
+          <span></span>
+          <button class="btn-nav btn-nav-primary" id="nextBtn" ${S.name.trim() ? '' : 'disabled'}>Continue</button>
+        </div>
+      `;
+      const input = document.getElementById('nameInput');
+      const btn = document.getElementById('nextBtn');
+      input.oninput = () => { S.name = input.value; btn.disabled = !input.value.trim(); };
+      btn.onclick = () => { S.step = 'demo'; render(); };
+    }
+
+    function renderDemographics() {
+      const genders = ['Female', 'Male', 'Other', 'Prefer not to say'];
+      card.innerHTML = `
+        <p class="screen-eyebrow">Step 2 of 2</p>
+        <h2 class="screen-question">A little about you, ${(S.name.split(' ')[0] || 'there')}</h2>
+        <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:0.4rem;">Age</label>
+        <input class="screen-field" id="ageInput" type="number" min="1" max="120" placeholder="e.g. 24" value="${S.age}">
+        <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:0.4rem;">Gender</label>
+        <div class="screen-gender-row" id="genderRow">
+          ${genders.map(g => `<button type="button" class="screen-choice ${S.gender === g ? 'selected' : ''}" data-g="${g}">${g}</button>`).join('')}
+        </div>
+        <div class="screen-nav">
+          <button class="screen-btn-ghost" id="backBtn">Back</button>
+          <button class="btn-nav btn-nav-primary" id="startBtn" ${S.age && S.gender ? '' : 'disabled'}>Start</button>
+        </div>
+      `;
+      const ageInput = document.getElementById('ageInput');
+      const startBtn = document.getElementById('startBtn');
+      ageInput.oninput = () => { S.age = ageInput.value; startBtn.disabled = !(S.age && S.gender); };
+      document.getElementById('genderRow').onclick = (e) => {
+        const b = e.target.closest('.screen-choice');
+        if (!b) return;
+        S.gender = b.dataset.g;
+        document.querySelectorAll('#genderRow .screen-choice').forEach(x => x.classList.remove('selected'));
+        b.classList.add('selected');
+        startBtn.disabled = !(S.age && S.gender);
+      };
+      document.getElementById('backBtn').onclick = () => { S.step = 'name'; render(); };
+      startBtn.onclick = startSession;
+    }
+
+    async function startSession() {
+      const res = await apiCall('/api/screening/start', 'POST', {
+        name: S.name, age: Number(S.age), gender: S.gender
+      });
+      if (!res.success) { showToast(res.message || 'Could not start screening', 'error'); return; }
+      S.sessionId = res.sessionId;
+      S.currentQuestion = res.next;
+      S.progress = res.progress;
+      S.step = 'question';
+      render();
+    }
+
+    function progressBar() {
+      // Baseline segment always fills first, then the adaptive segment.
+      const baselineTotal = S.progress.min;
+      const maxTotal = S.progress.max;
+      const asked = S.progress.asked;
+      const baselineFill = Math.min(asked, baselineTotal) / baselineTotal;
+      const extendedFill = asked > baselineTotal ? (asked - baselineTotal) / (maxTotal - baselineTotal) : 0;
+      return `
+        <div class="screen-progress">
+          <div class="screen-progress-seg" style="flex:${baselineTotal};"><i style="width:${baselineFill * 100}%"></i></div>
+          <div class="screen-progress-seg" style="flex:${maxTotal - baselineTotal};"><i style="width:${extendedFill * 100}%"></i></div>
+        </div>
+      `;
+    }
+
+    function renderQuestion() {
+      const q = S.currentQuestion;
+      card.innerHTML = `
+        ${progressBar()}
+        <p class="screen-eyebrow">Question ${S.progress.asked + 1}</p>
+        <h2 class="screen-question">${escapeHtml(q.text)}</h2>
+        <div class="screen-choices" id="choices">
+          <button type="button" class="screen-choice" data-v="Yes">Yes</button>
+          <button type="button" class="screen-choice" data-v="No">No</button>
+        </div>
+        <div id="crisisSlot"></div>
+      `;
+      document.getElementById('choices').onclick = async (e) => {
+        const b = e.target.closest('.screen-choice');
+        if (!b) return;
+        document.querySelectorAll('#choices .screen-choice').forEach(x => x.classList.remove('selected'));
+        b.classList.add('selected');
+        document.querySelectorAll('#choices .screen-choice').forEach(x => x.disabled = true);
+        await submitAnswer(q.column, b.dataset.v);
+      };
+    }
+
+    async function submitAnswer(column, value) {
+      const res = await apiCall(`/api/screening/${S.sessionId}/answer`, 'POST', { column, value });
+      if (!res.success) { showToast(res.message || 'Something went wrong', 'error'); return; }
+
+      if (res.crisisJustTriggered) {
+        const slot = document.getElementById('crisisSlot');
+        if (slot) slot.innerHTML = crisisPanelHtml() + `
+          <div class="screen-nav" style="justify-content:flex-end;">
+            <button class="btn-nav btn-nav-primary" id="continueBtn">Continue</button>
+          </div>`;
+        const cont = document.getElementById('continueBtn');
+        if (cont) { cont.onclick = () => advance(res); return; }
+      }
+      advance(res);
+    }
+
+    function advance(res) {
+      if (res.done) {
+        S.step = 'done';
+        S.results = res.results;
+        S.crisisFlag = res.crisisFlag;
+        S.totalQuestions = res.totalQuestions;
+        render();
+        return;
+      }
+      S.currentQuestion = res.next;
+      S.progress = res.progress;
+      S.step = 'question';
+      render();
+    }
+
+    function crisisPanelHtml() {
+      return `
+        <div class="crisis-panel" role="alert">
+          <h4>You don't have to go through this alone</h4>
+          <p>Thank you for answering honestly. Support is available right now, for free and in confidence.</p>
+          <div class="crisis-line"><span>Umang Pakistan — 24/7 Mental Health Helpline</span><strong>0311 7786264</strong></div>
+          <div class="crisis-line"><span>National Emergency (Police / Medical / Fire)</span><strong>1122</strong></div>
+          <p style="margin-top:0.5rem;">If you are in immediate danger, please contact emergency services or go to the nearest emergency room right away.</p>
+        </div>
+      `;
+    }
+
+    function renderDone() {
+      card.innerHTML = `
+        <h2 class="screen-question">Thank you, ${(S.name.split(' ')[0] || 'there')}</h2>
+        ${S.crisisFlag ? crisisPanelHtml() : ''}
+        <p class="screen-sub">Your responses have been recorded. We'll let you know once they've been reviewed.</p>
+        <div class="screen-disclaimer">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/>
+            <path d="M12 11v5.5M12 8v.01" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+          <span><strong>Please note:</strong> this tool is not a diagnosis. Please consult a licensed mental health professional for a full evaluation.</span>
+        </div>
+        <div class="screen-nav">
+          <button class="screen-btn-ghost" id="retakeBtn">Retake</button>
+          <a href="/psychiatrists" class="btn-nav btn-nav-primary" style="text-decoration:none;">Find a Psychiatrist</a>
+        </div>
+      `;
+      document.getElementById('retakeBtn').onclick = () => {
+        S.step = 'intro'; S.sessionId = null; S.currentQuestion = null;
+        S.progress = { asked: 0, min: 11, max: 20 };
+        render();
+      };
+    }
+
+    function escapeHtml(str) {
+      return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+    }
+
+    render();
+  </script>
+</body>
+
+</html>

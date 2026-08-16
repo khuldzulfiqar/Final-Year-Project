@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <title>My Profile – MindBridge</title>
@@ -12,198 +11,145 @@
 
 <body>
 
-  <!-- NAVBAR -->
-  <nav class="navbar">
-    <a href="/" class="navbar-brand">Mind<span>Bridge</span></a>
+<!-- NAVBAR -->
+<nav class="navbar">
+  <a href="/" class="navbar-brand">Mind<span>Bridge</span></a>
 
-    <div class="nav-right">
-      <button class="avatar-btn" id="avatarBtn">U</button>
+  <div class="nav-right">
+    <button class="avatar-btn" id="avatarBtn">U</button>
 
-      <div class="avatar-dropdown" id="avatarDropdown">
-        <div class="dropdown-user">
-          <p id="nav-name">User</p>
-          <span id="nav-email">email</span>
-        </div>
-
-        <div class="dropdown-item logout-item" id="logoutBtn">
-          <i class="ti ti-logout"></i> Logout
-        </div>
-      </div>
-    </div>
-  </nav>
-
-  <!-- PAGE -->
-  <div class="page">
-
-    <a href="#" onclick="goBack(event)" class="back-link">← Back</a>
-
-    <h2 class="title">My Profile</h2>
-
-    <div class="cardd">
-      <div class="avatar-circle" id="avatar-circle">?</div>
-
-      <h3 id="name" class="name">Loading...</h3>
-
-      <span class="badge-patient" id="role-badge">User</span>
-
-      <div class="info">
-        <div class="row">
-          <span>Email</span>
-          <p id="email">—</p>
-        </div>
-
-        <div class="row">
-          <span>CNIC</span>
-          <p id="cnic">—</p>
-        </div>
-
-        <div class="row">
-          <span>Age</span>
-          <p id="age">—</p>
-        </div>
-
-        <div class="row">
-          <span>Member Since</span>
-          <p id="since">—</p>
-        </div>
+    <div class="avatar-dropdown" id="avatarDropdown">
+      <div class="dropdown-user">
+        <p id="nav-name">User</p>
+        <span id="nav-email">email</span>
       </div>
 
-      <p id="error-msg" class="error-msg" style="display:none;"></p>
+      <div class="dropdown-item logout-item" id="logoutBtn">
+        <i class="ti ti-logout"></i> Logout
+      </div>
     </div>
   </div>
+</nav>
 
-  <script src="/js/app.js"></script>
+<!-- PAGE -->
+<div class="page">
 
-  <script>
-    // ================= DROPDOWN =================
-    const avatarBtn = document.getElementById('avatarBtn');
-    const avatarDropdown = document.getElementById('avatarDropdown');
+  <a href="#" onclick="goBack(event)" class="back-link">← Back</a>
 
-    avatarBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      avatarDropdown.classList.toggle('show');
-    });
+  <h2 class="title">My Profile</h2>
 
-    document.addEventListener('click', () => {
-      avatarDropdown.classList.remove('show');
-    });
+  <div class="cardd">
+    <div class="avatar-circle" id="avatar-circle">?</div>
 
-    // ================= LOGOUT =================
-    document.getElementById("logoutBtn").addEventListener("click", function () {
-      localStorage.clear();
-      window.location.href = "/";
-    });
+    <h3 id="name" class="name">Loading...</h3>
 
-    // ================= BACK =================
-    function goBack(e) {
-      e.preventDefault();
+    <span class="badge-patient" id="role-badge">User</span>
 
-      const user = JSON.parse(localStorage.getItem("mb_user"));
+    <div class="info">
+      <div class="row">
+        <span>Email</span>
+        <p id="email">—</p>
+      </div>
 
-      if (!user) return window.location.href = "/login";
+      <div class="row">
+        <span>CNIC</span>
+        <p id="cnic">—</p>
+      </div>
 
-      if (user.role === "admin") {
-        window.location.href = "/admin/manage-patients.html";
-      }
-      else if (user.role === "psychiatrist") {
-        window.location.href = "/appointments.html";
-      }
-      else {
-        window.location.href = "/dashboard";
-      }
-    }
+      <div class="row">
+        <span>Age</span>
+        <p id="age">—</p>
+      </div>
 
-    // ================= LOAD PROFILE =================
-    async function loadProfile() {
-      try {
+      <div class="row">
+        <span>Member Since</span>
+        <p id="since">—</p>
+      </div>
+    </div>
 
-        const params = new URLSearchParams(window.location.search);
-        const patientId = params.get("id");
+    <p id="error-msg" class="error-msg" style="display:none;"></p>
+  </div>
+</div>
 
-        let user;
+<script src="/js/app.js"></script>
 
-        // =========================
-        // ADMIN VIEWING PATIENT
-        // =========================
-        if (patientId) {
+<script>
+// ================= DROPDOWN =================
+const avatarBtn = document.getElementById('avatarBtn');
+const avatarDropdown = document.getElementById('avatarDropdown');
 
-          const res = await fetch('/api/admin/patient/' + patientId);
+avatarBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  avatarDropdown.classList.toggle('show');
+});
 
-          user = await res.json();
+document.addEventListener('click', () => {
+  avatarDropdown.classList.remove('show');
+});
 
-        }
+// ================= LOGOUT =================
+document.getElementById("logoutBtn").addEventListener("click", function () {
+  localStorage.clear();
+  window.location.href = "/";
+});
 
-        // =========================
-        // PATIENT VIEWING OWN PROFILE
-        // =========================
-        else {
+// ================= BACK =================
+function goBack(e) {
+  e.preventDefault();
 
-          const res = await apiCall('/api/auth/me');
+  const user = JSON.parse(localStorage.getItem("user"));
 
-          user = res.user;
-        }
+  if (!user) return window.location.href = "/login";
 
-        if (!user) {
-          throw new Error("User not found");
-        }
+  if (user.role === "admin") {
+    window.location.href = "/admin/manage-patients.html";
+  } 
+  else if (user.role === "psychiatrist") {
+    window.location.href = "/appointments.html";
+  } 
+  else {
+    window.location.href = "/dashboard";
+  }
+}
 
-        // NAVBAR
-        document.getElementById("nav-name").textContent =
-          user.fullName || "User";
+// ================= LOAD PROFILE =================
+async function loadProfile() {
+  try {
+    const res = await apiCall('/api/auth/me'); // 🔥 IMPORTANT
+    const user = res.user;
 
-        document.getElementById("nav-email").textContent =
-          user.email || "";
+    if (!user) throw new Error("No user");
 
-        // AVATAR
-        const initial =
-          user.fullName?.charAt(0).toUpperCase() || "U";
+    // NAVBAR
+    document.getElementById("nav-name").textContent = user.fullName;
+    document.getElementById("nav-email").textContent = user.email;
 
-        document.getElementById("avatarBtn").textContent = initial;
+    // AVATAR
+    const initial = user.fullName?.charAt(0).toUpperCase() || "U";
+    document.getElementById("avatarBtn").textContent = initial;
+    document.getElementById("avatar-circle").textContent = initial;
 
-        document.getElementById("avatar-circle").textContent = initial;
+    // PROFILE
+    document.getElementById('name').textContent = user.fullName || '—';
+    document.getElementById('email').textContent = user.email || '—';
+    document.getElementById('cnic').textContent = user.cnic || '—';
+    document.getElementById('age').textContent = user.age ? user.age + ' years' : '—';
+    document.getElementById('since').textContent = user.createdAt
+      ? new Date(user.createdAt).toLocaleDateString()
+      : '—';
 
-        // PROFILE
-        document.getElementById('name').textContent =
-          user.fullName || '—';
+    document.getElementById('role-badge').textContent =
+      user.role.charAt(0).toUpperCase() + user.role.slice(1);
 
-        document.getElementById('email').textContent =
-          user.email || '—';
+  } catch (err) {
+    document.getElementById('name').textContent = 'Failed to load';
+    document.getElementById('error-msg').style.display = 'block';
+    document.getElementById('error-msg').textContent = "Could not load profile.";
+  }
+}
 
-        document.getElementById('cnic').textContent =
-          user.cnic || '—';
-
-        document.getElementById('age').textContent =
-          user.age ? user.age + ' years' : '—';
-
-        document.getElementById('since').textContent =
-          user.createdAt
-            ? new Date(user.createdAt).toLocaleDateString()
-            : '—';
-
-        document.getElementById('role-badge').textContent =
-          user.role
-            ? user.role.charAt(0).toUpperCase() + user.role.slice(1)
-            : "User";
-
-      }
-
-      catch (err) {
-
-        console.error(err);
-
-        document.getElementById('name').textContent =
-          'Failed to load';
-
-        document.getElementById('error-msg').style.display =
-          'block';
-
-        document.getElementById('error-msg').textContent =
-          "Could not load profile.";
-      }
-    }
-    loadProfile();
-  </script>
+loadProfile();
+</script>
 
 </body>
-
 </html>

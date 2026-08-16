@@ -93,17 +93,6 @@ router.delete("/patient/:id", async (req, res) => {
 
 
 
-// Get single psychiatrist by ID — for View Profile modal
-router.get("/psychiatrist/:id", async (req, res) => {
-  try {
-    const psychiatrist = await User.findOne({ _id: req.params.id, role: "psychiatrist" });
-    if (!psychiatrist) return res.status(404).json({ message: "Psychiatrist not found" });
-    res.json(psychiatrist);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
 // 1️⃣ Get all psychiatrists
 router.get("/psychiatrists", async (req, res) => {
   try {

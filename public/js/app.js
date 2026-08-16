@@ -57,8 +57,8 @@ function buildNavbar() {
 
     const profileLink =
       role === "psychiatrist"
-        ? "/psy-profile"
-        : "/patient-profile";
+          ? "/psy-profile"
+          : "/patient-profile.html";
 
     html += `
 <div class="account-container">

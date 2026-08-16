@@ -347,10 +347,6 @@
       border-left-color: #e17055;
     }
 
-    .appt-card.completed {
-      border-left-color: #3b82f6;
-    }
-
     .appt-top {
       display: flex;
       justify-content: space-between;
@@ -410,11 +406,6 @@
     .badge-rejected {
       background: #fee2e2;
       color: #991b1b;
-    }
-
-    .badge-completed {
-      background: #dbeafe;
-      color: #1e40af;
     }
 
     .rejection-box {
@@ -859,6 +850,7 @@
         { icon: '🏠', label: 'Dashboard', href: '/dashboard', active: true },
         { icon: '📅', label: 'My Appointments', href: '/appointments' },
         { icon: '🔍', label: 'Find Psychiatrist', href: '/psychiatrists' },
+        { icon: '🧠', label: 'Symptom Screening', href: '/screening' },
         { icon: '👤', label: 'My Profile', href: '/patient-profile' },
         { icon: '📄', label: 'My Prescriptions', href: '/patient-prescriptions' }
       ];
@@ -998,9 +990,7 @@
             ? '✅ Accepted'
             : a.status === 'rejected'
               ? '❌ Rejected'
-              : a.status === 'completed'
-                ? '🏁 Completed'
-                : '⏳ Pending'}
+              : '⏳ Pending'}
 </span>
         </div>
         <div class="appt-meta-row">

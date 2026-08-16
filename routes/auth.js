@@ -117,10 +117,6 @@ router.post('/register-patient', async (req, res) => {
     if (!Number.isInteger(ageNum) || ageNum < 18 || ageNum > 100)
       return res.status(400).json({ success: false, message: 'Age must be between 18 and 100' });
 
-    // Password strength validation
-    if (password.length < 8 || !/[!@#$%^&*()\-_=+\[\]{};:'",.<>/?`~\\|]/.test(password))
-      return res.status(400).json({ success: false, message: 'Password must be at least 8 characters and contain at least one special character.' });
-
     // Check OTP verified
     const otpRecord = otpStore.get(email.toLowerCase().trim());
     if (!otpRecord || !otpRecord.verified)
@@ -141,11 +137,9 @@ router.post('/register-patient', async (req, res) => {
 router.post('/register-psychiatrist', async (req, res) => {
   try {
     const User = require('../models/User');
-    const { fullName, cnic, age, email, password, phone, specialization, experience, qualification, bio, licenseNumber } = req.body;
+    const { fullName, cnic, age, email, password, phone, specialization, experience, qualification, bio } = req.body;
     if (!fullName || !cnic || !email || !password)
       return res.status(400).json({ success: false, message: 'All required fields must be filled' });
-    if (!licenseNumber)
-      return res.status(400).json({ success: false, message: 'License number is required' });
 
     // CNIC validation: must match XXXXX-XXXXXXX-X
     const cnicRegex = /^\d{5}-\d{7}-\d{1}$/;
@@ -159,10 +153,6 @@ router.post('/register-psychiatrist', async (req, res) => {
         return res.status(400).json({ success: false, message: 'Age must be between 25 and 80' });
     }
 
-    // Password strength validation
-    if (password.length < 8 || !/[!@#$%^&*()\-_=+\[\]{};:'",.<>/?`~\\|]/.test(password))
-      return res.status(400).json({ success: false, message: 'Password must be at least 8 characters and contain at least one special character.' });
-
     // Check OTP verified
     const otpRecord = otpStore.get(email.toLowerCase().trim());
     if (!otpRecord || !otpRecord.verified)
@@ -170,7 +160,7 @@ router.post('/register-psychiatrist', async (req, res) => {
 
     const existing = await User.findOne({ $or: [{ email }, { cnic }] });
     if (existing) return res.status(400).json({ success: false, message: 'Email or CNIC already registered' });
-    const user = new User({ fullName, cnic, email, password, role: 'psychiatrist', phone, specialization, experience, qualification, bio, licenseNumber, isEmailVerified: true });
+    const user = new User({ fullName, cnic, email, password, role: 'psychiatrist', phone, specialization, experience, qualification, bio, isEmailVerified: true });
     await user.save();
     otpStore.delete(email.toLowerCase().trim());
     res.json({ success: true, message: 'Psychiatrist registered successfully!' });

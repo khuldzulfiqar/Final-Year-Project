@@ -22,7 +22,7 @@
       <div id="alert-box" class="alert-box"></div>
 
       <div style="background:rgba(13,115,119,0.06); border-radius:12px; padding:1rem 1.25rem; margin-bottom:1.5rem; border-left:3px solid var(--teal);">
-        <p style="font-size:0.85rem; color:var(--text-muted); margin:0;">Fields marked with <strong style="color:var(--teal);">*</strong> are required. Your registration will be reviewed by admin before approval.</p>
+        <p style="font-size:0.85rem; color:var(--text-muted); margin:0;">Fields marked with <strong style="color:var(--teal);">*</strong> are required. Profile details help patients find the right specialist.</p>
       </div>
 
       <!-- Required fields -->
@@ -40,23 +40,16 @@
       </div>
       <div class="mb-3">
         <label class="form-label">Password *</label>
-        <input type="password" id="password" class="form-control" placeholder="Min 8 chars, include a special character">
+        <input type="password" id="password" class="form-control" placeholder="Create a strong password (min 6 chars)">
       </div>
 
       <hr class="form-divider">
       <p style="font-size:0.8rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:1rem;">Professional Details</p>
 
-      <!-- License Number — required for admin review -->
-      <div class="mb-3">
-        <label class="form-label">License Number *</label>
-        <input type="text" id="licenseNumber" class="form-control" placeholder="e.g. PMC-12345">
-        <small style="color:var(--text-muted); font-size:0.78rem;">Your Pakistan Medical Commission (PMC) license number. Required for verification.</small>
-      </div>
-
       <div class="row">
         <div class="col-md-6">
           <div class="mb-3">
-            <label class="form-label">Specialization *</label>
+            <label class="form-label">Specialization</label>
             <input type="text" id="specialization" class="form-control" placeholder="e.g. Child Psychiatry">
           </div>
         </div>
@@ -68,7 +61,7 @@
         </div>
       </div>
       <div class="mb-3">
-        <label class="form-label">Qualification / Degree *</label>
+        <label class="form-label">Qualification / Degree</label>
         <input type="text" id="qualification" class="form-control" placeholder="e.g. MBBS, MD Psychiatry, FCPS">
       </div>
       <div class="mb-4">
@@ -89,16 +82,15 @@
 if (Auth.isLoggedIn()) window.location.href = '/dashboard';
 
 async function handleRegister() {
-  const fullName      = document.getElementById('fullName').value.trim();
-  const cnic          = document.getElementById('cnic').value.trim();
-  const email         = document.getElementById('email').value.trim();
-  const password      = document.getElementById('password').value;
-  const licenseNumber = document.getElementById('licenseNumber').value.trim();
-  const specialization= document.getElementById('specialization').value.trim();
-  const experience    = document.getElementById('experience').value.trim();
+  const fullName = document.getElementById('fullName').value.trim();
+  const cnic = document.getElementById('cnic').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const specialization = document.getElementById('specialization').value.trim();
+  const experience = document.getElementById('experience').value.trim();
   const qualification = document.getElementById('qualification').value.trim();
-  const bio           = document.getElementById('bio').value.trim();
-  const btn           = document.getElementById('reg-btn');
+  const bio = document.getElementById('bio').value.trim();
+  const btn = document.getElementById('reg-btn');
 
   if (!fullName || !cnic || !email || !password) {
     showAlert('alert-box', 'Please fill in all required fields (Name, CNIC, Email, Password).', 'error'); return;
@@ -107,17 +99,8 @@ async function handleRegister() {
   if (!cnicRegex.test(cnic)) {
     showAlert('alert-box', 'Invalid CNIC format. Please use XXXXX-XXXXXXX-X (e.g. 35201-1234567-8).', 'error'); return;
   }
-  if (!licenseNumber) {
-    showAlert('alert-box', 'License number is required for verification.', 'error'); return;
-  }
-  if (!specialization) {
-    showAlert('alert-box', 'Please enter your specialization.', 'error'); return;
-  }
-  if (!qualification) {
-    showAlert('alert-box', 'Please enter your qualification/degree.', 'error'); return;
-  }
-  if (password.length < 8) {
-    showAlert('alert-box', 'Password must be at least 8 characters.', 'error'); return;
+  if (password.length < 6) {
+    showAlert('alert-box', 'Password must be at least 6 characters.', 'error'); return;
   }
 
   btn.disabled = true;
@@ -125,11 +108,11 @@ async function handleRegister() {
 
   try {
     const data = await apiCall('/api/auth/register-psychiatrist', 'POST', {
-      fullName, cnic, email, password, licenseNumber, specialization, experience, qualification, bio
+      fullName, cnic, email, password, specialization, experience, qualification, bio
     });
     if (data.success) {
-      showAlert('alert-box', '✅ Account created! Your request is pending admin approval. Redirecting to login...', 'success');
-      setTimeout(() => window.location.href = '/login', 2500);
+      showAlert('alert-box', '✅ Account created successfully! Redirecting to login...', 'success');
+      setTimeout(() => window.location.href = '/login', 2000);
     } else {
       showAlert('alert-box', data.message || 'Registration failed.', 'error');
       btn.disabled = false; btn.textContent = 'Create Psychiatrist Account';
