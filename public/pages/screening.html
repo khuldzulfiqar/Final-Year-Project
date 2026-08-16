@@ -103,6 +103,28 @@
       background: var(--teal);
       border-color: var(--teal);
       color: white;
+<<<<<<< HEAD
+=======
+      box-shadow: 0 8px 18px -8px rgba(13, 115, 119, 0.55);
+    }
+
+    .screen-choice:focus-visible {
+      outline: 3px solid var(--teal-light);
+      outline-offset: 2px;
+    }
+
+    .screen-card {
+      animation: screenFadeIn .25s ease;
+    }
+
+    @keyframes screenFadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .screen-card { animation: none; }
+>>>>>>> 410c3f67ddd5d06fe25b10b7521efac7d0716d1a
     }
 
     .screen-field {
@@ -154,17 +176,50 @@
       padding: 0.7rem;
     }
 
+<<<<<<< HEAD
     .screen-disclaimer {
       background: var(--cream);
       border: 1px solid var(--border);
       border-radius: 10px;
       padding: 0.9rem 1rem;
+=======
+    .intro-badge {
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--teal), var(--teal-light));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.1rem;
+      box-shadow: 0 8px 20px -8px rgba(13, 115, 119, 0.55);
+    }
+
+    .screen-disclaimer {
+      display: flex;
+      gap: 0.7rem;
+      align-items: flex-start;
+      background: rgba(132, 169, 140, 0.12);
+      border: 1px solid rgba(13, 115, 119, 0.18);
+      border-left: 3px solid var(--teal);
+      border-radius: 10px;
+      padding: 0.85rem 1rem;
+>>>>>>> 410c3f67ddd5d06fe25b10b7521efac7d0716d1a
       font-size: 0.82rem;
       line-height: 1.55;
       color: var(--text-muted);
       margin-bottom: 1.25rem;
     }
 
+<<<<<<< HEAD
+=======
+    .screen-disclaimer svg {
+      flex-shrink: 0;
+      margin-top: 0.15rem;
+      color: var(--teal);
+    }
+
+>>>>>>> 410c3f67ddd5d06fe25b10b7521efac7d0716d1a
     .screen-disclaimer strong {
       color: var(--text);
     }
@@ -254,6 +309,12 @@
     const card = document.getElementById('screenCard');
 
     function render() {
+<<<<<<< HEAD
+=======
+      card.classList.remove('screen-card');
+      void card.offsetWidth; // reflow, so the animation replays on every step
+      card.classList.add('screen-card');
+>>>>>>> 410c3f67ddd5d06fe25b10b7521efac7d0716d1a
       if (S.step === 'intro') return renderIntro();
       if (S.step === 'name') return renderName();
       if (S.step === 'demo') return renderDemographics();
@@ -264,6 +325,7 @@
     function renderIntro() {
       const user = Auth.getUser();
       card.innerHTML = `
+<<<<<<< HEAD
         <p class="screen-eyebrow">Screening · ~5 minutes</p>
         <h2 class="screen-question">Let's check in on how you've been feeling</h2>
         <p class="screen-sub">
@@ -277,6 +339,28 @@
         </div>
         <div class="screen-nav" style="justify-content:flex-end;">
           <button class="btn-nav btn-nav-primary" id="beginBtn">Begin Screening</button>
+=======
+        <div class="intro-badge">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 21s-6.7-4.35-9.3-8.6C.8 8.9 2.1 5 5.6 4.2c2-.45 3.9.4 5 2 1.1-1.6 3-2.45 5-2C18.9 5 20.2 8.9 18.3 12.4 15.7 16.65 12 21 12 21z"
+              stroke="white" stroke-width="1.6" stroke-linejoin="round" fill="rgba(255,255,255,0.15)"/>
+          </svg>
+        </div>
+        <h2 class="screen-question">Let's check in on how you've been feeling</h2>
+        <p class="screen-sub">
+          A few short questions about the last two weeks. Just answer Yes or No
+          as honestly as you can — there are no right or wrong answers.
+        </p>
+        <div class="screen-disclaimer">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/>
+            <path d="M12 11v5.5M12 8v.01" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+          <span><strong>Please note:</strong> this tool is not a diagnosis. Please consult a licensed mental health professional for a full evaluation.</span>
+        </div>
+        <div class="screen-nav" style="justify-content:flex-end;">
+          <button class="btn-nav btn-nav-primary" id="beginBtn">Continue</button>
+>>>>>>> 410c3f67ddd5d06fe25b10b7521efac7d0716d1a
         </div>
       `;
       document.getElementById('beginBtn').onclick = () => {
@@ -364,7 +448,11 @@
       const q = S.currentQuestion;
       card.innerHTML = `
         ${progressBar()}
+<<<<<<< HEAD
         <p class="screen-eyebrow">${q.section} · Question ${S.progress.asked + 1}</p>
+=======
+        <p class="screen-eyebrow">Question ${S.progress.asked + 1}</p>
+>>>>>>> 410c3f67ddd5d06fe25b10b7521efac7d0716d1a
         <h2 class="screen-question">${escapeHtml(q.text)}</h2>
         <div class="screen-choices" id="choices">
           <button type="button" class="screen-choice" data-v="Yes">Yes</button>
@@ -426,6 +514,7 @@
     }
 
     function renderDone() {
+<<<<<<< HEAD
       const r = S.results || {};
       const rows = (r.sectionSummary || []).map(s => `
         <div class="section-score-row">
@@ -442,6 +531,18 @@
         <div class="screen-disclaimer">
           <strong>${r.disclaimer ? '' : 'Please note:'}</strong>
           ${r.disclaimer || 'This is an automated screening summary, not a diagnosis. Please consult a licensed mental health professional for a full evaluation.'}
+=======
+      card.innerHTML = `
+        <h2 class="screen-question">Thank you, ${(S.name.split(' ')[0] || 'there')}</h2>
+        ${S.crisisFlag ? crisisPanelHtml() : ''}
+        <p class="screen-sub">Your responses have been recorded. We'll let you know once they've been reviewed.</p>
+        <div class="screen-disclaimer">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/>
+            <path d="M12 11v5.5M12 8v.01" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+          <span><strong>Please note:</strong> this tool is not a diagnosis. Please consult a licensed mental health professional for a full evaluation.</span>
+>>>>>>> 410c3f67ddd5d06fe25b10b7521efac7d0716d1a
         </div>
         <div class="screen-nav">
           <button class="screen-btn-ghost" id="retakeBtn">Retake</button>
