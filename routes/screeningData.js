@@ -119,7 +119,10 @@ const BASELINE_ORDER = [
   "suicidal_thoughts"     // Depression (crisis check — always asked)
 ];
 
-const MAX_QUESTIONS = 20; // hard cap; baseline (11) + up to 9 adaptive follow-ups
+const MAX_QUESTIONS = 22; // hard cap; baseline (11) + up to 11 adaptive follow-ups
+// (11 covers the largest single section's extended pool -- Depression has
+// 11 extended questions -- so one strongly-triggered section can be fully
+// explored instead of being cut off partway through.)
 
 // Extended (follow-up) pool per section, in the order they get offered.
 const EXTENDED_MAP = SECTION_ORDER.reduce((acc, section) => {

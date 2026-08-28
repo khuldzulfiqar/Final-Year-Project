@@ -54,15 +54,22 @@ function pickNextColumn(session) {
   const activeSections = session.activeSections || [];
   if (activeSections.length === 0) return null;
 
-  // Round-robin across active sections so follow-ups stay mixed rather
-  // than exhausting one section before moving to the next.
-  const maxRounds = Math.max(...activeSections.map(s => (EXTENDED_MAP[s] || []).length), 0);
-  for (let round = 0; round < maxRounds; round++) {
-    for (const section of SECTION_ORDER) {
-      if (!activeSections.includes(section)) continue;
-      const col = (EXTENDED_MAP[section] || [])[round];
-      if (col && !asked.includes(col)) return col;
-    }
+  // Prioritize the section with the strongest signal so far (highest
+  // percentage of "Yes" answers, ties broken by raw "Yes" count) and ask
+  // ALL of its remaining extended questions before moving to the next
+  // triggered section. This keeps follow-ups focused on the condition
+  // that's actually looking likely, instead of diluting the picture by
+  // mixing questions from every triggered section together.
+  const prioritized = [...activeSections].sort((a, b) => {
+    const sa = session.sectionScores[a] || { percentage: 0, yes: 0 };
+    const sb = session.sectionScores[b] || { percentage: 0, yes: 0 };
+    if (sb.percentage !== sa.percentage) return sb.percentage - sa.percentage;
+    return sb.yes - sa.yes;
+  });
+
+  for (const section of prioritized) {
+    const remaining = (EXTENDED_MAP[section] || []).filter(col => !asked.includes(col));
+    if (remaining.length > 0) return remaining[0];
   }
   return null;
 }
