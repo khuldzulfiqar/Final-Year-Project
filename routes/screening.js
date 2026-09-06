@@ -90,6 +90,57 @@ function initSectionScores() {
 }
 
 /**
+ * Guidance content for the heuristic fallback path, keyed to the same
+ * section names used throughout this file (SECTION_ORDER). Mirrors the
+ * GUIDANCE dict in ml-service/main.py so the patient sees consistent
+ * advice whether the real AI model answered or this fallback did.
+ */
+const GUIDANCE = {
+  "Depression": {
+    selfCare: [
+      "Try to keep a consistent sleep and wake time, even on hard days.",
+      "Break tasks into small steps — finishing one small thing counts.",
+      "Reach out to one trusted person this week, even briefly."
+    ],
+    recommendedAction: "Book a consultation with a psychiatrist specializing in Depression.",
+    urgency: "moderate"
+  },
+  "Anxiety": {
+    selfCare: [
+      "Practice slow breathing (4 seconds in, 6 seconds out) when worry spikes.",
+      "Limit caffeine, which can worsen restlessness and racing thoughts.",
+      "Write worries down instead of replaying them mentally."
+    ],
+    recommendedAction: "Book a consultation with a psychiatrist specializing in Anxiety.",
+    urgency: "moderate"
+  },
+  "Bipolar Disorder": {
+    selfCare: [
+      "Track your mood daily — sudden energy/sleep changes are important signals.",
+      "Keep a stable daily routine; irregular sleep can trigger mood shifts.",
+      "Avoid major financial or life decisions during high-energy periods."
+    ],
+    recommendedAction: "See a psychiatrist specializing in Bipolar Disorder soon for a proper evaluation.",
+    urgency: "high"
+  },
+  "Schizophrenia": {
+    selfCare: [
+      "Note down what you experience and when, to share with a professional.",
+      "Stay connected to someone you trust — isolation can worsen symptoms.",
+      "Avoid alcohol or recreational drugs, which can intensify symptoms."
+    ],
+    recommendedAction: "This pattern needs prompt evaluation — please book a psychiatrist appointment soon.",
+    urgency: "high"
+  }
+};
+
+const NO_SIGNAL_GUIDANCE = {
+  selfCare: ['No strong pattern detected — keep monitoring how you feel.'],
+  recommendedAction: 'No urgent action needed.',
+  urgency: 'low'
+};
+
+/**
  * Rule-based fallback scorer, used when no external AI model endpoint is
  * configured (or if the call to it fails). Purely descriptive of the
  * answers given — NOT a diagnosis.
@@ -101,11 +152,13 @@ function heuristicResult(session) {
   }).sort((a, b) => b.percentage - a.percentage);
 
   const notable = summary.filter(s => s.asked > 0 && s.percentage >= 50);
+  const topSection = notable[0] && notable[0].section;
 
   return {
     source: 'heuristic-fallback',
     sectionSummary: summary,
     notableSections: notable.map(s => s.section),
+    guidance: (topSection && GUIDANCE[topSection]) || NO_SIGNAL_GUIDANCE,
     disclaimer: 'This is an automated screening summary, not a clinical diagnosis. Please consult a licensed mental health professional for a full evaluation.'
   };
 }
