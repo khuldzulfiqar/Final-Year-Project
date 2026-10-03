@@ -146,17 +146,22 @@ const NO_SIGNAL_GUIDANCE = {
  * answers given — NOT a diagnosis.
  */
 function heuristicResult(session) {
+  // Highest percentage first; ties broken by raw "Yes" count (same rule used
+  // when choosing follow-up questions).
   const summary = SECTION_ORDER.map(section => {
     const s = session.sectionScores[section] || { asked: 0, yes: 0, percentage: 0 };
     return { section, asked: s.asked, yes: s.yes, percentage: s.percentage };
-  }).sort((a, b) => b.percentage - a.percentage);
+  }).sort((a, b) => (b.percentage - a.percentage) || (b.yes - a.yes));
 
   const notable = summary.filter(s => s.asked > 0 && s.percentage >= 50);
   const topSection = notable[0] && notable[0].section;
 
   return {
     source: 'heuristic-fallback',
-    sectionSummary: summary,
+    // Single most likely condition, same shape the AI model returns, so the
+    // front end shows exactly one result on both code paths.
+    disease: topSection || 'Normal',
+    sectionSummary: summary,   // kept in the saved session for records only
     notableSections: notable.map(s => s.section),
     guidance: (topSection && GUIDANCE[topSection]) || NO_SIGNAL_GUIDANCE,
     disclaimer: 'This is an automated screening summary, not a clinical diagnosis. Please consult a licensed mental health professional for a full evaluation.'

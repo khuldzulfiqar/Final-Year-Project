@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 import joblib
+import re
 import pandas as pd
 
 app = FastAPI()
@@ -75,6 +76,22 @@ GUIDANCE = {
 }
 
 
+# Strength (mg etc.) lives inside the medicine name, e.g. "a rex 10mg tablet".
+STRENGTH_RE = re.compile(r"(\d+(?:\.\d+)?)\s*(mg|mcg|g|ml|iu)\b", re.IGNORECASE)
+
+
+def extract_strength(name):
+    """'a rex 10mg tablet' -> '10 mg'. Returns '' when the name has no strength."""
+    m = STRENGTH_RE.search(str(name))
+    return f"{m.group(1)} {m.group(2).lower()}" if m else ""
+
+
+def clean(value):
+    """CSV blanks come through pandas as NaN -> turn them into ''."""
+    s = str(value).strip()
+    return "" if s.lower() == "nan" else s
+
+
 def get_medicines(disease, top_n=5):
     if disease == "Normal":
         return []
@@ -85,6 +102,9 @@ def get_medicines(disease, top_n=5):
         substitutes = [s.strip() for s in str(substitutes_raw).split(",") if s.strip() and s.strip().lower() != "nan"]
         result.append({
             "name": row["name"],
+            "strength": extract_strength(row["name"]),          # e.g. "10 mg"
+            "dosage": clean(row.get("dosage", "")),              # e.g. "1 tablet"
+            "timeToTake": clean(row.get("time_to_take", "")),    # e.g. "morning"
             "indication": row["Indication"],
             "sideEffects": row["Side_Effects"],
             "substitutes": substitutes,
@@ -100,9 +120,12 @@ async def predict(payload: ScreeningPayload):
     # Any symptom column not present in `answers` (not asked this session) defaults to 0.
     row = [payload.answers.get(col, 0) for col in symptom_columns]
 
-    pred_idx = model.predict([row])[0]
-    disease = le.inverse_transform([pred_idx])[0]
-    confidence = float(max(model.predict_proba([row])[0]))
+    # Only the single most likely condition is returned: the class with the
+    # highest predicted probability. Other conditions are intentionally dropped.
+    probs = model.predict_proba([row])[0]
+    best = int(probs.argmax())
+    disease = le.inverse_transform([model.classes_[best]])[0]
+    confidence = float(probs[best])
     medicines = get_medicines(disease)
 
     return {
@@ -111,5 +134,5 @@ async def predict(payload: ScreeningPayload):
         "medicine": medicines,
         "guidance": GUIDANCE.get(disease, GUIDANCE["Normal"]),
         "habitFormingWarning": any(m["habitForming"] for m in medicines),
-        "disclaimer": "This is an automated screening suggestion, not a clinical diagnosis or prescription. Please consult a licensed psychiatrist."
+        "disclaimer": "This is an automated screening suggestion, not a clinical diagnosis or prescription. Medicine details are for reference only - do not start or change any medicine without a licensed psychiatrist's advice."
     }

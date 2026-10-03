@@ -481,15 +481,8 @@
       const r = S.results || {};
       const g = r.guidance || null;
 
-      // Section-score rows (only present when the heuristic fallback ran)
-      const rows = (r.sectionSummary || []).map(s => `
-        <div class="section-score-row">
-          <span>${s.section}</span>
-          <span class="score-pill">${s.percentage}%</span>
-        </div>
-      `).join('');
-
-      // Disease + confidence block (only present when the real AI model ran)
+      // Only ONE condition is shown: the one with the highest likelihood.
+      // (Confidence % is shown when the AI model produced it.)
       const diseaseBlock = r.disease ? `
         <div class="section-score-row">
           <span>Likely condition</span>
@@ -497,16 +490,28 @@
         </div>
       ` : '';
 
-      // Medicine list — now with substitutes + a habit-forming warning badge
-      const medicineList = (r.medicine && r.medicine.length) ? `
-        <p class="screen-eyebrow" style="margin-top:1rem;">Commonly used medicines</p>
+      const prettyTime = t => t ? t.charAt(0).toUpperCase() + t.slice(1) : '';
+
+      // Medicine list - ONLY name, dosage and time to take
+      // Remove duplicate medicines (same name + dosage + time)
+      const uniqueMedicines = [];
+      const seenMeds = new Set();
+      (r.medicine || []).forEach(m => {
+        const key = [m.name, m.dosage || m.strength, m.timeToTake]
+          .map(v => String(v || '').trim().toLowerCase()).join('|');
+        if (!seenMeds.has(key)) { seenMeds.add(key); uniqueMedicines.push(m); }
+      });
+
+      const medicineList = uniqueMedicines.length ? `
+        <p class="screen-eyebrow" style="margin-top:1rem;">Medicines</p>
         <div style="margin-bottom:0.5rem;">
-          ${r.medicine.map(m => `
+          ${uniqueMedicines.map(m => `
             <div class="section-score-row" style="display:block;">
               <strong>${escapeHtml(m.name || '')}</strong>
-              ${m.habitForming ? `<span class="score-pill" style="background:#b3402c;margin-left:0.5rem;">Habit-forming</span>` : ''}
-              ${(m.indication || m.Indication) ? `<div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.2rem;">${escapeHtml(m.indication || m.Indication)}</div>` : ''}
-              ${(m.substitutes && m.substitutes.length) ? `<div style="font-size:0.78rem;color:var(--text-muted);margin-top:0.2rem;"><em>Substitutes:</em> ${escapeHtml(m.substitutes.slice(0, 3).join(', '))}</div>` : ''}
+              <div style="display:flex;flex-wrap:wrap;gap:0.25rem 1.25rem;margin-top:0.4rem;font-size:0.85rem;">
+                ${(m.dosage || m.strength) ? `<span><strong>Dosage:</strong> ${escapeHtml(m.dosage || m.strength)}</span>` : ''}
+                ${m.timeToTake ? `<span><strong>Time to take:</strong> ${escapeHtml(prettyTime(m.timeToTake))}</span>` : ''}
+              </div>
             </div>
           `).join('')}
         </div>
@@ -571,7 +576,7 @@
         <h2 class="screen-question">Thank you, ${(S.name.split(' ')[0] || 'there')}</h2>
         ${S.crisisFlag ? crisisPanelHtml() : ''}
         ${noDiseaseNote}
-        <div style="margin:1rem 0;">${diseaseBlock}${rows}</div>
+        <div style="margin:1rem 0;">${diseaseBlock}</div>
         ${medicineList}
         ${guidanceHtml}
         ${doctorsHtml}
