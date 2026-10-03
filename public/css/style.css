@@ -973,3 +973,106 @@ footer p {
   background: rgba(13, 115, 119, 0.08);
   color: var(--teal);
 }
+
+/* ===== GLASSMORPHISM MEDICINE CARDS ===== */
+.medicine-card-glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 1.75rem;
+  border: 1px solid rgba(20, 160, 133, 0.2);
+  box-shadow: 0 8px 32px rgba(13, 115, 119, 0.08);
+  transition: all 0.3s ease;
+  margin-bottom: 1rem;
+  animation: medicineCardAppear 0.4s ease;
+}
+
+.medicine-card-glass:hover {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: var(--teal);
+  box-shadow: 0 12px 48px rgba(13, 115, 119, 0.15);
+}
+
+.medicine-header-glass {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.medicine-icon-glass {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(20, 160, 133, 0.1), rgba(132, 169, 140, 0.1));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.75rem;
+  flex-shrink: 0;
+}
+
+.medicine-name-glass {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--charcoal);
+  margin-bottom: 0.3rem;
+}
+
+.medicine-badge-glass {
+  display: inline-block;
+  padding: 0.25rem 0.6rem;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: rgba(179, 64, 44, 0.1);
+  color: #b3402c;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.medicine-indication-glass {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-bottom: 1rem;
+  padding: 0.9rem;
+  background: rgba(132, 169, 140, 0.08);
+  border-radius: 10px;
+}
+
+.medicine-substitutes-glass {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.substitutes-label-glass {
+  color: var(--teal);
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.5px;
+}
+
+@keyframes medicineCardAppear {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .medicine-card-glass {
+    animation: none;
+  }
+
+  .medicine-card-glass:hover {
+    transform: none;
+  }
+}
