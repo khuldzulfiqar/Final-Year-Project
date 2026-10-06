@@ -103,8 +103,8 @@ router.post('/verify-otp', (req, res) => {
 router.post('/register-patient', async (req, res) => {
   try {
     const User = require('../models/User');
-    const { fullName, cnic, age, email, password } = req.body;
-    if (!fullName || !cnic || !age || !email || !password)
+    const { fullName, cnic, age, gender, email, password } = req.body;
+    if (!fullName || !cnic || !age || !gender || !email || !password)
       return res.status(400).json({ success: false, message: 'All fields are required' });
 
     // CNIC validation: must match XXXXX-XXXXXXX-X
@@ -117,6 +117,10 @@ router.post('/register-patient', async (req, res) => {
     if (!Number.isInteger(ageNum) || ageNum < 18 || ageNum > 100)
       return res.status(400).json({ success: false, message: 'Age must be between 18 and 100' });
 
+    // Gender validation: must be one of the values the User model accepts
+    if (!['Male', 'Female', 'Other'].includes(gender))
+      return res.status(400).json({ success: false, message: 'Please select a valid gender' });
+
     // Check OTP verified
     const otpRecord = otpStore.get(email.toLowerCase().trim());
     if (!otpRecord || !otpRecord.verified)
@@ -124,7 +128,7 @@ router.post('/register-patient', async (req, res) => {
 
     const existing = await User.findOne({ $or: [{ email }, { cnic }] });
     if (existing) return res.status(400).json({ success: false, message: 'Email or CNIC already registered' });
-    const user = new User({ fullName, cnic, email, password, role: 'patient', age, isEmailVerified: true });
+    const user = new User({ fullName, cnic, email, password, role: 'patient', age, gender, isEmailVerified: true });
     await user.save();
     otpStore.delete(email.toLowerCase().trim());
     res.json({ success: true, message: 'Patient registered successfully!' });

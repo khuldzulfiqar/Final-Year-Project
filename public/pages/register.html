@@ -162,6 +162,15 @@
           </div>
         </div>
         <div class="mb-3">
+          <label class="form-label">Gender *</label>
+          <select id="p-gender" class="form-control">
+            <option value="">Select gender</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="mb-3">
           <label class="form-label">Email Address *</label>
           <div style="display:flex;gap:0.5rem;">
             <input type="email" id="p-email" class="form-control" placeholder="your@email.com" style="flex:1;">
@@ -396,11 +405,12 @@ async function registerPatient() {
   const fullName = document.getElementById('p-fullName').value.trim();
   const cnic     = document.getElementById('p-cnic').value.trim();
   const age      = document.getElementById('p-age').value;
+  const gender   = document.getElementById('p-gender').value;
   const email    = document.getElementById('p-email').value.trim();
   const password = document.getElementById('p-password').value;
   const btn      = document.getElementById('btn-patient');
 
-  if (!fullName || !cnic || !age || !email || !password) {
+  if (!fullName || !cnic || !age || !gender || !email || !password) {
     showAlert('alert-patient', 'All fields are required.', 'error'); return;
   }
   const cnicRegex = /^\d{5}-\d{7}-\d{1}$/;
@@ -423,7 +433,7 @@ async function registerPatient() {
   btn.innerHTML = '<span class="spinner"></span>Creating account...';
 
   try {
-    const data = await apiCall('/api/auth/register-patient', 'POST', { fullName, cnic, age, email, password });
+    const data = await apiCall('/api/auth/register-patient', 'POST', { fullName, cnic, age, gender, email, password });
     if (data.success) {
       showAlert('alert-patient', '✅ Account created successfully! Redirecting to login...', 'success');
       setTimeout(() => window.location.href = '/login?role=patient', 2000);

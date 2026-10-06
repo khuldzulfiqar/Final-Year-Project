@@ -284,6 +284,9 @@ router.post('/:id/answer', async (req, res) => {
         success: true,
         done: true,
         crisisFlag: session.crisisFlag,
+        // Lets the screening page show the support panel right when a crisis
+        // question is answered "Yes", even if it was the very last question.
+        crisisJustTriggered: !!(q.crisis && value === 'Yes'),
         results: session.aiResult,
         totalQuestions: session.askedColumns.length
       });

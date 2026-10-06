@@ -727,12 +727,21 @@
     }
 
     @keyframes screenFadeIn {
-      from { opacity: 0; transform: translateY(6px); }
-      to { opacity: 1; transform: translateY(0); }
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     @media (prefers-reduced-motion: reduce) {
-      .screen-card { animation: none; }
+      .screen-card {
+        animation: none;
+      }
     }
 
     .screen-field {
@@ -879,6 +888,51 @@
       background: var(--teal-light);
       color: white;
     }
+
+    /* Important screening disclaimer */
+    .screen-disclaimer-alert {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      margin: 1.5rem 0 1rem;
+      padding: 16px 18px;
+      border: 1px solid #f0c36a;
+      border-left: 5px solid #d89b2b;
+      border-radius: 12px;
+      background: #fff8e7;
+      color: #5f4a1b;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .screen-disclaimer-icon {
+      width: 36px;
+      height: 36px;
+      min-width: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: #f7d98b;
+      color: #795b16;
+      font-size: 17px;
+    }
+
+    .screen-disclaimer-content {
+      flex: 1;
+    }
+
+    .screen-disclaimer-content strong {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .screen-disclaimer-content p {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.6;
+    }
   </style>
 </head>
 
@@ -942,11 +996,30 @@
           <button class="btn-nav btn-nav-primary" id="beginBtn">Begin Screening</button>
         </div>
       `;
-      document.getElementById('beginBtn').onclick = () => {
-        if (user) { S.name = user.fullName || ''; S.step = 'demo'; }
-        else { S.step = 'name'; }
+      document.getElementById('beginBtn').onclick = async (e) => {
+        if (user) {
+          e.currentTarget.disabled = true;
+          S.name = user.fullName || '';
+          await prefillFromProfile();   // age + gender saved at registration
+          S.step = 'demo';
+        } else { S.step = 'name'; }
         render();
       };
+    }
+
+    // Fetches the logged-in user's saved profile and pre-fills age and gender.
+    // Only fills fields that are still empty, so anything the person already
+    // typed on this page is never overwritten. If anything fails, the person
+    // simply fills the fields in by hand like before.
+    async function prefillFromProfile() {
+      if (!Auth.isLoggedIn()) return;
+      try {
+        const res = await apiCall('/api/auth/me', 'GET');
+        if (res.success && res.user) {
+          if (!S.age && res.user.age) { S.age = String(res.user.age); S.prefilled = true; }
+          if (!S.gender && res.user.gender) { S.gender = res.user.gender; S.prefilled = true; }
+        }
+      } catch (err) { /* ignore: manual entry still works */ }
     }
 
     function renderName() {
@@ -970,6 +1043,7 @@
       card.innerHTML = `
         <p class="screen-eyebrow">Step 2 of 2</p>
         <h2 class="screen-question">A little about you, ${(S.name.split(' ')[0] || 'there')}</h2>
+        ${S.prefilled ? '<p class="screen-sub" style="margin-bottom:1rem;">We filled in some details from your registration. Please check them and change anything that is out of date.</p>' : ''}
         <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:0.4rem;">Age</label>
         <input class="screen-field" id="ageInput" type="number" min="1" max="120" placeholder="e.g. 24" value="${S.age}">
         <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:0.4rem;">Gender</label>
@@ -1113,9 +1187,9 @@
         <p class="screen-eyebrow" style="margin-top:1rem;">Commonly used medicines</p>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
           ${r.medicine.map((m, idx) => {
-            const icons = ['💊', '⚠️', '🧠', '💉', '🌿'];
-            const icon = icons[idx % icons.length];
-            return `
+        const icons = ['💊', '⚠️', '🧠', '💉', '🌿'];
+        const icon = icons[idx % icons.length];
+        return `
               <div class="medicine-card-glass">
                 <div class="medicine-header-glass">
                   <div class="medicine-icon-glass">${icon}</div>
@@ -1137,7 +1211,7 @@
                 ` : ''}
               </div>
             `;
-          }).join('')}
+      }).join('')}
         </div>
       ` : '';
 
@@ -1150,9 +1224,12 @@
         ${g.recommendedAction ? `<p class="screen-sub" style="margin-bottom:0.75rem;"><strong>${escapeHtml(g.recommendedAction)}</strong></p>` : ''}
       ` : '';
 
-      const noDiseaseNote = (r.disease === 'Normal') ? `
-        <p class="screen-sub">Your answers don't show strong signs of any of the screened conditions right now.</p>
-      ` : '';
+      // Result alert: one clear, colour-coded summary of the outcome, shown
+      // right under the heading. The level comes from the "urgency" value
+      // (low / moderate / high) that both the AI model and the fallback
+      // scorer already return in their guidance. It replaces the old plain
+      // "no strong signs" sentence, since the alert now says that itself.
+
 
       // Matched psychiatrists — fetched by specialization when we have a
       // real, non-"Normal" predicted condition (or a notable heuristic section).
@@ -1198,19 +1275,24 @@
       card.innerHTML = `
         <p class="screen-eyebrow">Screening complete · ${S.totalQuestions} questions</p>
         <h2 class="screen-question">Thank you, ${(S.name.split(' ')[0] || 'there')}</h2>
-        ${S.crisisFlag ? crisisPanelHtml() : ''}
-        ${noDiseaseNote}
+        
         <div style="margin:1rem 0;">${diseaseBlock}${rows}</div>
         ${medicineList}
         ${guidanceHtml}
         ${doctorsHtml}
-        <div class="screen-disclaimer">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/>
-            <path d="M12 11v5.5M12 8v.01" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-          </svg>
-          <span><strong>${r.disclaimer ? '' : 'Please note:'}</strong>
-          ${r.disclaimer || 'This is an automated screening summary, not a diagnosis. Please consult a licensed mental health professional for a full evaluation.'}</span>
+        <div class="screen-disclaimer-alert">
+             <div class="screen-disclaimer-icon">
+                 <i class="fas fa-triangle-exclamation"></i>
+             </div>
+
+            <div class="screen-disclaimer-content">
+                 <strong>Important Notice</strong>
+                 <p>
+                    This is an automated screening suggestion, not a clinical diagnosis or prescription.
+                    Medicine details are for reference only — do not start or change any medicine without
+                    a licensed psychiatrist's advice.
+                 </p>
+             </div>
         </div>
         <div class="screen-nav">
           <button class="screen-btn-ghost" id="retakeBtn">Retake</button>
