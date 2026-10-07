@@ -102,7 +102,7 @@ def get_medicines(disease, top_n=5):
         substitutes = [s.strip() for s in str(substitutes_raw).split(",") if s.strip() and s.strip().lower() != "nan"]
         result.append({
             "name": row["name"],
-            "strength": extract_strength(row["name"]),          # e.g. "10 mg"
+            "strength": clean(row.get("strength", "")),         # from CSV, e.g. "10 mg" or "0.5 mg / 10 mg"
             "dosage": clean(row.get("dosage", "")),              # e.g. "1 tablet"
             "timeToTake": clean(row.get("time_to_take", "")),    # e.g. "morning"
             "indication": row["Indication"],

@@ -1182,36 +1182,43 @@
         </div>
       ` : '';
 
-      // Medicine list — Glassmorphism design with emoji icons
-      const medicineList = (r.medicine && r.medicine.length) ? `
-        <p class="screen-eyebrow" style="margin-top:1rem;">Commonly used medicines</p>
+      // Medicine list — ONLY name, strength (mg), dosage and time to take.
+      // Nothing else about the medicine (indication, habit-forming badge,
+      // substitutes, side effects...) is shown. Duplicates are removed.
+      const prettyTime = t => t ? t.charAt(0).toUpperCase() + t.slice(1) : '';
+      const uniqueMedicines = [];
+      const seenMeds = new Set();
+      (r.medicine || []).forEach(m => {
+        const key = [m.name, m.strength, m.dosage, m.timeToTake]
+          .map(v => String(v || '').trim().toLowerCase()).join('|');
+        if (!seenMeds.has(key)) { seenMeds.add(key); uniqueMedicines.push(m); }
+      });
+
+      const medField = (label, value) => value ? `
+        <div style="min-width:90px;">
+          <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.04em;opacity:0.7;">${label}</div>
+          <div style="font-size:0.95rem;font-weight:600;">${escapeHtml(value)}</div>
+        </div>
+      ` : '';
+
+      const medicineList = uniqueMedicines.length ? `
+        <p class="screen-eyebrow" style="margin-top:1rem;">Medicines</p>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
-          ${r.medicine.map((m, idx) => {
-        const icons = ['💊', '⚠️', '🧠', '💉', '🌿'];
-        const icon = icons[idx % icons.length];
-        return `
-              <div class="medicine-card-glass">
-                <div class="medicine-header-glass">
-                  <div class="medicine-icon-glass">${icon}</div>
-                  <div>
-                    <div class="medicine-name-glass">${escapeHtml(m.name || '')}</div>
-                    ${m.habitForming ? `<span class="medicine-badge-glass">Habit-Forming</span>` : ''}
-                  </div>
+          ${uniqueMedicines.map(m => `
+            <div class="medicine-card-glass">
+              <div class="medicine-header-glass">
+                <div class="medicine-icon-glass">💊</div>
+                <div>
+                  <div class="medicine-name-glass">${escapeHtml(m.name || '')}</div>
                 </div>
-                ${(m.indication || m.Indication) ? `
-                  <div class="medicine-indication-glass">
-                    ${escapeHtml(m.indication || m.Indication)}
-                  </div>
-                ` : ''}
-                ${(m.substitutes && m.substitutes.length) ? `
-                  <div class="medicine-substitutes-glass">
-                    <div class="substitutes-label-glass">Alternative options:</div>
-                    ${escapeHtml(m.substitutes.slice(0, 3).join(', '))}
-                  </div>
-                ` : ''}
               </div>
-            `;
-      }).join('')}
+              <div style="display:flex;flex-wrap:wrap;gap:0.75rem 1.5rem;margin-top:0.75rem;">
+                ${medField('Strength', m.strength)}
+                ${medField('Dosage', m.dosage)}
+                ${medField('Time to take', prettyTime(m.timeToTake || ''))}
+              </div>
+            </div>
+          `).join('')}
         </div>
       ` : '';
 
