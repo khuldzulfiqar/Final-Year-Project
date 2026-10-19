@@ -418,3 +418,56 @@ body {
 .btn-delete:hover {
   background: #c0392b;
 }
+
+
+/* ========================
+   ICON ACTION BUTTONS
+   (one row, icon only, tooltip via title attr)
+======================== */
+.action-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
+.icon-btn {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  margin: 0;
+  border: none;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 18px;
+  line-height: 1;
+  color: #fff;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s, background 0.2s;
+}
+
+.icon-btn i { pointer-events: none; }
+
+.icon-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
+}
+
+.icon-btn:active { transform: translateY(0); box-shadow: none; }
+
+.icon-btn:focus-visible { outline: 2px solid #0d7377; outline-offset: 2px; }
+
+.icon-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* View (same teal as Approve) */
+.btn-view { background: #0d7377; }
+.btn-view:hover { background: #0b5f61; }

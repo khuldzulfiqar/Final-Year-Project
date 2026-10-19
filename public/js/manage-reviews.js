@@ -77,10 +77,12 @@ async function loadReviews() {
           <td style="padding:12px;">${r.comment || "—"}</td>
           <td style="padding:12px;">${new Date(r.createdAt).toLocaleDateString()}</td>
           <td style="padding:12px;">
-            <button onclick="deleteReview('${r._id}')"
-              style="background:#e74c3c; color:white; border:none; padding:6px 10px; border-radius:6px; cursor:pointer;">
-              Delete
-            </button>
+            <div class="action-group">
+              <button class="icon-btn btn-delete" title="Delete review" aria-label="Delete review"
+                onclick="deleteReview('${r._id}')">
+                <i class="ti ti-trash"></i>
+              </button>
+            </div>
           </td>
         </tr>
       `;

@@ -61,17 +61,21 @@ function displayPatients(data) {
         <td style="padding:12px;">${patient.email || ""}</td>
 
         <td style="padding:12px;">
-          <button onclick="viewProfile('${patient._id}')"
-            style="padding:6px 10px; border:none; border-radius:6px; background:#0d7377; color:white; cursor:pointer;">
-            View
-          </button>
+          <div class="action-group">
+            <button class="icon-btn btn-view" title="View profile" aria-label="View profile"
+              onclick="viewProfile('${patient._id}')">
+              <i class="ti ti-eye"></i>
+            </button>
+          </div>
         </td>
 
         <td style="padding:12px;">
-          <button onclick="deletePatient('${patient._id}')"
-            style="padding:6px 10px; border:none; border-radius:6px; background:#e74c3c; color:white; cursor:pointer;">
-            Delete
-          </button>
+          <div class="action-group">
+            <button class="icon-btn btn-delete" title="Delete patient" aria-label="Delete patient"
+              onclick="deletePatient('${patient._id}')">
+              <i class="ti ti-trash"></i>
+            </button>
+          </div>
         </td>
       </tr>
     `;

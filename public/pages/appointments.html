@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Appointment Requests — MindBridge</title>
   <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
   <style>
     .appt-card {
       background: white;
@@ -107,6 +108,40 @@
     .btn-accept:hover {
       background: #218838;
     }
+
+    /* Icon-only action buttons (tooltip comes from the title attribute) */
+    .appt-actions {
+      flex-wrap: nowrap;
+      gap: 0.5rem;
+    }
+
+    .appt-actions .icon-only {
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      line-height: 1;
+      flex-shrink: 0;
+      transition: transform 0.15s, box-shadow 0.15s, background 0.2s;
+    }
+
+    .appt-actions .icon-only:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
+    }
+
+    .btn-prescription {
+      background: #6f42c1;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    .btn-prescription:hover { background: #5a32a3; }
 
     .btn-reject {
       background: #dc3545;
@@ -348,8 +383,8 @@
 
       ${a.status === 'pending' ? `
         <div class="appt-actions">
-          <button class="btn-accept" onclick="handleAction('${a._id}', 'accepted')">✅ Accept</button>
-          <button class="btn-reject" onclick="toggleRejectForm('${a._id}')">❌ Reject</button>
+          <button class="btn-accept icon-only" title="Accept" aria-label="Accept" onclick="handleAction('${a._id}', 'accepted')"><i class="ti ti-check"></i></button>
+          <button class="btn-reject icon-only" title="Reject" aria-label="Reject" onclick="toggleRejectForm('${a._id}')"><i class="ti ti-x"></i></button>
         </div>
         <div class="reject-form" id="reject-form-${a._id}">
           <label class="form-label">Reason for Rejection *</label>
@@ -362,13 +397,13 @@
       ` : ''}
       ${(a.status === 'accepted' || a.status === 'completed') ? `
   <div class="appt-actions">
-    <button class="btn-accept" onclick="markCompleted('${a._id}')">
-      ✅ Mark Completed
+    <button class="btn-accept icon-only" title="Mark completed" aria-label="Mark completed" onclick="markCompleted('${a._id}')">
+      <i class="ti ti-circle-check"></i>
     </button>
 
-    <button style="background:#6f42c1; color:white; border:none; padding:0.55rem 1.25rem; border-radius:8px; font-weight:600; cursor:pointer;"
+    <button class="btn-prescription icon-only" title="Add prescription" aria-label="Add prescription"
       onclick="openPrescription('${a._id}')">
-      📄 Add Prescription
+      <i class="ti ti-file-text"></i>
     </button>
   </div>
 ` : ''}

@@ -53,18 +53,21 @@ async function loadPsychiatrists(search = "") {
         <td style="padding:12px;">${p.specialization || "—"}</td>
         <td style="padding:12px;">${p.status || "Pending"}</td>
         <td style="padding:12px;">
-  <button class="btn btn-approve" onclick="approve('${p._id}')">
-    Approve
-  </button>
-
-  <button class="btn btn-reject" onclick="rejectPsy('${p._id}')">
-    Reject
-  </button>
-
-  <button class="btn btn-delete" onclick="deletePsy('${p._id}')">
-    Delete
-  </button>
-</td>
+          <div class="action-group">
+            <button class="icon-btn btn-approve" title="Approve" aria-label="Approve"
+              onclick="approve('${p._id}')" ${p.status === "Approved" ? "disabled" : ""}>
+              <i class="ti ti-check"></i>
+            </button>
+            <button class="icon-btn btn-reject" title="Reject" aria-label="Reject"
+              onclick="rejectPsy('${p._id}')" ${p.status === "Rejected" ? "disabled" : ""}>
+              <i class="ti ti-x"></i>
+            </button>
+            <button class="icon-btn btn-delete" title="Delete" aria-label="Delete"
+              onclick="deletePsy('${p._id}')">
+              <i class="ti ti-trash"></i>
+            </button>
+          </div>
+        </td>
       </tr>
     `;
   });
@@ -72,7 +75,10 @@ async function loadPsychiatrists(search = "") {
 
 function approve(id) { fetch(`/api/admin/approve/${id}`, { method: "PUT" }).then(loadPsychiatrists); }
 function rejectPsy(id) { fetch(`/api/admin/reject/${id}`, { method: "PUT" }).then(loadPsychiatrists); }
-function deletePsy(id) { fetch(`/api/admin/delete/${id}`, { method: "DELETE" }).then(loadPsychiatrists); }
+function deletePsy(id) {
+  if (!confirm("Delete this psychiatrist? This cannot be undone.")) return;
+  fetch(`/api/admin/delete/${id}`, { method: "DELETE" }).then(loadPsychiatrists);
+}
 
 searchInput?.addEventListener("keyup", () => {
   loadPsychiatrists(searchInput.value);
