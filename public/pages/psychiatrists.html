@@ -449,7 +449,17 @@
           <option value="online">Online</option>
           <option value="inPerson">In-Person</option>
         </select>
+        <select id="filter-distance" class="form-control" onchange="onDistanceChange()" style="max-width:190px;"
+          title="Show only psychiatrists whose clinic is within this distance of you">
+          <option value="">📍 Any Distance</option>
+          <option value="5">Within 5 km</option>
+          <option value="10">Within 10 km</option>
+          <option value="25">Within 25 km</option>
+          <option value="50">Within 50 km</option>
+          <option value="100">Within 100 km</option>
+        </select>
       </div>
+      <div id="location-status" style="font-size:0.82rem; color:var(--text-muted); margin:-0.75rem 0 1rem; display:none;"></div>
       <div id="psy-count" style="color:var(--text-muted); font-size:0.875rem; margin-bottom:1.25rem;"></div>
 
       <!-- Cards -->
@@ -553,6 +563,9 @@
   <script src="/js/app.js"></script>
   <script>
     let allPsychiatrists = [];
+    let filteredPsychiatrists = [];   // what the pager walks through
+    let userLocation = null;          // { lat, lng } once the patient allows location access
+    const distanceMap = {};           // psychiatristId -> km from patient
     let currentPage = 1;
     const pageSize = 4;
     let allReviewsMap = {};
@@ -594,7 +607,8 @@
           allPsychiatrists = (data.psychiatrists || []).filter(p => p.profileCreated === true);
         }
         await loadAllReviews(allPsychiatrists);
-        renderPsychiatrists(allPsychiatrists);
+        filteredPsychiatrists = allPsychiatrists;
+        renderPsychiatrists(filteredPsychiatrists);
       } catch (e) {
         document.getElementById('psychiatrists-list').innerHTML =
           `<div style="text-align:center;padding:3rem;color:var(--text-muted);">Could not load psychiatrists.</div>`;
@@ -625,19 +639,99 @@
       return html;
     }
 
+    // ===== NEARBY / LOCATION FILTER =====
+    // Clinic coordinates are stored as strings (clinicAddress.lat / lng) -> convert safely.
+    function getClinicCoords(p) {
+      const lat = parseFloat(p.clinicAddress?.lat);
+      const lng = parseFloat(p.clinicAddress?.lng);
+      return (Number.isFinite(lat) && Number.isFinite(lng)) ? { lat, lng } : null;
+    }
+
+    // Haversine formula: straight-line distance between two lat/lng points, in km.
+    function distanceKm(lat1, lng1, lat2, lng2) {
+      const R = 6371;
+      const toRad = d => d * Math.PI / 180;
+      const dLat = toRad(lat2 - lat1);
+      const dLng = toRad(lng2 - lng1);
+      const a = Math.sin(dLat / 2) ** 2 +
+        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    function getUserLocation() {
+      return new Promise((resolve, reject) => {
+        if (!navigator.geolocation) return reject({ code: 0 });
+        navigator.geolocation.getCurrentPosition(
+          pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+          err => reject(err),
+          { enableHighAccuracy: false, timeout: 10000, maximumAge: 5 * 60 * 1000 }
+        );
+      });
+    }
+
+    function setLocationStatus(msg, isError) {
+      const el = document.getElementById('location-status');
+      el.style.display = msg ? 'block' : 'none';
+      el.style.color = isError ? '#e17055' : 'var(--text-muted)';
+      el.textContent = msg || '';
+    }
+
+    async function onDistanceChange() {
+      const select = document.getElementById('filter-distance');
+      if (select.value && !userLocation) {
+        setLocationStatus('📍 Getting your location… please click "Allow" in your browser.');
+        try {
+          userLocation = await getUserLocation();
+          allPsychiatrists.forEach(p => {
+            const c = getClinicCoords(p);
+            if (c) distanceMap[p._id] = distanceKm(userLocation.lat, userLocation.lng, c.lat, c.lng);
+          });
+        } catch (err) {
+          select.value = '';
+          const msgs = {
+            1: 'Location permission was denied. Allow location access for this site in your browser settings to use this filter.',
+            2: 'Could not detect your location. Please check your device location settings.',
+            3: 'Getting your location timed out. Please try again.'
+          };
+          setLocationStatus(msgs[err.code] || 'Your browser does not support location access.', true);
+          filterPsychiatrists();
+          return;
+        }
+      }
+      filterPsychiatrists();
+    }
+
     function filterPsychiatrists() {
       const q = document.getElementById('search-input').value.toLowerCase();
       const mode = document.getElementById('filter-mode').value;
+      const maxKm = parseFloat(document.getElementById('filter-distance').value) || null;
+
       let filtered = allPsychiatrists.filter(p => {
         const matchSearch = p.fullName.toLowerCase().includes(q) ||
           (p.specialization && p.specialization.toLowerCase().includes(q));
         const matchMode = !mode ||
           (mode === 'online' && p.consultationModes?.online) ||
           (mode === 'inPerson' && p.consultationModes?.inPerson);
-        return matchSearch && matchMode;
+        // Distance: psychiatrists without a pinned clinic location can't be placed, so they're excluded
+        const d = distanceMap[p._id];
+        const matchDistance = !maxKm || (d !== undefined && d <= maxKm);
+        return matchSearch && matchMode && matchDistance;
       });
+
+      // When filtering by distance, show the closest clinics first
+      if (maxKm) filtered.sort((a, b) => distanceMap[a._id] - distanceMap[b._id]);
+
+      if (maxKm && userLocation) {
+        const noPin = allPsychiatrists.filter(p => !getClinicCoords(p)).length;
+        setLocationStatus(`📍 Showing clinics within ${maxKm} km of your location, nearest first.` +
+          (noPin ? ` (${noPin} psychiatrist${noPin !== 1 ? 's' : ''} hidden — no clinic location set.)` : ''));
+      } else if (!maxKm) {
+        setLocationStatus('');
+      }
+
+      filteredPsychiatrists = filtered;
       currentPage = 1; // 🔥 reset page
-      renderPsychiatrists(filtered);
+      renderPsychiatrists(filteredPsychiatrists);
       document.getElementById('no-results').style.display = filtered.length === 0 ? 'block' : 'none';
     }
 
@@ -700,6 +794,13 @@
         <div class="stat-label">Location</div>
       </div>` : '';
 
+        const dist = distanceMap[p._id];
+        const distHtml = (dist !== undefined) ? `
+      <div class="stat-block">
+        <div class="stat-val">🧭 ${dist < 1 ? '< 1' : dist.toFixed(1)} km</div>
+        <div class="stat-label">From you</div>
+      </div>` : '';
+
         let chipHtml = '';
 
         // Verified badge (Approved status)
@@ -734,7 +835,7 @@
           ${p.specialization ? `<div class="psy-spec">${p.specialization}</div>` : ''}
           ${p.qualification ? `<div class="psy-qual">${p.qualification}</div>` : ''}
 
-          ${(expHtml || ratHtml || feeHtml || cityHtml) ? `<div class="psy-stats">${expHtml}${ratHtml}${feeHtml}${cityHtml}</div>` : ''}
+          ${(expHtml || ratHtml || feeHtml || cityHtml || distHtml) ? `<div class="psy-stats">${expHtml}${ratHtml}${feeHtml}${distHtml}${cityHtml}</div>` : ''}
 
           ${chipHtml}
         </div>
@@ -743,14 +844,14 @@
       }).join('');
     }
     function nextPage() {
-      const maxPage = Math.ceil(allPsychiatrists.length / pageSize);
+      const maxPage = Math.ceil(filteredPsychiatrists.length / pageSize);
       if (currentPage < maxPage) currentPage++;
-      renderPsychiatrists(allPsychiatrists);
+      renderPsychiatrists(filteredPsychiatrists);
     }
 
     function prevPage() {
       if (currentPage > 1) currentPage--;
-      renderPsychiatrists(allPsychiatrists);
+      renderPsychiatrists(filteredPsychiatrists);
     }
     // ===== BOOKING =====
     function openBookingModal(psychiatristId) {
