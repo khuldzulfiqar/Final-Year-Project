@@ -347,6 +347,10 @@
       border-left-color: #e17055;
     }
 
+    .appt-card.completed {
+      border-left-color: #3b82f6;
+    }
+
     .appt-top {
       display: flex;
       justify-content: space-between;
@@ -406,6 +410,29 @@
     .badge-rejected {
       background: #fee2e2;
       color: #991b1b;
+    }
+
+    .badge-completed {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    .chat-link {
+      display: inline-block;
+      margin-top: 0.6rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--teal);
+      text-decoration: none;
+      border: 1.5px solid var(--teal);
+      border-radius: 8px;
+      padding: 0.3rem 0.8rem;
+      transition: all 0.2s;
+    }
+
+    .chat-link:hover {
+      background: var(--teal);
+      color: white;
     }
 
     .rejection-box {
@@ -768,6 +795,11 @@
             <div class="stat-tile-val" id="stat-accepted">—</div>
             <div class="stat-tile-lbl">Confirmed</div>
           </div>
+          <div class="stat-tile">
+            <div class="stat-tile-icon icon-teal">🏁</div>
+            <div class="stat-tile-val" id="stat-completed">—</div>
+            <div class="stat-tile-lbl">Completed</div>
+          </div>
 
         </div>
 
@@ -779,6 +811,7 @@
               <button class="filter-pill" onclick="filterAppts('pending',this)">Pending</button>
               <button class="filter-pill" onclick="filterAppts('accepted',this)">Confirmed</button>
               <button class="filter-pill" onclick="filterAppts('rejected',this)">Declined</button>
+              <button class="filter-pill" onclick="filterAppts('completed',this)">Completed</button>
             </div>
           </div>
           <div class="mb-card-body" id="appt-list">
@@ -818,6 +851,11 @@
             <div class="stat-tile-val" id="psy-stat-accepted">—</div>
             <div class="stat-tile-lbl">Confirmed</div>
           </div>
+          <div class="stat-tile">
+            <div class="stat-tile-icon icon-teal">🏁</div>
+            <div class="stat-tile-val" id="psy-stat-completed">—</div>
+            <div class="stat-tile-lbl">Completed</div>
+          </div>
 
         </div>
 
@@ -849,6 +887,7 @@
       const patientLinks = [
         { icon: '🏠', label: 'Dashboard', href: '/dashboard', active: true },
         { icon: '📅', label: 'My Appointments', href: '/appointments' },
+        { icon: '💬', label: 'Messages', href: '/chat' },
         { icon: '🔍', label: 'Find Psychiatrist', href: '/psychiatrists' },
         { icon: '🧠', label: 'Symptom Screening', href: '/screening' },
         { icon: '👤', label: 'My Profile', href: '/patient-profile' },
@@ -857,6 +896,7 @@
       const psyLinks = [
         { icon: '🏠', label: 'Dashboard', href: '/dashboard', active: true },
         { icon: '📋', label: 'Appointments', href: '/appointments' },
+        { icon: '💬', label: 'Messages', href: '/chat' },
         { icon: '👤', label: 'My Profile', href: '/psy-profile' },
         { icon: '✏️', label: 'Edit Profile', href: '/create-profile' },
         { icon: '⭐', label: 'Reviews', href: '/reviews' },
@@ -904,6 +944,17 @@
       }
     });
 
+    /* ── SHARED ── */
+    function statusLabel(status, role) {
+      const labels = {
+        pending: '⏳ Pending',
+        accepted: role === 'patient' ? '✅ Confirmed' : '✅ Accepted',
+        rejected: role === 'patient' ? '❌ Declined' : '❌ Rejected',
+        completed: '🏁 Completed'
+      };
+      return labels[status] || status;
+    }
+
     /* ── PATIENT ── */
     async function loadPatientAppointments() {
       try {
@@ -913,7 +964,9 @@
         const accepted = allPatientAppts.filter(a => a.status === 'accepted').length;
         document.getElementById('stat-total').textContent = allPatientAppts.length;
         document.getElementById('stat-pending').textContent = pending;
+        const completed = allPatientAppts.filter(a => a.status === 'completed').length;
         document.getElementById('stat-accepted').textContent = accepted;
+        document.getElementById('stat-completed').textContent = completed;
         renderPatientAppts('all');
       } catch (e) {
         document.getElementById('appt-list').innerHTML = `<div class="empty-state"><p>Could not load appointments.</p></div>`;
@@ -934,7 +987,8 @@
           all: { icon: '📭', txt: 'No appointments yet.', link: '<a href="/psychiatrists">Book one now!</a>' },
           pending: { icon: '⏳', txt: 'No pending appointments.', link: '' },
           accepted: { icon: '✅', txt: 'No confirmed appointments yet.', link: '' },
-          rejected: { icon: '❌', txt: 'No declined appointments.', link: '' }
+          rejected: { icon: '❌', txt: 'No declined appointments.', link: '' },
+          completed: { icon: '🏁', txt: 'No completed appointments yet.', link: '' }
         };
         const m = msgs[filter] || { icon: '📭', txt: 'None found.', link: '' };
         container.innerHTML = `<div class="empty-state"><div class="es-icon">${m.icon}</div><p>${m.txt} ${m.link}</p></div>`;
@@ -947,7 +1001,7 @@
           <div class="appt-name">👨‍⚕️ ${a.psychiatristName}</div>
           <div class="appt-mode">${a.consultationMode === 'online' ? '🌐 Online Consultation' : '🏥 In-Person Visit'}</div>
         </div>
-        <span class="badge-status badge-${a.status}">${a.status.charAt(0).toUpperCase() + a.status.slice(1)}</span>
+        <span class="badge-status badge-${a.status}">${statusLabel(a.status, 'patient')}</span>
       </div>
       <div class="appt-meta-row">
         <span class="appt-meta-item">📅 ${a.date}</span>
@@ -957,6 +1011,8 @@
       ${a.notes ? `<div class="appt-meta-item" style="margin-top:0.4rem;">📝 ${a.notes}</div>` : ''}
       ${a.status === 'rejected' && a.rejectionReason ? `<div class="rejection-box">❌ Reason: ${a.rejectionReason}</div>` : ''}
       ${a.status === 'accepted' ? `<div class="confirm-box">✅ Your appointment has been confirmed!</div>` : ''}
+      ${a.status === 'completed' ? `<div class="confirm-box">🏁 This appointment has been completed.</div>` : ''}
+      ${(a.status === 'accepted' || a.status === 'completed') ? `<a class="chat-link" href="/chat?with=${a.psychiatrist}">💬 Message ${a.psychiatristName}</a>` : ''}
     </div>
   `).join('');
     }
@@ -971,6 +1027,7 @@
         document.getElementById('psy-stat-total').textContent = appts.length;
         document.getElementById('psy-stat-pending').textContent = pending;
         document.getElementById('psy-stat-accepted').textContent = accepted;
+        document.getElementById('psy-stat-completed').textContent = appts.filter(a => a.status === 'completed').length;
 
         const recent = appts.slice(0, 8);
         const container = document.getElementById('psy-appt-list');
@@ -985,13 +1042,7 @@
             <div class="appt-name">👤 ${a.patientName}</div>
             <div class="appt-mode">${a.consultationMode === 'online' ? '🌐 Online' : '🏥 In-Person'}</div>
           </div>
-          <span class="badge-status badge-${a.status}">
-  ${a.status === 'accepted'
-            ? '✅ Accepted'
-            : a.status === 'rejected'
-              ? '❌ Rejected'
-              : '⏳ Pending'}
-</span>
+          <span class="badge-status badge-${a.status}">${statusLabel(a.status, 'psychiatrist')}</span>
         </div>
         <div class="appt-meta-row">
           <span class="appt-meta-item">📅 ${a.date}</span>

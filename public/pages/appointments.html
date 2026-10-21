@@ -62,6 +62,18 @@
       color: #721c24;
     }
 
+    .status-completed {
+      background: #d1ecf1;
+      color: #0c5460;
+    }
+
+    .btn-accept.icon-only:disabled {
+      background: #b8c2c2;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
     .appt-details {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -133,6 +145,16 @@
       transform: translateY(-2px);
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
     }
+
+    .btn-chat {
+      background: var(--teal);
+      color: white;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .btn-chat:hover { background: var(--teal-dark); }
 
     .btn-prescription {
       background: #6f42c1;
@@ -285,6 +307,7 @@
         <button class="tab-btn" onclick="setTab('pending', this)">⏳ Pending</button>
         <button class="tab-btn" onclick="setTab('accepted', this)">✅ Accepted</button>
         <button class="tab-btn" onclick="setTab('rejected', this)">❌ Rejected</button>
+        <button class="tab-btn" onclick="setTab('completed', this)">🏁 Completed</button>
       </div>
 
       <div id="alert-box" class="alert-box"></div>
@@ -369,6 +392,7 @@
             : a.status === 'completed'
               ? '🏁 Completed'
               : '⏳ Pending'}
+        </span>
       </div>
 
       <div class="appt-details">
@@ -395,20 +419,41 @@
           </div>
         </div>
       ` : ''}
-      ${(a.status === 'accepted' || a.status === 'completed') ? `
+      ${a.status === 'accepted' ? `
   <div class="appt-actions">
-    <button class="btn-accept icon-only" title="Mark completed" aria-label="Mark completed" onclick="markCompleted('${a._id}')">
-      <i class="ti ti-circle-check"></i>
-    </button>
-
+    ${hasAppointmentPassed(a)
+      ? `<button class="btn-accept icon-only" title="Mark completed" aria-label="Mark completed" onclick="markCompleted('${a._id}')"><i class="ti ti-circle-check"></i></button>`
+      : `<button class="btn-accept icon-only" title="Can be marked completed only after the appointment time has passed" aria-label="Mark completed (not available yet)" disabled><i class="ti ti-circle-check"></i></button>`}
+    ${chatButton(a)}
+  </div>
+` : ''}
+      ${a.status === 'completed' ? `
+  <div class="appt-actions">
     <button class="btn-prescription icon-only" title="Add prescription" aria-label="Add prescription"
       onclick="openPrescription('${a._id}')">
       <i class="ti ti-file-text"></i>
     </button>
+    ${chatButton(a)}
   </div>
 ` : ''}
     </div>
   `).join('');
+    }
+
+    // True once the appointment slot has ended (date = "YYYY-MM-DD", timeSlot = "HH:MM – HH:MM")
+    function hasAppointmentPassed(a) {
+      const [y, m, d] = a.date.split('-').map(Number);
+      const endPart = (a.timeSlot || '').split(/[–-]/)[1];
+      let endH = 23, endM = 59;
+      if (endPart) {
+        const [h, min] = endPart.trim().split(':').map(Number);
+        if (!isNaN(h) && !isNaN(min)) { endH = h; endM = min; }
+      }
+      return new Date() >= new Date(y, m - 1, d, endH, endM);
+    }
+
+    function chatButton(a) {
+      return `<a class="btn-chat icon-only" href="/chat?with=${a.patient}" title="Message patient" aria-label="Message patient"><i class="ti ti-message-circle"></i></a>`;
     }
 
     function toggleRejectForm(id) {
@@ -444,16 +489,22 @@
       }
     }
     async function markCompleted(id) {
-      const res = await apiCall(`/api/appointments/${id}/complete`, 'PUT');
+      try {
+        const res = await apiCall(`/api/appointments/${id}/complete`, 'PUT');
 
-      if (res.success) {
-        showToast("Marked as completed", "success");
+        if (res.success) {
+          showToast("Marked as completed", "success");
 
-        allAppointments = allAppointments.map(a =>
-          a._id === id ? { ...a, status: "completed" } : a
-        );
+          allAppointments = allAppointments.map(a =>
+            a._id === id ? { ...a, status: "completed" } : a
+          );
 
-        renderAppointments();
+          renderAppointments();
+        } else {
+          showAlert('alert-box', res.message || 'Could not mark as completed.', 'error');
+        }
+      } catch (e) {
+        showAlert('alert-box', 'Server error. Please try again.', 'error');
       }
     }
 

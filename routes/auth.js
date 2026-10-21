@@ -255,6 +255,62 @@ router.get('/me', authMiddleware, async (req, res) => {
   }
 });
 
+const WEEK_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+// Validates the weekly schedule and returns { weeklySchedule, availableDays } or { error }
+function buildSchedule({ weeklySchedule, availableDays, timeSlots }) {
+  let schedule = weeklySchedule;
+
+  // Old clients: same slots on every selected day
+  if (!Array.isArray(schedule) || schedule.length === 0) {
+    if (!Array.isArray(availableDays) || availableDays.length === 0 ||
+        !Array.isArray(timeSlots) || timeSlots.length === 0) {
+      return { error: 'Select at least one available day and add a time slot for it' };
+    }
+    schedule = availableDays.map(day => ({ day, slots: timeSlots }));
+  }
+
+  const seen = new Set();
+  const clean = [];
+
+  for (const entry of schedule) {
+    const day = entry && entry.day;
+    if (!WEEK_DAYS.includes(day)) return { error: `Invalid day: ${day}` };
+    if (seen.has(day)) return { error: `${day} is listed more than once` };
+    seen.add(day);
+
+    if (!Array.isArray(entry.slots) || entry.slots.length === 0)
+      return { error: `Add at least one time slot for ${day}` };
+
+    const ranges = [];
+    for (const slot of entry.slots) {
+      if (!slot || typeof slot.start !== 'string' || typeof slot.end !== 'string' ||
+          !/^\d{1,2}:\d{2}$/.test(slot.start) || !/^\d{1,2}:\d{2}$/.test(slot.end))
+        return { error: `${day}: invalid time format` };
+
+      const [sh, sm] = slot.start.split(':').map(Number);
+      const [eh, em] = slot.end.split(':').map(Number);
+      const startMin = sh * 60 + sm;
+      const endMin = eh * 60 + em;
+      const duration = endMin - startMin;
+
+      if (duration <= 0) return { error: `${day}: end time must be after start time` };
+      if (duration < 120) return { error: `${day}: each slot must be at least 2 hours` };
+      ranges.push([startMin, endMin]);
+    }
+
+    ranges.sort((a, b) => a[0] - b[0]);
+    for (let i = 1; i < ranges.length; i++) {
+      if (ranges[i][0] < ranges[i - 1][1]) return { error: `${day}: time slots overlap` };
+    }
+
+    clean.push({ day, slots: entry.slots.map(s => ({ start: s.start, end: s.end })) });
+  }
+
+  clean.sort((a, b) => WEEK_DAYS.indexOf(a.day) - WEEK_DAYS.indexOf(b.day));
+  return { weeklySchedule: clean, availableDays: clean.map(e => e.day) };
+}
+
 // Create / update full psychiatrist profile (FR_14)
 router.post('/create-profile', authMiddleware, async (req, res) => {
   try {
@@ -263,7 +319,7 @@ router.post('/create-profile', authMiddleware, async (req, res) => {
       fullName, phone, gender, profileImage, bio,
       specialization, experience, qualification, licenseNumber,
       consultationFee, consultationModes,
-      availableDays, timeSlots,
+      availableDays, timeSlots, weeklySchedule,
       clinicAddress
     } = req.body;
     const fee = Number(consultationFee);
@@ -276,45 +332,19 @@ router.post('/create-profile', authMiddleware, async (req, res) => {
       });
     }
     }
-    // Validate time slots
-    if (!Array.isArray(timeSlots) || timeSlots.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'At least one time slot is required'
-      });
-  }
-
-  for (const slot of timeSlots) {
-    const [sh, sm] = slot.start.split(':').map(Number);
-    const [eh, em] = slot.end.split(':').map(Number);
-
-    const startMin = sh * 60 + sm;
-    const endMin   = eh * 60 + em;
-
-    const duration = endMin - startMin;
-
-  // ❌ End must be after start
-    if (duration <= 0) {
-      return res.status(400).json({
-       success: false,
-       message: 'End time must be after start time'
-      });
+    // Validate per-day schedule (also accepts the old availableDays + timeSlots format)
+    const sched = buildSchedule({ weeklySchedule, availableDays, timeSlots });
+    if (sched.error) {
+      return res.status(400).json({ success: false, message: sched.error });
     }
-
-  // ❌ Minimum 2 hours
-   if (duration < 120) {
-      return res.status(400).json({
-        success: false,
-        message: 'Each slot must be at least 2 hours'
-      });
-    }
-  }
 
     const updateData = {
       fullName, phone, gender, bio,
       specialization, experience, qualification, licenseNumber,
       consultationFee, consultationModes,
-      availableDays, timeSlots,
+      availableDays: sched.availableDays,
+      weeklySchedule: sched.weeklySchedule,
+      timeSlots: [],
       clinicAddress,
       profileCreated: true
     };

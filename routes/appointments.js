@@ -34,6 +34,35 @@ function generateHourlySlots(timeSlots) {
   });
   return slots;
 }
+// Hourly slots a psychiatrist offers on a given date ("YYYY-MM-DD").
+// Returns { dayName, slots } where slots is null if he/she does not sit that day.
+function getSlotsForDate(psy, date) {
+  const [y, m, d] = date.split('-').map(Number);
+  const dayName = new Date(y, m - 1, d).toLocaleDateString('en-US', { weekday: 'long' });
+
+  if (psy.weeklySchedule && psy.weeklySchedule.length > 0) {
+    const entry = psy.weeklySchedule.find(e => e.day === dayName);
+    return { dayName, slots: entry ? generateHourlySlots(entry.slots) : null };
+  }
+
+  // Legacy profiles: same hours on every available day
+  if (psy.availableDays && psy.availableDays.length > 0 && !psy.availableDays.includes(dayName))
+    return { dayName, slots: null };
+  return { dayName, slots: generateHourlySlots(psy.timeSlots) };
+}
+
+// Has the appointment slot finished? (date is "YYYY-MM-DD", timeSlot is "HH:MM – HH:MM")
+function hasAppointmentPassed(date, timeSlot) {
+  const [y, m, d] = date.split('-').map(Number);
+  const endPart = (timeSlot || '').split(/[–-]/)[1];
+  let endH = 23, endM = 59; // if the slot can't be parsed, fall back to end of that day
+  if (endPart) {
+    const [h, min] = endPart.trim().split(':').map(Number);
+    if (!isNaN(h) && !isNaN(min)) { endH = h; endM = min; }
+  }
+  return new Date() >= new Date(y, m - 1, d, endH, endM);
+}
+
 function createTransporter() {
   return nodemailer.createTransport({
     service: 'gmail',
@@ -51,29 +80,29 @@ router.get('/slots/:psychiatristId', async (req, res) => {
     if (!psy) return res.status(404).json({ success: false, message: 'Psychiatrist not found' });
 
     const { date } = req.query;
-    const [_y,_m,_d] = date ? date.split("-").map(Number) : [];
-    const dayName = date ? new Date(_y, _m-1, _d).toLocaleDateString("en-US", { weekday: "long" }) : null;
 
-    // Check if psychiatrist works on this day
-    if (dayName && psy.availableDays && !psy.availableDays.includes(dayName)) {
-      return res.json({ success: true, slots: [], message: `Not available on ${dayName}` });
+    // No date: return the union of all slots (rarely used)
+    if (!date) {
+      let all = [];
+      if (psy.weeklySchedule && psy.weeklySchedule.length > 0)
+        psy.weeklySchedule.forEach(e => { all = all.concat(generateHourlySlots(e.slots)); });
+      else all = generateHourlySlots(psy.timeSlots);
+      return res.json({ success: true, slots: [...new Set(all)], availableDays: psy.availableDays });
     }
 
-    const allSlots = generateHourlySlots(psy.timeSlots);
+    const { dayName, slots: allSlots } = getSlotsForDate(psy, date);
+    if (!allSlots)
+      return res.json({ success: true, slots: [], message: `Not available on ${dayName}`, availableDays: psy.availableDays });
 
     // Remove already booked slots for this date
-    if (date) {
-      const booked = await Appointment.find({
-        psychiatrist: req.params.psychiatristId,
-        date,
-        status: { $ne: 'rejected' }
-      }).select('timeSlot');
-      const bookedSlots = booked.map(b => b.timeSlot);
-      const available = allSlots.filter(s => !bookedSlots.includes(s));
-      return res.json({ success: true, slots: available, availableDays: psy.availableDays });
-    }
-
-    res.json({ success: true, slots: allSlots, availableDays: psy.availableDays });
+    const booked = await Appointment.find({
+      psychiatrist: req.params.psychiatristId,
+      date,
+      status: { $ne: 'rejected' }
+    }).select('timeSlot');
+    const bookedSlots = booked.map(b => b.timeSlot);
+    const available = allSlots.filter(s => !bookedSlots.includes(s));
+    return res.json({ success: true, slots: available, availableDays: psy.availableDays });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -95,6 +124,13 @@ router.post('/book', async (req, res) => {
 
     const psy = await User.findById(psychiatristId);
     if (!psy) return res.status(404).json({ success: false, message: 'Psychiatrist not found' });
+
+    // Slot must belong to the psychiatrist's schedule for that weekday
+    const { dayName: bookDay, slots: daySlots } = getSlotsForDate(psy, date);
+    if (!daySlots)
+      return res.status(400).json({ success: false, message: `Dr. ${psy.fullName} is not available on ${bookDay}` });
+    if (!daySlots.includes(timeSlot))
+      return res.status(400).json({ success: false, message: `That time slot is not available on ${bookDay}. Please choose another.` });
 
     // Check slot not already booked
     const existing = await Appointment.findOne({
@@ -309,6 +345,22 @@ router.put('/:id/complete', async (req, res) => {
     // only psychiatrist can mark complete
     if (appointment.psychiatrist.toString() !== decoded.id)
       return res.status(403).json({ success: false, message: 'Not authorized' });
+
+    // only accepted appointments can be completed
+    if (appointment.status !== 'accepted')
+      return res.status(400).json({
+        success: false,
+        message: appointment.status === 'completed'
+          ? 'Appointment is already completed'
+          : 'Only accepted appointments can be marked as completed'
+      });
+
+    // cannot complete before the appointment time has passed
+    if (!hasAppointmentPassed(appointment.date, appointment.timeSlot))
+      return res.status(400).json({
+        success: false,
+        message: `You can mark this appointment as completed only after it ends (${appointment.date}, ${appointment.timeSlot}).`
+      });
 
     appointment.status = 'completed';
     await appointment.save();

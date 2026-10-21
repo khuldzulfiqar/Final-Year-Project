@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Messages — MindBridge</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .chat-shell {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      height: calc(100vh - 70px - 2rem);
+      min-height: 420px;
+      max-width: 1140px;
+      margin: 1rem auto;
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    /* ── contact list ── */
+    .chat-sidebar {
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .chat-sidebar-head {
+      padding: 1rem 1.1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .chat-sidebar-head h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.15rem;
+      color: var(--charcoal);
+    }
+
+    .chat-sidebar-head a {
+      font-size: 0.8rem;
+      color: var(--teal);
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    .chat-list {
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .contact {
+      display: flex;
+      gap: 0.75rem;
+      padding: 0.85rem 1.1rem;
+      cursor: pointer;
+      border-bottom: 1px solid #f0eee9;
+      transition: background 0.15s;
+    }
+
+    .contact:hover {
+      background: rgba(13, 115, 119, 0.04);
+    }
+
+    .contact.active {
+      background: rgba(13, 115, 119, 0.09);
+    }
+
+    .avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: var(--teal);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .contact-body {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .contact-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.5rem;
+      align-items: baseline;
+    }
+
+    .contact-name {
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: var(--charcoal);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .contact-time {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    .contact-bottom {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.5rem;
+      align-items: center;
+      margin-top: 0.1rem;
+    }
+
+    .contact-last {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .unread-badge {
+      background: var(--teal);
+      color: white;
+      font-size: 0.68rem;
+      font-weight: 700;
+      min-width: 20px;
+      height: 20px;
+      padding: 0 6px;
+      border-radius: 50px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .list-empty {
+      padding: 2rem 1.25rem;
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    /* ── conversation ── */
+    .chat-main {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      min-width: 0;
+    }
+
+    .chat-head {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.85rem 1.1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .chat-head-name {
+      font-weight: 700;
+      color: var(--charcoal);
+      font-size: 0.95rem;
+    }
+
+    .chat-head-sub {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .back-btn {
+      display: none;
+      background: none;
+      border: none;
+      font-size: 1.3rem;
+      cursor: pointer;
+      color: var(--teal);
+      padding: 0 0.3rem;
+    }
+
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem 1.25rem;
+      background: #f7f5f0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .chat-placeholder {
+      margin: auto;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      padding: 1rem;
+    }
+
+    .chat-placeholder .big {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .msg {
+      max-width: 70%;
+      padding: 0.55rem 0.85rem;
+      border-radius: 14px;
+      font-size: 0.9rem;
+      line-height: 1.45;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .msg.mine {
+      align-self: flex-end;
+      background: var(--teal);
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+
+    .msg.theirs {
+      align-self: flex-start;
+      background: white;
+      border: 1px solid var(--border);
+      border-bottom-left-radius: 4px;
+    }
+
+    .msg .time {
+      display: block;
+      font-size: 0.66rem;
+      opacity: 0.7;
+      margin-top: 0.2rem;
+      text-align: right;
+    }
+
+    .date-sep {
+      align-self: center;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      background: #ece9e2;
+      padding: 0.15rem 0.75rem;
+      border-radius: 50px;
+      margin: 0.5rem 0;
+    }
+
+    .chat-compose {
+      border-top: 1px solid var(--border);
+      padding: 0.75rem 1rem 0.5rem;
+    }
+
+    .compose-row {
+      display: flex;
+      gap: 0.6rem;
+      align-items: flex-end;
+    }
+
+    .compose-row textarea {
+      flex: 1;
+      resize: none;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 0.6rem 0.85rem;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      max-height: 120px;
+      outline: none;
+    }
+
+    .compose-row textarea:focus {
+      border-color: var(--teal);
+    }
+
+    .send-btn {
+      background: var(--teal);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 0.65rem 1.2rem;
+      font-weight: 600;
+      font-size: 0.875rem;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    .send-btn:hover:not(:disabled) {
+      background: var(--teal-dark);
+    }
+
+    .send-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .compose-note {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-top: 0.4rem;
+    }
+
+    .compose-error {
+      font-size: 0.78rem;
+      color: #c0392b;
+      margin-bottom: 0.4rem;
+      display: none;
+    }
+
+    @media (max-width: 768px) {
+      .chat-shell {
+        grid-template-columns: 1fr;
+        height: calc(100vh - 70px);
+        margin: 0;
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+      }
+
+      .chat-main {
+        display: none;
+      }
+
+      .chat-shell.show-chat .chat-sidebar {
+        display: none;
+      }
+
+      .chat-shell.show-chat .chat-main {
+        display: flex;
+      }
+
+      .back-btn {
+        display: block;
+      }
+
+      .msg {
+        max-width: 85%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <nav class="navbar">
+    <a href="/" class="navbar-brand">Mind<span>Bridge</span></a>
+    <div class="nav-links" id="dynamic-nav"></div>
+  </nav>
+
+  <div class="chat-shell" id="chat-shell">
+    <!-- contacts -->
+    <aside class="chat-sidebar">
+      <div class="chat-sidebar-head">
+        <h2>Messages</h2>
+        <a href="/dashboard">← Back to Dashboard</a>
+      </div>
+      <div class="chat-list" id="chat-list">
+        <div class="list-empty">Loading…</div>
+      </div>
+    </aside>
+
+    <!-- conversation -->
+    <section class="chat-main">
+      <div class="chat-head" id="chat-head" style="display:none;">
+        <button class="back-btn" onclick="closeChatMobile()" aria-label="Back to conversations">←</button>
+        <div class="avatar" id="head-avatar"></div>
+        <div>
+          <div class="chat-head-name" id="head-name"></div>
+          <div class="chat-head-sub" id="head-sub"></div>
+        </div>
+      </div>
+
+      <div class="chat-messages" id="chat-messages">
+        <div class="chat-placeholder">
+          <div class="big">💬</div>
+          Select a conversation to start chatting.
+        </div>
+      </div>
+
+      <div class="chat-compose" id="chat-compose" style="display:none;">
+        <div class="compose-error" id="compose-error"></div>
+        <div class="compose-row">
+          <textarea id="msg-input" rows="1" maxlength="1000" placeholder="Type a message…"></textarea>
+          <button class="send-btn" id="send-btn" onclick="sendMessage()">Send</button>
+        </div>
+        <div class="compose-note">Enter to send · Shift+Enter for a new line. This chat is not for emergencies — in a crisis,
+          contact your local emergency services.</div>
+      </div>
+    </section>
+  </div>
+
+  <script src="/js/app.js"></script>
+  <script>
+    if (!Auth.isLoggedIn()) window.location.href = '/login';
+    else if (Auth.isAdmin()) window.location.href = '/dashboard';
+
+    let contacts = [];
+    let activeId = null;
+    let lastMessageId = null;
+    let renderedIds = new Set();
+    let lastDateKey = null;
+    let sending = false;
+
+    const POLL_MESSAGES_MS = 3000;
+    const POLL_CONTACTS_MS = 10000;
+
+    function esc(s) {
+      return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    function initial(name) {
+      return esc((name || '?').replace(/^Dr\.\s*/, '').charAt(0).toUpperCase());
+    }
+
+    function shortTime(iso) {
+      const d = new Date(iso);
+      const now = new Date();
+      if (d.toDateString() === now.toDateString())
+        return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    }
+
+    function dateLabel(d) {
+      const today = new Date();
+      const yesterday = new Date(); yesterday.setDate(today.getDate() - 1);
+      if (d.toDateString() === today.toDateString()) return 'Today';
+      if (d.toDateString() === yesterday.toDateString()) return 'Yesterday';
+      return d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    /* ───────── contacts ───────── */
+    async function loadContacts() {
+      try {
+        const data = await apiCall('/api/chat/contacts');
+        if (!data.success) throw new Error(data.message);
+        contacts = data.contacts;
+        renderContacts();
+        refreshChatBadge();
+      } catch (e) {
+        if (!contacts.length)
+          document.getElementById('chat-list').innerHTML = '<div class="list-empty">Could not load conversations.</div>';
+      }
+    }
+
+    function renderContacts() {
+      const list = document.getElementById('chat-list');
+      if (contacts.length === 0) {
+        const msg = Auth.isPsychiatrist()
+          ? 'No conversations yet. You can chat with a patient once you accept their appointment request.'
+          : 'No conversations yet. You can chat with a psychiatrist once they accept your appointment.';
+        list.innerHTML = `<div class="list-empty">💬<br>${msg}</div>`;
+        return;
+      }
+      list.innerHTML = contacts.map(c => `
+        <div class="contact ${c._id === activeId ? 'active' : ''}" onclick="openChat('${c._id}')">
+          <div class="avatar">${initial(c.name)}</div>
+          <div class="contact-body">
+            <div class="contact-top">
+              <span class="contact-name">${esc(c.name)}</span>
+              <span class="contact-time">${c.lastMessage ? shortTime(c.lastMessage.createdAt) : ''}</span>
+            </div>
+            <div class="contact-bottom">
+              <span class="contact-last">${c.lastMessage
+          ? (c.lastMessage.mine ? 'You: ' : '') + esc(c.lastMessage.text)
+          : esc(c.subtitle)}</span>
+              ${c.unread > 0 && c._id !== activeId ? `<span class="unread-badge">${c.unread}</span>` : ''}
+            </div>
+          </div>
+        </div>`).join('');
+    }
+
+    /* ───────── conversation ───────── */
+    async function openChat(id) {
+      activeId = id;
+      lastMessageId = null;
+      renderedIds = new Set();
+      lastDateKey = null;
+
+      document.getElementById('chat-shell').classList.add('show-chat');
+      history.replaceState(null, '', `/chat?with=${id}`);
+
+      const box = document.getElementById('chat-messages');
+      box.innerHTML = '<div class="chat-placeholder">Loading…</div>';
+      document.getElementById('compose-error').style.display = 'none';
+
+      try {
+        const data = await apiCall(`/api/chat/${id}/messages`);
+        if (activeId !== id) return; // user switched while loading
+        if (!data.success) {
+          document.getElementById('chat-head').style.display = 'none';
+          document.getElementById('chat-compose').style.display = 'none';
+          box.innerHTML = `<div class="chat-placeholder"><div class="big">🔒</div>${esc(data.message || 'Cannot open this chat.')}</div>`;
+          return;
+        }
+
+        document.getElementById('chat-head').style.display = 'flex';
+        document.getElementById('chat-compose').style.display = 'block';
+        document.getElementById('head-avatar').textContent = data.other.name.replace(/^Dr\.\s*/, '').charAt(0).toUpperCase();
+        document.getElementById('head-name').textContent = data.other.name;
+        document.getElementById('head-sub').textContent = data.other.subtitle;
+
+        box.innerHTML = '';
+        if (data.messages.length === 0) {
+          box.innerHTML = '<div class="chat-placeholder" id="no-msgs"><div class="big">👋</div>No messages yet. Say hello!</div>';
+        } else {
+          data.messages.forEach(appendMessage);
+        }
+        scrollToBottom(true);
+        document.getElementById('msg-input').focus();
+
+        // opening a chat marks it read
+        const c = contacts.find(x => x._id === id);
+        if (c) c.unread = 0;
+        renderContacts();
+        refreshChatBadge();
+      } catch (e) {
+        box.innerHTML = '<div class="chat-placeholder">Could not load messages.</div>';
+      }
+    }
+
+    function closeChatMobile() {
+      document.getElementById('chat-shell').classList.remove('show-chat');
+      activeId = null;
+      history.replaceState(null, '', '/chat');
+      renderContacts();
+    }
+
+    function appendMessage(m) {
+      if (renderedIds.has(m._id)) return;
+      renderedIds.add(m._id);
+      lastMessageId = m._id;
+
+      const box = document.getElementById('chat-messages');
+      const noMsgs = document.getElementById('no-msgs');
+      if (noMsgs) noMsgs.remove();
+
+      const d = new Date(m.createdAt);
+      const key = d.toDateString();
+      if (key !== lastDateKey) {
+        lastDateKey = key;
+        const sep = document.createElement('div');
+        sep.className = 'date-sep';
+        sep.textContent = dateLabel(d);
+        box.appendChild(sep);
+      }
+
+      const el = document.createElement('div');
+      el.className = `msg ${m.mine ? 'mine' : 'theirs'}`;
+      el.appendChild(document.createTextNode(m.text));   // text only — never HTML
+      const t = document.createElement('span');
+      t.className = 'time';
+      t.textContent = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      el.appendChild(t);
+      box.appendChild(el);
+    }
+
+    function scrollToBottom(force) {
+      const box = document.getElementById('chat-messages');
+      const nearBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 120;
+      if (force || nearBottom) box.scrollTop = box.scrollHeight;
+    }
+
+    async function pollMessages() {
+      if (!activeId || document.hidden) return;
+      const id = activeId;
+      try {
+        const url = `/api/chat/${id}/messages` + (lastMessageId ? `?after=${lastMessageId}` : '');
+        const data = await apiCall(url);
+        if (!data.success || activeId !== id) return;
+        if (data.messages.length > 0) {
+          const box = document.getElementById('chat-messages');
+          const wasNearBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 120;
+          data.messages.forEach(appendMessage);
+          if (wasNearBottom) box.scrollTop = box.scrollHeight;
+          loadContacts();
+        }
+      } catch (e) { /* ignore — next poll will retry */ }
+    }
+
+    /* ───────── sending ───────── */
+    async function sendMessage() {
+      if (sending || !activeId) return;
+      const input = document.getElementById('msg-input');
+      const text = input.value.trim();
+      if (!text) return;
+
+      const errEl = document.getElementById('compose-error');
+      errEl.style.display = 'none';
+      sending = true;
+      document.getElementById('send-btn').disabled = true;
+
+      try {
+        const data = await apiCall(`/api/chat/${activeId}/messages`, 'POST', { text });
+        if (data.success) {
+          input.value = '';
+          input.style.height = 'auto';
+          appendMessage(data.message);
+          scrollToBottom(true);
+          loadContacts();
+        } else {
+          errEl.textContent = data.message || 'Could not send message.';
+          errEl.style.display = 'block';
+        }
+      } catch (e) {
+        errEl.textContent = 'Network error. Please try again.';
+        errEl.style.display = 'block';
+      } finally {
+        sending = false;
+        document.getElementById('send-btn').disabled = false;
+        input.focus();
+      }
+    }
+
+    const msgInput = document.getElementById('msg-input');
+    msgInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+    });
+    msgInput.addEventListener('input', () => {
+      msgInput.style.height = 'auto';
+      msgInput.style.height = Math.min(msgInput.scrollHeight, 120) + 'px';
+    });
+
+    /* ───────── start ───────── */
+    document.addEventListener('DOMContentLoaded', async () => {
+      await loadContacts();
+
+      const withId = new URLSearchParams(window.location.search).get('with');
+      if (withId) openChat(withId);
+      else if (window.innerWidth > 768 && contacts.length > 0) {
+        // desktop: open the most recent conversation (or the first one with unread messages)
+        const firstUnread = contacts.find(c => c.unread > 0);
+        openChat((firstUnread || contacts[0])._id);
+      }
+
+      setInterval(pollMessages, POLL_MESSAGES_MS);
+      setInterval(loadContacts, POLL_CONTACTS_MS);
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) { pollMessages(); loadContacts(); } });
+    });
+  </script>
+</body>
+
+</html>

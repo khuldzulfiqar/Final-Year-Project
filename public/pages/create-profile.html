@@ -98,6 +98,23 @@
     }
     .add-slot-btn:hover { background: rgba(13,115,119,0.06); }
 
+    /* ── PER-DAY SCHEDULE ── */
+    .day-schedule {
+      border: 1.5px solid var(--border); border-radius: 12px;
+      padding: 1rem 1.1rem; margin-bottom: 0.85rem; background: white;
+    }
+    .day-schedule-head {
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.75rem;
+    }
+    .day-schedule-title { font-weight: 700; font-size: 0.9rem; color: var(--charcoal); }
+    .copy-day-btn {
+      background: none; border: none; color: var(--teal); font-size: 0.78rem;
+      font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; padding: 0;
+    }
+    .copy-day-btn:hover { text-decoration: underline; }
+    .schedule-empty { font-size: 0.85rem; color: var(--text-muted); }
+
     /* ── MAP ── */
     #map {
       height: 320px; border-radius: 14px;
@@ -378,6 +395,7 @@
         </div>
         <div class="mb-4">
           <label class="form-label">Available Days *</label>
+          <p style="font-size:0.8rem;color:var(--text-muted);margin:0.15rem 0 0;">Pick the days you sit. You can set different hours for each day below.</p>
           <div class="day-grid">
             <button type="button" class="day-btn" onclick="toggleDay(this,'Monday')">Mon</button>
             <button type="button" class="day-btn" onclick="toggleDay(this,'Tuesday')">Tue</button>
@@ -389,9 +407,9 @@
           </div>
         </div>
         <div class="mb-3">
-          <label class="form-label">Time Slots *</label>
-          <div id="slots-list"></div>
-          <button type="button" class="add-slot-btn" onclick="addSlot()">+ Add Time Slot</button>
+          <label class="form-label">Sitting Hours per Day *</label>
+          <div id="day-schedules"></div>
+          <p id="schedule-empty" class="schedule-empty">Select a day above to set its hours.</p>
         </div>
       </div>
 
@@ -452,6 +470,8 @@ if (!Auth.isLoggedIn() || !Auth.isPsychiatrist()) window.location.href = '/login
 
 let profileImageUrl = null;
 let selectedDays = [];
+const DAY_ORDER = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const DAY_SHORT = { Monday:'Mon', Tuesday:'Tue', Wednesday:'Wed', Thursday:'Thu', Friday:'Fri', Saturday:'Sat', Sunday:'Sun' };
 let map, marker;
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -619,16 +639,19 @@ async function prefillForm() {
   }
   if (u.consultationModes?.online)   { document.getElementById('card-online').classList.add('selected');   document.getElementById('mode-online').checked = true; }
   if (u.consultationModes?.inPerson) { document.getElementById('card-inPerson').classList.add('selected'); document.getElementById('mode-inPerson').checked = true; }
-  if (u.availableDays?.length > 0) {
-    selectedDays = [...u.availableDays];
-    const dayMap = { Mon:'Monday', Tue:'Tuesday', Wed:'Wednesday', Thu:'Thursday', Fri:'Friday', Sat:'Saturday', Sun:'Sunday' };
-    document.querySelectorAll('.day-btn').forEach(btn => {
-      const full = dayMap[btn.textContent.trim()];
-      if (selectedDays.includes(full)) btn.classList.add('active');
-    });
-  }
-  if (u.timeSlots?.length > 0) u.timeSlots.forEach(s => addSlot(s.start, s.end));
-  else addSlot();
+  // Per-day schedule (falls back to the old "same slots on every day" format)
+  const savedSchedule = (u.weeklySchedule && u.weeklySchedule.length > 0)
+    ? u.weeklySchedule
+    : (u.availableDays || []).map(day => ({ day, slots: u.timeSlots || [] }));
+  savedSchedule.forEach(entry => {
+    const btn = dayButton(entry.day);
+    if (!btn || selectedDays.includes(entry.day)) return;
+    btn.classList.add('active');
+    selectedDays.push(entry.day);
+    createDayCard(entry.day);
+    if (entry.slots && entry.slots.length > 0) entry.slots.forEach(sl => addSlot(entry.day, sl.start, sl.end));
+    else addSlot(entry.day);
+  });
 }
 
 async function handleImage(input) {
@@ -676,14 +699,52 @@ function toggleMode(mode) {
   cb.checked = !cb.checked;
 }
 
+function dayButton(day) {
+  return [...document.querySelectorAll('.day-btn')].find(b => b.textContent.trim() === DAY_SHORT[day]);
+}
+
+function updateScheduleEmptyHint() {
+  document.getElementById('schedule-empty').style.display = selectedDays.length ? 'none' : 'block';
+}
+
 function toggleDay(btn, day) {
   btn.classList.toggle('active');
-  if (selectedDays.includes(day)) selectedDays = selectedDays.filter(d => d !== day);
-  else selectedDays.push(day);
+  if (selectedDays.includes(day)) {
+    selectedDays = selectedDays.filter(d => d !== day);
+    const card = document.getElementById(`sched-${day}`);
+    if (card) card.remove();
+  } else {
+    selectedDays.push(day);
+    createDayCard(day);
+    addSlot(day);
+  }
+  updateScheduleEmptyHint();
+}
+
+function createDayCard(day) {
+  const card = document.createElement('div');
+  card.className = 'day-schedule';
+  card.id = `sched-${day}`;
+  card.dataset.day = day;
+  card.innerHTML = `
+    <div class="day-schedule-head">
+      <span class="day-schedule-title">${day}</span>
+      <button type="button" class="copy-day-btn" onclick="copyDayToAll('${day}')">Copy these hours to all selected days</button>
+    </div>
+    <div class="day-slots"></div>
+    <button type="button" class="add-slot-btn" onclick="addSlot('${day}')">+ Add Time Slot</button>`;
+  // keep the cards in Monday → Sunday order
+  const container = document.getElementById('day-schedules');
+  const next = [...container.children].find(c => DAY_ORDER.indexOf(c.dataset.day) > DAY_ORDER.indexOf(day));
+  container.insertBefore(card, next || null);
+  updateScheduleEmptyHint();
+  return card;
 }
 
 let slotCount = 0;
-function addSlot(start='', end='') {
+function addSlot(day, start='', end='') {
+  const card = document.getElementById(`sched-${day}`);
+  if (!card) return;
   slotCount++;
   const id = `slot-${slotCount}`;
   const div = document.createElement('div');
@@ -694,7 +755,7 @@ function addSlot(start='', end='') {
     <span style="font-size:0.85rem;color:var(--text-muted);font-weight:500;">To</span>
     <input type="time" class="form-control slot-end" value="${end}">
     <button type="button" class="remove-slot" onclick="document.getElementById('${id}').remove()" title="Remove">✕</button>`;
-  document.getElementById('slots-list').appendChild(div);
+  card.querySelector('.day-slots').appendChild(div);
   const startInput = div.querySelector('.slot-start');
   const endInput   = div.querySelector('.slot-end');
 
@@ -703,41 +764,62 @@ function addSlot(start='', end='') {
   });
 }
 
-function getTimeSlots() {
-  const slots = [];
+// Copy one day's hours onto every other selected day
+function copyDayToAll(day) {
+  const rows = [...document.querySelectorAll(`#sched-${day} .slot-row`)]
+    .map(r => ({ start: r.querySelector('.slot-start').value, end: r.querySelector('.slot-end').value }))
+    .filter(r => r.start || r.end);
+  if (rows.length === 0) { showAlert('form-alert', `⚠️ Set the hours for ${day} first.`, 'error'); return; }
+  selectedDays.filter(d => d !== day).forEach(d => {
+    document.querySelector(`#sched-${d} .day-slots`).innerHTML = '';
+    rows.forEach(r => addSlot(d, r.start, r.end));
+  });
+}
 
-  document.querySelectorAll('.slot-row').forEach(row => {
-    const start = row.querySelector('.slot-start').value;
-    const end   = row.querySelector('.slot-end').value;
+// Reads and validates every selected day's hours → [{ day, slots: [{start, end}] }]
+function getWeeklySchedule() {
+  const schedule = [];
 
-    if (start && end) {
+  DAY_ORDER.filter(d => selectedDays.includes(d)).forEach(day => {
+    const slots = [];
+
+    function fail(msg, el) {
+      showAlert('form-alert', `⚠️ ${day}: ${msg}`, 'error');
+      if (el) { el.classList.add('field-error'); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+      throw new Error('Invalid schedule');
+    }
+
+    document.querySelectorAll(`#sched-${day} .slot-row`).forEach(row => {
+      const startEl = row.querySelector('.slot-start');
+      const endEl   = row.querySelector('.slot-end');
+      const start = startEl.value;
+      const end   = endEl.value;
+
+      if (!start && !end) return;                       // ignore blank rows
+      if (!start || !end) fail('please fill in both start and end time', !start ? startEl : endEl);
+
       const [sh, sm] = start.split(':').map(Number);
       const [eh, em] = end.split(':').map(Number);
+      const duration = (eh * 60 + em) - (sh * 60 + sm);
 
-      const startMin = sh * 60 + sm;
-      const endMin   = eh * 60 + em;
-
-      const duration = endMin - startMin;
-
-      // ❌ End must be AFTER start
-      if (duration <= 0) {
-        showAlert('form-alert', '⚠️ End time must be after start time', 'error');
-        row.querySelector('.slot-end').classList.add('field-error');
-        throw new Error('Invalid time');
-      }
-
-      // ❌ Minimum 2 hours
-      if (duration < 120) {
-        showAlert('form-alert', '⚠️ Each slot must be at least 2 hours', 'error');
-        row.querySelector('.slot-end').classList.add('field-error');
-        throw new Error('Too short');
-      }
+      if (duration <= 0)  fail('end time must be after start time', endEl);
+      if (duration < 120) fail('each slot must be at least 2 hours', endEl);
 
       slots.push({ start, end });
+    });
+
+    if (slots.length === 0) fail('please add at least one time slot (or unselect this day)');
+
+    // no overlapping slots on the same day
+    const sorted = [...slots].sort((a, b) => a.start.localeCompare(b.start));
+    for (let i = 1; i < sorted.length; i++) {
+      if (sorted[i].start < sorted[i - 1].end) fail('time slots overlap');
     }
+
+    schedule.push({ day, slots });
   });
 
-  return slots;
+  return schedule;
 }
 
 async function submitProfile() {
@@ -758,9 +840,9 @@ async function submitProfile() {
   const lng             = document.getElementById('addr-lng').value;
   const onlineMode      = document.getElementById('mode-online').checked;
   const inPersonMode    = document.getElementById('mode-inPerson').checked;
-  let timeSlots;
+  let weeklySchedule;
   try {
-    timeSlots = getTimeSlots();
+    weeklySchedule = getWeeklySchedule();
   } catch (e) {
     return; // stop form submit if invalid
   }
@@ -801,7 +883,6 @@ async function submitProfile() {
   }
   if (!onlineMode && !inPersonMode) { showAlert('form-alert','\u26a0\ufe0f Please select at least one consultation mode (Online or In-Person).','error'); document.getElementById('mode-online').closest('label').scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
   if (selectedDays.length === 0)    { showAlert('form-alert','\u26a0\ufe0f Please select at least one available day.','error'); document.querySelector('.days-grid') && document.querySelector('.days-grid').scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
-  if (timeSlots.length === 0)       { showAlert('form-alert','\u26a0\ufe0f Please add at least one time slot.','error'); document.getElementById('time-slots-container') && document.getElementById('time-slots-container').scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
 
   const btn = document.getElementById('submit-btn');
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Saving…';
@@ -811,7 +892,7 @@ async function submitProfile() {
     specialization, experience, qualification, licenseNumber,
     consultationFee: parseInt(consultationFee),
     consultationModes: { online: onlineMode, inPerson: inPersonMode },
-    availableDays: selectedDays, timeSlots,
+    availableDays: selectedDays, weeklySchedule,
     clinicAddress: { street, city, state, country, lat: lat || null, lng: lng || null }
   };
   if (profileImageUrl) body.profileImage = profileImageUrl;

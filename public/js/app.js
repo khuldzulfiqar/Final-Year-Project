@@ -47,6 +47,7 @@ function buildNavbar() {
   } else {
 
     html += link('/dashboard', 'My Dashboard');
+    html += link('/chat', '💬 Messages<span id="nav-chat-badge" class="nav-badge" style="display:none;"></span>');
 
     const user = Auth.getUser();
     const name = user?.fullName || 'User';
@@ -89,6 +90,22 @@ function buildNavbar() {
   }
 
   nav.innerHTML = html;
+  if (isLoggedIn && !isAdmin) refreshChatBadge();
+}
+
+// Unread-messages badge next to "Messages" in the navbar
+async function refreshChatBadge() {
+  const badge = document.getElementById('nav-chat-badge');
+  if (!badge) return;
+  try {
+    const data = await apiCall('/api/chat/unread-count');
+    if (data.success && data.count > 0) {
+      badge.textContent = data.count > 99 ? '99+' : data.count;
+      badge.style.display = 'inline-block';
+    } else {
+      badge.style.display = 'none';
+    }
+  } catch (e) { /* ignore */ }
 }
 
 function logout() {

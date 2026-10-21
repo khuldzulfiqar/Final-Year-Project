@@ -34,7 +34,13 @@ const userSchema = new mongoose.Schema({
     inPerson: { type: Boolean, default: false }
   },
   availableDays: [{ type: String }],
-  timeSlots: [{ start: String, end: String }],
+  timeSlots: [{ start: String, end: String }],   // legacy: same hours on every day
+  // Per-day sitting hours, e.g. [{ day: 'Monday', slots: [{ start: '09:00', end: '13:00' }] }, ...]
+  weeklySchedule: [{
+    _id: false,
+    day: { type: String, enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] },
+    slots: [{ _id: false, start: String, end: String }]
+  }],
   bio: { type: String, trim: true },
   profileCreated: { type: Boolean, default: false },
 

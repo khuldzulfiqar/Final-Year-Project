@@ -1076,3 +1076,18 @@ footer p {
     transform: none;
   }
 }
+/* Unread messages badge (navbar) */
+.nav-badge {
+  background: #e17055;
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  line-height: 18px;
+  padding: 0 5px;
+  border-radius: 50px;
+  text-align: center;
+  margin-left: 0.35rem;
+  vertical-align: middle;
+}

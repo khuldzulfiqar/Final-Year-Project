@@ -33,6 +33,7 @@ app.use('/api/reviews', require('./routes/reviews'));
 app.use('/api/upload', require('./routes/upload'));
 app.use('/api/password', require('./routes/password'));
 app.use('/api/screening', require('./routes/screening'));
+app.use('/api/chat', require('./routes/chat'));
 
 
 const p = (file) => path.join(__dirname, 'public', 'pages', file);
@@ -52,6 +53,7 @@ app.get('/reset-password', (req, res) => res.sendFile(p('reset-password.html')))
 app.get('/patient-profile', (req, res) => res.sendFile(p('patient-profile.html')));
 app.get('/screening', (req, res) => res.sendFile(p('screening.html')));
 app.get('/psy-profile', (req, res) => res.sendFile(p('psy-profile.html')));
+app.get('/chat', (req, res) => res.sendFile(p('chat.html')));
 app.get('/patient-prescriptions', (req, res) => {
   res.sendFile(p('patient-prescriptions.html'));
 });
