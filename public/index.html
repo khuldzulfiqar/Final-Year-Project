@@ -76,7 +76,17 @@
     background: var(--teal);
     transform: translateY(-3px) scale(1.05);
   }
-</style>
+
+    /* Keep the three hero buttons on one line on desktop (logged-in users get "Contact Us") */
+    @media (min-width: 992px) {
+      #hero-actions.has-contact { flex-wrap: nowrap; gap: 0.7rem; }
+      #hero-actions.has-contact a {
+        padding: 0.85rem 1.2rem;
+        font-size: 0.95rem;
+        white-space: nowrap;
+      }
+    }
+  </style>
 
 <body>
 
@@ -255,6 +265,28 @@
 
   <script src="/js/app.js"></script>
   <script>
+    // Contact Us button (logged-in patients & psychiatrists only)
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!Auth.isLoggedIn() || Auth.isAdmin()) return;
+      const btn = document.createElement('a');
+      btn.href = '#';
+      btn.className = 'btn-hero-outline';
+      btn.textContent = '💬 Contact Us';
+      btn.addEventListener('click', e => { e.preventDefault(); contactAdmin(); });
+      const heroActions = document.getElementById('hero-actions');
+      heroActions.appendChild(btn);
+      heroActions.classList.add('has-contact');
+
+      const footerLinks = document.querySelector('footer .col-md-4:nth-child(2)');
+      if (footerLinks) {
+        const f = document.createElement('a');
+        f.href = '#';
+        f.textContent = 'Contact Us';
+        f.addEventListener('click', e => { e.preventDefault(); contactAdmin(); });
+        footerLinks.appendChild(f);
+      }
+    });
+
 
     let allPsychiatrists = [];
     let currentIndex = 0;

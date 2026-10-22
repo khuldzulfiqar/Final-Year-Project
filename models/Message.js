@@ -1,8 +1,9 @@
 const mongoose = require('mongoose');
 
 const messageSchema = new mongoose.Schema({
-  sender:   { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  receiver: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  // sender/receiver can be a User (patient/psychiatrist) or the Admin, so no single 'ref'
+  sender:   { type: mongoose.Schema.Types.ObjectId, required: true },
+  receiver: { type: mongoose.Schema.Types.ObjectId, required: true },
   text:     { type: String, required: true, trim: true, maxlength: 1000 },
   read:     { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now }

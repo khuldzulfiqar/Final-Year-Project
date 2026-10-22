@@ -47,6 +47,20 @@
       text-decoration: none;
     }
 
+    .chat-filter { display: none; padding: 0.6rem 1.1rem; border-bottom: 1px solid var(--border); }
+    .chat-filter input {
+      width: 100%; border: 1.5px solid var(--border); border-radius: 10px;
+      padding: 0.45rem 0.7rem; font-family: 'DM Sans', sans-serif; font-size: 0.85rem; outline: none;
+    }
+    .chat-filter input:focus { border-color: var(--teal); }
+    .filter-tabs { display: flex; gap: 0.4rem; margin-top: 0.5rem; }
+    .filter-tab {
+      border: 1px solid var(--border); background: white; border-radius: 50px;
+      padding: 0.2rem 0.7rem; font-size: 0.74rem; cursor: pointer; color: var(--text-muted);
+      font-family: 'DM Sans', sans-serif;
+    }
+    .filter-tab.active { background: var(--teal); color: white; border-color: var(--teal); }
+
     .chat-list {
       overflow-y: auto;
       flex: 1;
@@ -354,7 +368,15 @@
     <aside class="chat-sidebar">
       <div class="chat-sidebar-head">
         <h2>Messages</h2>
-        <a href="/dashboard">← Back to Dashboard</a>
+        <a href="/dashboard" id="back-link">← Back to Dashboard</a>
+      </div>
+      <div class="chat-filter" id="chat-filter">
+        <input type="text" id="contact-search" placeholder="Search conversations…">
+        <div class="filter-tabs">
+          <button class="filter-tab active" data-role="all" onclick="setRoleFilter('all')">All</button>
+          <button class="filter-tab" data-role="patient" onclick="setRoleFilter('patient')">Patients</button>
+          <button class="filter-tab" data-role="psychiatrist" onclick="setRoleFilter('psychiatrist')">Psychiatrists</button>
+        </div>
       </div>
       <div class="chat-list" id="chat-list">
         <div class="list-empty">Loading…</div>
@@ -385,7 +407,7 @@
           <textarea id="msg-input" rows="1" maxlength="1000" placeholder="Type a message…"></textarea>
           <button class="send-btn" id="send-btn" onclick="sendMessage()">Send</button>
         </div>
-        <div class="compose-note">Enter to send · Shift+Enter for a new line. This chat is not for emergencies — in a crisis,
+        <div class="compose-note" id="compose-note">Enter to send · Shift+Enter for a new line. This chat is not for emergencies — in a crisis,
           contact your local emergency services.</div>
       </div>
     </section>
@@ -394,7 +416,10 @@
   <script src="/js/app.js"></script>
   <script>
     if (!Auth.isLoggedIn()) window.location.href = '/login';
-    else if (Auth.isAdmin()) window.location.href = '/dashboard';
+
+    const IS_ADMIN = Auth.isAdmin();
+    let roleFilter = 'all';
+    let searchTerm = '';
 
     let contacts = [];
     let activeId = null;
@@ -446,6 +471,20 @@
 
     function renderContacts() {
       const list = document.getElementById('chat-list');
+      let shown = contacts;
+      if (IS_ADMIN && contacts.length === 0) {
+        list.innerHTML = '<div class="list-empty">💬<br>No messages yet. Users will appear here when they contact you using the Contact Us button.</div>';
+        return;
+      }
+      if (IS_ADMIN) {
+        shown = contacts.filter(c =>
+          (roleFilter === 'all' || c.role === roleFilter) &&
+          (!searchTerm || c.name.toLowerCase().includes(searchTerm)));
+        if (shown.length === 0) {
+          list.innerHTML = '<div class="list-empty">No matching conversations.</div>';
+          return;
+        }
+      }
       if (contacts.length === 0) {
         const msg = Auth.isPsychiatrist()
           ? 'No conversations yet. You can chat with a patient once you accept their appointment request.'
@@ -453,7 +492,7 @@
         list.innerHTML = `<div class="list-empty">💬<br>${msg}</div>`;
         return;
       }
-      list.innerHTML = contacts.map(c => `
+      list.innerHTML = shown.map(c => `
         <div class="contact ${c._id === activeId ? 'active' : ''}" onclick="openChat('${c._id}')">
           <div class="avatar">${initial(c.name)}</div>
           <div class="contact-body">
@@ -623,12 +662,29 @@
     });
 
     /* ───────── start ───────── */
+    function setRoleFilter(role) {
+      roleFilter = role;
+      document.querySelectorAll('.filter-tab').forEach(t => t.classList.toggle('active', t.dataset.role === role));
+      renderContacts();
+    }
+
     document.addEventListener('DOMContentLoaded', async () => {
+      if (IS_ADMIN) {
+        document.getElementById('chat-filter').style.display = 'block';
+        const back = document.getElementById('back-link');
+        back.href = '/admin/admin-dashboard.html';
+        back.textContent = '← Back to Admin Dashboard';
+        document.getElementById('compose-note').textContent = 'Enter to send · Shift+Enter for a new line.';
+        document.getElementById('contact-search').addEventListener('input', e => {
+          searchTerm = e.target.value.trim().toLowerCase();
+          renderContacts();
+        });
+      }
       await loadContacts();
 
       const withId = new URLSearchParams(window.location.search).get('with');
       if (withId) openChat(withId);
-      else if (window.innerWidth > 768 && contacts.length > 0) {
+      else if (window.innerWidth > 768 && contacts.length > 0 && (!IS_ADMIN || contacts.some(c => c.unread > 0))) {
         // desktop: open the most recent conversation (or the first one with unread messages)
         const firstUnread = contacts.find(c => c.unread > 0);
         openChat((firstUnread || contacts[0])._id);

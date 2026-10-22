@@ -43,6 +43,7 @@ function buildNavbar() {
     html += `<a href="/register" class="btn-nav btn-nav-primary">Register</a>`;
   } else if (isAdmin) {
     html += `<a href="/admin/admin-dashboard.html" class="nav-link">My Dashboard</a>`;
+    html += link('/chat', '💬 Messages<span id="nav-chat-badge" class="nav-badge" style="display:none;"></span>');
     html += `<button onclick="logout()" class="btn-nav btn-nav-danger">Logout</button>`;
   } else {
 
@@ -90,7 +91,7 @@ function buildNavbar() {
   }
 
   nav.innerHTML = html;
-  if (isLoggedIn && !isAdmin) refreshChatBadge();
+  if (isLoggedIn) refreshChatBadge();
 }
 
 // Unread-messages badge next to "Messages" in the navbar
@@ -106,6 +107,19 @@ async function refreshChatBadge() {
       badge.style.display = 'none';
     }
   } catch (e) { /* ignore */ }
+}
+
+// "Contact Us" button: opens the conversation with the admin
+async function contactAdmin() {
+  if (!Auth.isLoggedIn()) { window.location.href = '/login'; return; }
+  if (Auth.isAdmin()) { window.location.href = '/chat'; return; }
+  try {
+    const data = await apiCall('/api/chat/admin-contact');
+    if (data.success) window.location.href = '/chat?with=' + data._id;
+    else showToast(data.message || 'Could not open Contact Us', 'error');
+  } catch (e) {
+    showToast('Network error. Please try again.', 'error');
+  }
 }
 
 function logout() {

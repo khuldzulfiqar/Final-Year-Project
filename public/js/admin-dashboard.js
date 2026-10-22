@@ -52,4 +52,15 @@ async function loadCounts() {
   }
 }
 
+// Unread chat messages for the admin
+async function loadUnread() {
+  try {
+    const token = localStorage.getItem('mb_token');
+    const res = await fetch('/api/chat/unread-count', { headers: { Authorization: 'Bearer ' + token } });
+    const data = await res.json();
+    if (data.success) document.getElementById('unreadCount').textContent = data.count;
+  } catch (err) { /* ignore */ }
+}
+
 loadCounts();
+loadUnread();
