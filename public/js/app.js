@@ -159,3 +159,28 @@ window.onclick = function (e) {
     if (menu) menu.style.display = "none";
   }
 }
+
+
+// ── Online consultation helpers ──
+// 'early' | 'open' | 'ended' | null  (null = this appointment has no meeting to join)
+function meetingJoinState(a, earlyMin = 10) {
+  if (a.consultationMode !== 'online' || a.status !== 'accepted' || !a.meetingLink) return null;
+  const [y, m, d] = a.date.split('-').map(Number);
+  const [s, e] = (a.timeSlot || '').split(/[–-]/).map(x => x.trim());
+  const [sh, sm] = s.split(':').map(Number), [eh, em] = e.split(':').map(Number);
+  const start = new Date(y, m - 1, d, sh, sm), end = new Date(y, m - 1, d, eh, em);
+  const now = new Date();
+  if (now >= end) return 'ended';
+  if (now < new Date(start.getTime() - earlyMin * 60000)) return 'early';
+  return 'open';
+}
+
+function joinMeetingButton(a, iconOnly = false) {
+  const st = meetingJoinState(a);
+  if (!st || st === 'ended') return '';
+  const cls = 'btn-join' + (iconOnly ? ' icon-only' : '');
+  const label = iconOnly ? '' : ' Join Meeting';
+  return st === 'open'
+    ? `<a class="${cls}" href="${a.meetingLink}" target="_blank" rel="noopener noreferrer" title="Join video consultation">🎥${label}</a>`
+    : `<span class="${cls} disabled" title="Opens 10 minutes before the appointment">🎥${label}</span>`;
+}

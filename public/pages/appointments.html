@@ -405,6 +405,9 @@
       ${a.notes ? `<div class="notes-box">📝 <strong>Patient Notes:</strong> ${a.notes}</div>` : ''}
       ${a.status === 'rejected' && a.rejectionReason ? `<div class="rejection-reason">❌ <strong>Rejection Reason:</strong> ${a.rejectionReason}</div>` : ''}
 
+      ${a.status === 'pending' && a.consultationMode === 'online' ? `
+        <input id="meet-link-${a._id}" class="form-control" style="margin-bottom:0.6rem;"
+          placeholder="Meeting link (Google Meet / Zoom / Teams) — optional, you can add it later">` : ''}
       ${a.status === 'pending' ? `
         <div class="appt-actions">
           <button class="btn-accept icon-only" title="Accept" aria-label="Accept" onclick="handleAction('${a._id}', 'accepted')"><i class="ti ti-check"></i></button>
@@ -425,6 +428,8 @@
       ? `<button class="btn-accept icon-only" title="Mark completed" aria-label="Mark completed" onclick="markCompleted('${a._id}')"><i class="ti ti-circle-check"></i></button>`
       : `<button class="btn-accept icon-only" title="Can be marked completed only after the appointment time has passed" aria-label="Mark completed (not available yet)" disabled><i class="ti ti-circle-check"></i></button>`}
     ${chatButton(a)}
+    <span class="join-slot" data-id="${a._id}">${joinMeetingButton(a, true)}</span>
+    ${a.consultationMode === 'online' ? `<button class="btn-chat icon-only" title="${a.meetingLink ? 'Change meeting link' : 'Add meeting link'}" aria-label="Meeting link" onclick="editMeetingLink('${a._id}')">🔗</button>` : ''}
   </div>
 ` : ''}
       ${a.status === 'completed' ? `
@@ -463,6 +468,8 @@
 
     async function handleAction(appointmentId, action) {
       let rejectionReason = '';
+      const linkEl = document.getElementById(`meet-link-${appointmentId}`);
+      const meetingLink = linkEl ? linkEl.value.trim() : '';
       if (action === 'rejected') {
         rejectionReason = document.getElementById(`reject-reason-${appointmentId}`).value.trim();
         if (!rejectionReason) {
@@ -472,12 +479,12 @@
       }
 
       try {
-        const data = await apiCall(`/api/appointments/${appointmentId}/action`, 'PUT', { action, rejectionReason });
+        const data = await apiCall(`/api/appointments/${appointmentId}/action`, 'PUT', { action, rejectionReason, meetingLink });
         if (data.success) {
           showToast(data.message, 'success');
           // FR_17-08: Update status in list
           allAppointments = allAppointments.map(a =>
-            a._id === appointmentId ? { ...a, status: action, rejectionReason } : a
+            a._id === appointmentId ? { ...a, status: action, rejectionReason, meetingLink: (data.appointment && data.appointment.meetingLink) || '' } : a
           );
           // FR_17-11: Remove rejected from pending view
           renderAppointments();
@@ -507,6 +514,31 @@
         showAlert('alert-box', 'Server error. Please try again.', 'error');
       }
     }
+
+    async function editMeetingLink(id) {
+      const link = prompt('Paste your Google Meet / Zoom / Teams link:', '');
+      if (link === null) return;
+      try {
+        const res = await apiCall(`/api/appointments/${id}/meeting-link`, 'PUT', { meetingLink: link });
+        if (res.success) {
+          allAppointments = allAppointments.map(a => a._id === id ? { ...a, meetingLink: res.appointment.meetingLink } : a);
+          renderAppointments();
+          showToast('Meeting link saved', 'success');
+        } else {
+          showAlert('alert-box', res.message || 'Could not save link.', 'error');
+        }
+      } catch (e) {
+        showAlert('alert-box', 'Server error. Please try again.', 'error');
+      }
+    }
+
+    // Keep Join buttons current without re-rendering (so typed text is never lost)
+    setInterval(() => {
+      document.querySelectorAll('.join-slot').forEach(el => {
+        const a = allAppointments.find(x => x._id === el.dataset.id);
+        if (a) el.innerHTML = joinMeetingButton(a, true);
+      });
+    }, 60000);
 
     function openPrescription(id) {
       window.location.href = `/add-prescription.html?id=${id}`;

@@ -1091,3 +1091,9 @@ footer p {
   margin-left: 0.35rem;
   vertical-align: middle;
 }
+
+/* ── Online consultation: Join Meeting button ── */
+.btn-join { display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; background: var(--teal); color: #fff; border-radius: 8px; padding: 0.35rem 0.9rem; font-size: 0.8rem; font-weight: 600; text-decoration: none; margin-top: 0.6rem; }
+.btn-join:hover { background: var(--teal-dark); }
+.btn-join.disabled { background: #b8c2c2; cursor: not-allowed; }
+.btn-join.icon-only { width: 40px; height: 40px; padding: 0; font-size: 20px; margin-top: 0; border-radius: 10px; }

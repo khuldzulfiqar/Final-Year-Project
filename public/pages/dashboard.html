@@ -880,6 +880,7 @@
     if (!Auth.isLoggedIn()) window.location.href = '/login';
 
     let allPatientAppts = [];
+    let currentApptFilter = 'all';
 
     function logout() { Auth.clear(); window.location.href = '/login'; }
 
@@ -967,13 +968,14 @@
         const completed = allPatientAppts.filter(a => a.status === 'completed').length;
         document.getElementById('stat-accepted').textContent = accepted;
         document.getElementById('stat-completed').textContent = completed;
-        renderPatientAppts('all');
+        renderPatientAppts(currentApptFilter);
       } catch (e) {
         document.getElementById('appt-list').innerHTML = `<div class="empty-state"><p>Could not load appointments.</p></div>`;
       }
     }
 
     function filterAppts(status, btn) {
+      currentApptFilter = status;
       document.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       renderPatientAppts(status);
@@ -1013,9 +1015,24 @@
       ${a.status === 'accepted' ? `<div class="confirm-box">✅ Your appointment has been confirmed!</div>` : ''}
       ${a.status === 'completed' ? `<div class="confirm-box">🏁 This appointment has been completed.</div>` : ''}
       ${(a.status === 'accepted' || a.status === 'completed') ? `<a class="chat-link" href="/chat?with=${a.psychiatrist}">💬 Message ${a.psychiatristName}</a>` : ''}
+      ${joinMeetingButton(a)}
+      ${a.status === 'accepted' && a.consultationMode === 'online' && !a.meetingLink ? `<div class="confirm-box">⏳ Your psychiatrist will share the meeting link soon.</div>` : ''}
     </div>
   `).join('');
     }
+
+    /* ── Meeting reminder toast + auto-refresh of Join buttons (patient) ── */
+    const meetingNotified = new Set();
+    setInterval(() => {
+      if (!Auth.isPatient()) return;
+      allPatientAppts.forEach(a => {
+        if (meetingJoinState(a) === 'open' && !meetingNotified.has(a._id)) {
+          meetingNotified.add(a._id);
+          showToast(`⏰ Your meeting with ${a.psychiatristName} starts in 10 minutes`, 'success');
+        }
+      });
+      loadPatientAppointments();
+    }, 60000);
 
     /* ── PSYCHIATRIST ── */
     async function loadPsyAppointments() {

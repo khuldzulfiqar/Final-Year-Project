@@ -11,6 +11,10 @@ const appointmentSchema = new mongoose.Schema({
   status: { type: String, enum: ['pending', 'accepted', 'rejected', 'completed'], default: 'pending' },
   rejectionReason: { type: String, default: '' },
   notes: { type: String, default: '' },
+  // Online consultation (all optional -> old appointments keep working)
+  meetingLink: { type: String, default: '' },
+  meetingProvider: { type: String, enum: ['', 'google_meet', 'zoom', 'teams', 'other'], default: '' },
+  reminderSent: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now }
 });
 appointmentSchema.index(

@@ -5,6 +5,7 @@ const Appointment = require('../models/Appointment');
 const User = require('../models/User');
 const nodemailer = require('nodemailer');
 const Prescription = require('../models/Prescription');
+const { normalizeMeetingLink } = require('../utils/meeting');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'mindbridge-jwt-secret';
 
@@ -250,7 +251,7 @@ router.put('/:id/action', async (req, res) => {
     const decoded = getUser(req);
     if (!decoded) return res.status(401).json({ success: false, message: 'Not authenticated' });
 
-    const { action, rejectionReason } = req.body;
+    const { action, rejectionReason, meetingLink } = req.body;
     if (!['accepted', 'rejected'].includes(action))
       return res.status(400).json({ success: false, message: 'Invalid action' });
 
@@ -263,6 +264,17 @@ router.put('/:id/action', async (req, res) => {
 
     if (appointment.psychiatrist.toString() !== decoded.id)
       return res.status(403).json({ success: false, message: 'Not authorized' });
+
+    // Online appointment: psychiatrist may paste a meeting link while accepting (optional)
+    if (action === 'accepted' && appointment.consultationMode === 'online') {
+      const m = normalizeMeetingLink(meetingLink);
+      if (!m.ok) return res.status(400).json({ success: false, message: m.error });
+      if (m.link) {
+        appointment.meetingLink = m.link;
+        appointment.meetingProvider = m.provider;
+        appointment.reminderSent = false;
+      }
+    }
 
     appointment.status = action;
 
@@ -294,6 +306,11 @@ router.put('/:id/action', async (req, res) => {
           <li><b>Date:</b> ${appointment.date}</li>
           <li><b>Time:</b> ${appointment.timeSlot}</li>
           <li><b>Mode:</b> ${appointment.consultationMode}</li>
+          ${appointment.consultationMode === 'online'
+            ? (appointment.meetingLink
+                ? `<li><b>Meeting link:</b> <a href="${appointment.meetingLink}">Join online consultation</a></li>`
+                : `<li><b>Meeting link:</b> your psychiatrist will share it soon (you will also see it on your dashboard).</li>`)
+            : ''}
         </ul>
 
         <p>Thank you for using MindBridge 💙</p>
@@ -332,6 +349,36 @@ router.put('/:id/action', async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 });
+// Psychiatrist adds / replaces the meeting link of an accepted online appointment
+router.put('/:id/meeting-link', async (req, res) => {
+  try {
+    const decoded = getUser(req);
+    if (!decoded) return res.status(401).json({ success: false, message: 'Not authenticated' });
+
+    const appointment = await Appointment.findById(req.params.id);
+    if (!appointment) return res.status(404).json({ success: false, message: 'Appointment not found' });
+
+    if (appointment.psychiatrist.toString() !== decoded.id)
+      return res.status(403).json({ success: false, message: 'Not authorized' });
+
+    if (appointment.consultationMode !== 'online' || appointment.status !== 'accepted')
+      return res.status(400).json({ success: false, message: 'Only accepted online appointments can have a meeting link' });
+
+    const m = normalizeMeetingLink(req.body.meetingLink);
+    if (!m.ok) return res.status(400).json({ success: false, message: m.error });
+    if (!m.link) return res.status(400).json({ success: false, message: 'Please paste a meeting link' });
+
+    appointment.meetingLink = m.link;
+    appointment.meetingProvider = m.provider;
+    appointment.reminderSent = false;   // new link -> reminder may go out again if still upcoming
+    await appointment.save();
+
+    res.json({ success: true, message: 'Meeting link saved', appointment });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 router.put('/:id/complete', async (req, res) => {
   try {
     const decoded = getUser(req);

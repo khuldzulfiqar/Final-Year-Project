@@ -20,7 +20,7 @@ app.use(session({
 
 const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://mindbridge:mindbridge12@mindbridge.nas1mkf.mongodb.net/mindbridge';
 mongoose.connect(MONGO_URI)
-  .then(() => console.log('✅ MongoDB Connected'))
+  .then(() => { console.log('✅ MongoDB Connected'); require('./utils/reminders').start(); })
   .catch(err => console.log('❌ MongoDB Error:', err.message));
 
 
