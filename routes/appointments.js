@@ -434,14 +434,54 @@ router.post('/:id/prescription', async (req, res) => {
     if (appointment.psychiatrist.toString() !== decoded.id)
       return res.status(403).json({ message: 'Not authorized' });
 
-    const { diagnosis, medicines, notes } = req.body;
+    const { diagnosis, medicines, notes, medicineList, tests } = req.body;
+
+    // Clean the structured medicine rows (name is required per row)
+    const cleanList = Array.isArray(medicineList)
+      ? medicineList
+          .map(m => {
+            const sch = m.schedule || {};
+            const schedule = {
+              morning: String(sch.morning || '').trim(),
+              afternoon: String(sch.afternoon || '').trim(),
+              night: String(sch.night || '').trim()
+            };
+            // readable text version, only the timings the doctor filled in
+            const timingText = [
+              schedule.morning && 'Morning: ' + schedule.morning,
+              schedule.afternoon && 'Afternoon: ' + schedule.afternoon,
+              schedule.night && 'Night: ' + schedule.night
+            ].filter(Boolean).join(', ');
+            return {
+              name: (m.name || '').trim(),
+              dosage: (m.dosage || '').trim(),
+              timing: timingText || (m.timing || '').trim(),
+              schedule,
+              duration: (m.duration || '').trim()
+            };
+          })
+          .filter(m => m.name)
+      : [];
+    const cleanTests = Array.isArray(tests)
+      ? tests.map(t => String(t).trim()).filter(Boolean)
+      : [];
+
+    // Keep the old "medicines" text field filled so older screens still work
+    const medicinesText = cleanList.length
+      ? cleanList.map(m => [m.name, m.dosage, m.timing, m.duration].filter(Boolean).join(' - ')).join('\n')
+      : (medicines || '');
+
+    if (!diagnosis || !medicinesText)
+      return res.status(400).json({ message: 'Diagnosis and at least one medicine are required' });
 
     const prescription = new Prescription({
       appointment: appointment._id,
       patient: appointment.patient,
       psychiatrist: appointment.psychiatrist,
       diagnosis,
-      medicines,
+      medicines: medicinesText,
+      medicineList: cleanList,
+      tests: cleanTests,
       notes
     });
 
@@ -458,14 +498,37 @@ router.get('/prescriptions/patient', async (req, res) => {
     const decoded = getUser(req);
     if (!decoded) return res.status(401).json({ message: 'Not authenticated' });
 
-    const prescriptions = await Prescription.find({ patient: decoded.id })
-      .populate('psychiatrist', 'fullName')
+    const prescriptions = await Prescription.find({ patient: decoded.id, hiddenByPatient: { $ne: true } })
+      .populate('psychiatrist', 'fullName specialization qualification licenseNumber phone clinicAddress')
+      .populate('patient', 'fullName age gender phone')
+      .populate('appointment', 'date timeSlot')
       .sort({ createdAt: -1 });
 
     res.json({ success: true, prescriptions });
 
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+});
+router.delete('/prescriptions/:id', async (req, res) => {
+  try {
+    const decoded = getUser(req);
+    if (!decoded) return res.status(401).json({ success: false, message: 'Not authenticated' });
+
+    const prescription = await Prescription.findById(req.params.id);
+    if (!prescription)
+      return res.status(404).json({ success: false, message: 'Prescription not found' });
+
+    if (prescription.patient.toString() !== decoded.id)
+      return res.status(403).json({ success: false, message: 'Not authorized' });
+
+    // only hide it from the patient's list; the doctor's record stays
+    prescription.hiddenByPatient = true;
+    await prescription.save();
+
+    res.json({ success: true, message: 'Prescription removed' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
   }
 });
 module.exports = router;

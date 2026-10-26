@@ -19,6 +19,21 @@
       font-weight: 600;
       margin-bottom: 10px;
     }
+
+    /* profile picture inside the circles */
+    .avatar-circle,
+    .avatar-btn {
+      overflow: hidden;
+      padding: 0;
+    }
+    .avatar-circle img,
+    .avatar-btn img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+      display: block;
+    }
   </style>
 </head>
 
@@ -47,7 +62,7 @@
 <!-- PAGE -->
 <div class="page">
 
-  <a href="#" onclick="goBack(event)" class="back-link">← Back</a>
+  <a href="#" onclick="goBack(event)" class="back-link">← Back to Dashboard</a>
 
   <h2 class="title">My Profile</h2>
 
@@ -136,6 +151,18 @@ function goBack(e) {
   window.location.href = "/dashboard";
 }
 
+// ================= PROFILE PICTURE =================
+// Shows the uploaded photo (User.profileImage); falls back to the initial letter.
+function setAvatar(el, photoUrl, initial) {
+  if (!photoUrl) { el.textContent = initial; return; }
+  el.textContent = '';
+  const img = document.createElement('img');
+  img.alt = 'Profile picture';
+  img.src = photoUrl;
+  img.onerror = () => { el.textContent = initial; };
+  el.appendChild(img);
+}
+
 // ================= LOAD PROFILE =================
 async function loadProfile() {
   try {
@@ -145,9 +172,10 @@ async function loadProfile() {
     if (!user) throw new Error();
 
     const initial = user.fullName?.charAt(0).toUpperCase() || "U";
+    const photoUrl = user.profileImage || '';
 
-    document.getElementById("avatar-circle").textContent = initial;
-    document.getElementById("avatarBtn").textContent = initial;
+    setAvatar(document.getElementById("avatar-circle"), photoUrl, initial);
+    setAvatar(document.getElementById("avatarBtn"), photoUrl, initial);
 
     document.getElementById("nav-name").textContent = user.fullName;
     document.getElementById("nav-email").textContent = user.email;

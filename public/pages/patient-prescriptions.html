@@ -63,6 +63,48 @@
             box-shadow: 0 10px 25px rgba(13, 115, 119, 0.2);
             border-left: 5px solid #0b5e61;
         }
+
+        /* ---- Real prescription layout ---- */
+        .rx-card {
+            background: white; border-radius: 12px; box-shadow: var(--shadow);
+            border-top: 6px solid var(--teal); margin-bottom: 25px; overflow: hidden;
+        }
+        .rx-actions { display:flex; justify-content:flex-end; gap:10px; padding:12px 20px 0; }
+        .btn-download {
+            background: var(--teal); color:#fff; border:none; border-radius:8px;
+            padding:9px 16px; font-weight:600; font-size:0.85rem; cursor:pointer;
+            font-family:'DM Sans',sans-serif;
+        }
+        .btn-download:hover { background:#0b5e61; }
+        .rx-paper { padding: 24px 30px 30px; background:#fff; color:var(--text); }
+        .rx-top { display:flex; justify-content:space-between; align-items:flex-start; gap:20px; border-bottom:2px solid var(--teal); padding-bottom:12px; margin-bottom:14px; }
+        .rx-brand { font-family:'Playfair Display',serif; font-size:1.5rem; color:var(--teal); font-weight:700; line-height:1; margin-top:-6px; margin-bottom:6px; }
+        .rx-brand span { color:var(--teal-light); }
+        .rx-doc-name { font-weight:700; font-size:1.05rem; color:var(--charcoal); }
+        .rx-doc-meta { font-size:0.82rem; color:var(--text-muted); line-height:1.5; }
+        .rx-top-right { text-align:right; }
+        .rx-patient { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:8px 20px; background:var(--cream); border:1px solid var(--border); border-radius:8px; padding:10px 14px; font-size:0.88rem; margin-bottom:14px; }
+        .rx-patient b { color:var(--text-muted); font-weight:600; }
+        .rx-section-title { font-weight:700; color:var(--teal); font-size:0.85rem; text-transform:uppercase; letter-spacing:0.5px; margin:14px 0 6px; }
+        .rx-symbol { font-family:'Playfair Display',serif; font-size:2.2rem; color:var(--teal); font-weight:700; line-height:1; }
+        .rx-table { width:100%; border-collapse:collapse; font-size:0.9rem; }
+        .rx-table th { background:var(--teal); color:#fff; text-align:left; padding:8px 10px; font-weight:600; font-size:0.8rem; }
+        .rx-table td { padding:8px 10px; border-bottom:1px solid var(--border); }
+        .rx-table td.sr { width:36px; text-align:center; color:var(--text-muted); font-weight:600; }
+        .rx-bottom { display:flex; justify-content:flex-start; padding:0 20px 14px; }
+        .btn-delete {
+            background:transparent; color:#c0392b; border:1.5px solid #c0392b; border-radius:8px;
+            padding:7px 14px; font-weight:600; font-size:0.82rem; cursor:pointer;
+            font-family:'DM Sans',sans-serif;
+        }
+        .btn-delete:hover { background:rgba(192,57,43,0.1); }
+        .rx-table .slot { display:inline-block; margin-right:16px; }
+        .rx-tests { margin-left:20px; font-size:0.9rem; }
+        .rx-notes { font-size:0.9rem; white-space:pre-wrap; }
+        .rx-footer { margin-top:26px; display:flex; justify-content:space-between; align-items:flex-end; font-size:0.78rem; color:var(--text-muted); }
+        .rx-sign { text-align:center; min-width:160px; }
+        .rx-sign .line { border-top:1px solid var(--text); margin-bottom:4px; padding-top:4px; font-weight:600; color:var(--text); }
+        @media (max-width:600px){ .rx-top{flex-direction:column;} .rx-top-right{text-align:left;} .rx-paper{padding:18px;} .rx-table{display:block; overflow-x:auto;} }
     </style>
 </head>
 
@@ -83,8 +125,163 @@
     </div>
 
     <script src="/js/app.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <script>
+        function esc(v) {
+            return String(v == null ? '' : v)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        function fmtDate(d) {
+            return new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+        }
+
+        function renderPrescription(p) {
+            const doc = p.psychiatrist || {};
+            const pat = p.patient || {};
+            const addr = doc.clinicAddress || {};
+            const clinic = [addr.street, addr.city, addr.state].filter(Boolean).join(', ');
+
+            // New prescriptions have medicineList; old ones only have the text field
+            let medRows = '';
+            if (p.medicineList && p.medicineList.length) {
+                medRows = p.medicineList.map((m, i) => {
+                    const sch = m.schedule || {};
+                    const slots = [
+                        ['Morning', sch.morning],
+                        ['Afternoon', sch.afternoon],
+                        ['Night', sch.night]
+                    ].filter(x => x[1]);
+                    let timingHtml;
+                    if (slots.length) {
+                        timingHtml = slots.map(x => `<span class="slot"><b>${x[0]}:</b> ${esc(x[1])}</span>`).join('');
+                    } else {
+                        // older prescriptions: show whatever text was saved
+                        timingHtml = esc([m.dosage, m.timing].filter(Boolean).join(' - ')) || '-';
+                    }
+                    return `
+                    <tr>
+                      <td class="sr">${i + 1}</td>
+                      <td><b>${esc(m.name)}</b></td>
+                      <td>${timingHtml}</td>
+                      <td>${esc(m.duration) || '-'}</td>
+                    </tr>`;
+                }).join('');
+            } else {
+                medRows = String(p.medicines || '').split('\n').filter(l => l.trim()).map((l, i) => `
+                    <tr>
+                      <td class="sr">${i + 1}</td>
+                      <td colspan="3">${esc(l)}</td>
+                    </tr>`).join('');
+            }
+
+            const tests = (p.tests && p.tests.length)
+                ? `<div class="rx-section-title">Tests / Investigations Advised</div>
+                   <ul class="rx-tests">${p.tests.map(t => `<li>${esc(t)}</li>`).join('')}</ul>`
+                : '';
+
+            const notes = p.notes
+                ? `<div class="rx-section-title">Doctor's Advice</div><div class="rx-notes">${esc(p.notes)}</div>`
+                : '';
+
+            return `
+      <div class="rx-card">
+        <div class="rx-actions">
+          <button class="btn-download" onclick="downloadPrescription('${p._id}', this)">⬇ Download</button>
+        </div>
+        <div class="rx-paper" id="rx-${p._id}">
+          <div class="rx-top">
+            <div>
+              <div class="rx-brand">Mind<span>Bridge</span></div>
+              <div class="rx-doc-meta">Online Psychiatric Care Platform</div>
+            </div>
+            <div class="rx-top-right">
+              <div class="rx-doc-name">Dr. ${esc(doc.fullName || 'Doctor')}</div>
+              <div class="rx-doc-meta">
+                ${doc.qualification ? esc(doc.qualification) + '<br>' : ''}
+                ${doc.specialization ? esc(doc.specialization) + '<br>' : ''}
+                ${doc.licenseNumber ? 'Reg. No: ' + esc(doc.licenseNumber) + '<br>' : ''}
+                ${clinic ? esc(clinic) : ''}
+              </div>
+            </div>
+          </div>
+
+          <div class="rx-patient">
+            <span><b>Patient:</b> ${esc(pat.fullName || '-')}</span>
+            ${pat.age ? `<span><b>Age:</b> ${esc(pat.age)}</span>` : ''}
+            ${pat.gender ? `<span><b>Gender:</b> ${esc(pat.gender)}</span>` : ''}
+            <span><b>Date:</b> ${fmtDate(p.createdAt)}</span>
+          </div>
+
+          <div class="rx-section-title">Diagnosis</div>
+          <div>${esc(p.diagnosis)}</div>
+
+          <div style="margin-top:14px;"></div>
+          <table class="rx-table">
+            <thead>
+              <tr><th>#</th><th>Medicine</th><th>Timing & Dosage</th><th>Duration</th></tr>
+            </thead>
+            <tbody>${medRows}</tbody>
+          </table>
+
+          ${tests}
+          ${notes}
+
+          <div class="rx-footer">
+            <div>This is a computer-generated prescription from MindBridge.</div>
+            <div class="rx-sign"><div class="line">Dr. ${esc(doc.fullName || 'Doctor')}</div></div>
+          </div>
+        </div>
+        <div class="rx-bottom">
+          <button class="btn-delete" onclick="deletePrescription('${p._id}', this)">🗑</button>
+        </div>
+      </div>`;
+        }
+
+        async function deletePrescription(id, btn) {
+            if (!confirm('Remove this prescription from your list?')) return;
+            btn.disabled = true;
+            try {
+                const res = await apiCall('/api/appointments/prescriptions/' + id, 'DELETE');
+                if (res.success) {
+                    const card = btn.closest('.rx-card');
+                    if (card) card.remove();
+                    const list = document.getElementById('prescriptionList');
+                    if (!list.children.length) list.innerHTML = '<p>No prescriptions found.</p>';
+                } else {
+                    btn.disabled = false;
+                    alert(res.message || 'Could not delete');
+                }
+            } catch (err) {
+                btn.disabled = false;
+                alert('Server error');
+            }
+        }
+
+        function downloadPrescription(id, btn) {
+            const el = document.getElementById('rx-' + id);
+            if (!el) return;
+            const name = 'Prescription-' + id.slice(-6) + '.pdf';
+            if (typeof html2pdf === 'undefined') { window.print(); return; }
+            btn.disabled = true;
+            const old = btn.textContent;
+            btn.textContent = 'Preparing...';
+            html2pdf().set({
+                margin: 8,
+                filename: name,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            }).from(el).save().then(() => {
+                btn.disabled = false; btn.textContent = old;
+            }).catch(() => {
+                btn.disabled = false; btn.textContent = old;
+                alert('Could not create PDF. Please try again.');
+            });
+        }
+
         async function loadPrescriptions() {
             try {
                 const res = await apiCall('/api/appointments/prescriptions/patient');
@@ -96,23 +293,7 @@
                     return;
                 }
 
-                container.innerHTML = res.prescriptions.map(p => `
-      <div class="card">
-        <div class="doctor">👨‍⚕️ Dr. ${p.psychiatrist?.fullName || "Doctor"}</div>
-
-        <div class="item">
-          <span class="label">Diagnosis:</span> ${p.diagnosis}
-        </div>
-
-        <div class="item">
-          <span class="label">Medicines:</span> ${p.medicines}
-        </div>
-
-        <div class="item">
-          <span class="label">Notes:</span> ${p.notes || "N/A"}
-        </div>
-      </div>
-    `).join('');
+                container.innerHTML = res.prescriptions.map(p => renderPrescription(p)).join('');
 
             } catch (err) {
                 document.getElementById("prescriptionList").innerHTML =

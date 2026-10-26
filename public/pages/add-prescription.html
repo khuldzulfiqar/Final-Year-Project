@@ -12,7 +12,7 @@
     }
 
     .container {
-      max-width: 600px;
+      max-width: 900px;
       margin: 50px auto;
       background: white;
       padding: 30px;
@@ -57,12 +57,40 @@
     button:hover {
       background: #0b5e61;
     }
+
+    /* ---- Medicine rows ---- */
+    .rx-head { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+    .rx-symbol { font-family:'Playfair Display',serif; font-size:2rem; color:var(--teal); font-weight:700; line-height:1; }
+    .med-head, .med-row { display:grid; grid-template-columns:44px 1.6fr 3fr 1fr 40px; gap:12px; align-items:start; }
+    .med-head { background:var(--teal); color:#fff; font-size:0.82rem; font-weight:600; padding:10px; border-radius:8px; }
+    .med-head div:first-child { text-align:center; }
+    .med-row { padding:12px 10px; border-bottom:1px solid var(--border); }
+    .med-row .sr { text-align:center; font-weight:600; color:var(--text-muted); padding-top:10px; }
+    .med-row input { padding:8px; font-size:0.9rem; }
+    .timing-boxes { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+    .timing-box label { font-size:0.75rem; font-weight:600; color:var(--text-muted); margin-bottom:3px; }
+    .med-row .btn-remove-row { margin-top:4px; }
+    .btn-add-row, .btn-remove-row {
+      width:auto; margin-top:0; padding:8px 14px; font-size:0.85rem;
+    }
+    .btn-add-row { margin-top:12px; background:transparent; color:var(--teal); border:1.5px dashed var(--teal); }
+    .btn-add-row:hover { background:rgba(13,115,119,0.08); }
+    .btn-remove-row { background:transparent; color:#c0392b; border:none; font-size:1.1rem; padding:4px 8px; }
+    .btn-remove-row:hover { background:rgba(192,57,43,0.1); }
+    .test-row { display:flex; gap:8px; margin-bottom:8px; }
+    .test-row input { flex:1; }
+    .hint { font-size:0.8rem; color:var(--text-muted); margin-top:4px; }
+    @media (max-width:760px){ .med-head{display:none;} .med-row{grid-template-columns:30px 1fr 40px;} .med-row .timing-wrap,.med-row .dur-wrap{grid-column:1 / -1;} .container { margin:20px 12px; padding:20px; } }
   </style>
 </head>
 
 <body>
 
 <div class="container">
+  <a href="/dashboard" style="display:inline-flex; align-items:center; gap:6px; color:var(--teal); font-weight:600; text-decoration:none; margin-bottom:15px;">
+    ← Back to Dashboard
+  </a>
+
   <h2>🩺 Add Prescription</h2>
 
   <div class="form-group">
@@ -71,8 +99,19 @@
   </div>
 
   <div class="form-group">
-    <label>Medicines</label>
-    <textarea id="medicines" rows="3" placeholder="e.g. Paracetamol - 2 times daily"></textarea>
+    <div class="rx-head"></span><label style="margin:0;">Medicines</label></div>
+    <div class="med-head">
+      <div>#</div><div>Medicine Name</div><div>Timing</div><div>Duration</div><div></div>
+    </div>
+    <div id="medBody"></div>
+    <button type="button" class="btn-add-row" onclick="addMedRow()">+ Add Medicine</button>
+  </div>
+
+  <div class="form-group">
+    <label>Tests / Lab Investigations (optional)</label>
+    <div id="testList"></div>
+    <button type="button" class="btn-add-row" onclick="addTestRow()">+ Add Test</button>
+    <div class="hint">Refer the patient for any test, e.g. Blood CBC, Thyroid Profile (TSH), ECG, EEG, MRI Brain.</div>
   </div>
 
   <div class="form-group">
@@ -89,13 +128,74 @@
 const urlParams = new URLSearchParams(window.location.search);
 const appointmentId = urlParams.get("id");
 
+function addMedRow(data = {}) {
+  const body = document.getElementById("medBody");
+  const sch = data.schedule || {};
+  const div = document.createElement("div");
+  div.className = "med-row";
+  div.innerHTML = `
+    <div class="sr"></div>
+    <div><input type="text" class="m-name" placeholder="e.g. Sertraline 50mg" value="${data.name || ''}"></div>
+    <div class="timing-wrap">
+      <div class="timing-boxes">
+        <div class="timing-box"><label>Morning</label><input type="text" class="m-morning" placeholder="Dosage" value="${sch.morning || ''}"></div>
+        <div class="timing-box"><label>Afternoon</label><input type="text" class="m-afternoon" placeholder="Dosage" value="${sch.afternoon || ''}"></div>
+        <div class="timing-box"><label>Night</label><input type="text" class="m-night" placeholder="Dosage" value="${sch.night || ''}"></div>
+      </div>
+    </div>
+    <div class="dur-wrap"><input type="text" class="m-duration" placeholder="e.g. 14 days" value="${data.duration || ''}"></div>
+    <div><button type="button" class="btn-remove-row" title="Remove" onclick="removeMedRow(this)">&#10005;</button></div>
+  `;
+  body.appendChild(div);
+  renumberRows();
+}
+
+function removeMedRow(btn) {
+  const body = document.getElementById("medBody");
+  if (body.children.length <= 1) return; // keep at least one row
+  btn.closest(".med-row").remove();
+  renumberRows();
+}
+
+function renumberRows() {
+  document.querySelectorAll("#medBody .med-row").forEach((tr, i) => {
+    tr.querySelector(".sr").textContent = i + 1;
+  });
+}
+
+function addTestRow(value = "") {
+  const list = document.getElementById("testList");
+  const div = document.createElement("div");
+  div.className = "test-row";
+  div.innerHTML = `
+    <input type="text" class="t-name" placeholder="e.g. Blood CBC" value="${value}">
+    <button type="button" class="btn-remove-row" title="Remove" onclick="this.parentElement.remove()">&#10005;</button>
+  `;
+  list.appendChild(div);
+}
+
+// start with one empty medicine row
+addMedRow();
+
 async function submitPrescription() {
   const diagnosis = document.getElementById("diagnosis").value.trim();
-  const medicines = document.getElementById("medicines").value.trim();
   const notes = document.getElementById("notes").value.trim();
 
-  if (!diagnosis || !medicines) {
-    alert("Please fill all required fields");
+  const medicineList = [...document.querySelectorAll("#medBody .med-row")].map(tr => ({
+    name: tr.querySelector(".m-name").value.trim(),
+    schedule: {
+      morning: tr.querySelector(".m-morning").value.trim(),
+      afternoon: tr.querySelector(".m-afternoon").value.trim(),
+      night: tr.querySelector(".m-night").value.trim()
+    },
+    duration: tr.querySelector(".m-duration").value.trim()
+  })).filter(m => m.name);
+
+  const tests = [...document.querySelectorAll(".t-name")]
+    .map(i => i.value.trim()).filter(Boolean);
+
+  if (!diagnosis || medicineList.length === 0) {
+    alert("Please enter diagnosis and at least one medicine");
     return;
   }
 
@@ -103,7 +203,7 @@ async function submitPrescription() {
     const res = await apiCall(
       `/api/appointments/${appointmentId}/prescription`,
       "POST",
-      { diagnosis, medicines, notes }
+      { diagnosis, medicineList, tests, notes }
     );
 
     if (res.success) {
