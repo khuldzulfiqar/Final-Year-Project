@@ -99,7 +99,7 @@ router.get('/slots/:psychiatristId', async (req, res) => {
     const booked = await Appointment.find({
       psychiatrist: req.params.psychiatristId,
       date,
-      status: { $ne: 'rejected' }
+      status: { $nin: ['rejected', 'expired'] }
     }).select('timeSlot');
     const bookedSlots = booked.map(b => b.timeSlot);
     const available = allSlots.filter(s => !bookedSlots.includes(s));
@@ -264,6 +264,8 @@ router.put('/:id/action', async (req, res) => {
 
     if (appointment.psychiatrist.toString() !== decoded.id)
       return res.status(403).json({ success: false, message: 'Not authorized' });
+    if (appointment.status !== 'pending')
+      return res.status(400).json({ success: false, message: 'Only pending appointment requests can be accepted or rejected' });
 
     // Online appointment: psychiatrist may paste a meeting link while accepting (optional)
     if (action === 'accepted' && appointment.consultationMode === 'online') {
@@ -277,6 +279,16 @@ router.put('/:id/action', async (req, res) => {
     }
 
     appointment.status = action;
+
+    if (action === 'accepted') {
+      appointment.paymentStatus = 'unpaid';
+      appointment.paymentDeadline = new Date(Date.now() + (Number(process.env.PAYMENT_DEADLINE_HOURS) || 24) * 60 * 60 * 1000);
+      appointment.paymentAmount = null; // Snapshot is set when Checkout is created.
+      appointment.paymentCurrency = '';
+      appointment.safepayTrackerToken = '';
+      appointment.safepayReferenceCode = '';
+      appointment.paidAt = null;
+    }
 
     if (action === 'rejected') {
       appointment.rejectionReason = rejectionReason;
@@ -292,14 +304,14 @@ router.put('/:id/action', async (req, res) => {
       await createTransporter().sendMail({
         from: `"MindBridge" <${process.env.EMAIL_USER}>`,
         to: patient.email,
-        subject: 'Appointment Confirmed - MindBridge',
+        subject: 'Appointment Accepted — Payment Required - MindBridge',
         html: `
       <div style="font-family:Arial;padding:20px">
-        <h2 style="color:#0d7377;">Appointment Confirmed ✅</h2>
+        <h2 style="color:#0d7377;">Appointment Accepted ✅</h2>
 
         <p>Hi <b>${patient.fullName}</b>,</p>
 
-        <p>Your appointment has been <b>ACCEPTED</b>.</p>
+        <p>Your appointment request has been <b>accepted</b>. Please complete payment from your patient dashboard within the payment deadline to confirm the appointment.</p>
 
         <h3>Details:</h3>
         <ul>
@@ -307,9 +319,7 @@ router.put('/:id/action', async (req, res) => {
           <li><b>Time:</b> ${appointment.timeSlot}</li>
           <li><b>Mode:</b> ${appointment.consultationMode}</li>
           ${appointment.consultationMode === 'online'
-            ? (appointment.meetingLink
-                ? `<li><b>Meeting link:</b> <a href="${appointment.meetingLink}">Join online consultation</a></li>`
-                : `<li><b>Meeting link:</b> your psychiatrist will share it soon (you will also see it on your dashboard).</li>`)
+            ? `<li><b>Meeting link:</b> available on your dashboard after successful payment.</li>`
             : ''}
         </ul>
 
@@ -394,7 +404,7 @@ router.put('/:id/complete', async (req, res) => {
       return res.status(403).json({ success: false, message: 'Not authorized' });
 
     // only accepted appointments can be completed
-    if (appointment.status !== 'accepted')
+    if (appointment.status !== 'accepted' || !['paid', 'not_required', undefined].includes(appointment.paymentStatus))
       return res.status(400).json({
         success: false,
         message: appointment.status === 'completed'

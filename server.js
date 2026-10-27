@@ -7,6 +7,9 @@ require('dotenv').config();
 
 const app = express();
 app.use(cors());
+// Safepay webhook signature validation requires the raw request body.
+const paymentRoutes = require('./routes/payments');
+app.post('/api/payments/webhook', express.raw({ type: 'application/json' }), paymentRoutes.webhookHandler);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -35,6 +38,7 @@ app.use("/api/admin", require("./routes/adminRoutes"));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/psychiatrist', require('./routes/psychiatrist'));
 app.use('/api/appointments', require('./routes/appointments'));
+app.use('/api/payments', paymentRoutes.router);
 app.use('/api/reviews', require('./routes/reviews'));
 app.use('/api/upload', require('./routes/upload'));
 app.use('/api/password', require('./routes/password'));
@@ -50,6 +54,9 @@ app.get('/register', (req, res) => res.sendFile(p('register.html')));
 app.get('/register-psychiatrist', (req, res) => res.sendFile(p('register-psychiatrist.html')));
 app.get('/psychiatrists', (req, res) => res.sendFile(p('psychiatrists.html')));
 app.get('/dashboard', (req, res) => res.sendFile(p('dashboard.html')));
+app.all('/payment/return', (req, res) => res.redirect(303, '/dashboard?payment=success'));
+app.all('/payment/cancel', (req, res) => res.redirect(303, '/dashboard?payment=cancelled'));
+
 app.get('/about', (req, res) => res.sendFile(p('about.html')));
 app.get('/create-profile', (req, res) => res.sendFile(p('create-profile.html')));
 app.get('/appointments', (req, res) => res.sendFile(p('appointments.html')));

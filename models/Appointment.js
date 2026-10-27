@@ -8,7 +8,15 @@ const appointmentSchema = new mongoose.Schema({
   date: { type: String, required: true },
   timeSlot: { type: String, required: true },
   consultationMode: { type: String, enum: ['online', 'inPerson'], required: true },
-  status: { type: String, enum: ['pending', 'accepted', 'rejected', 'completed'], default: 'pending' },
+  status: { type: String, enum: ['pending', 'accepted', 'rejected', 'completed', 'expired'], default: 'pending' },
+  // Payment is separate from doctor approval. An appointment is only confirmed for the patient after Safepay verifies payment.
+  paymentStatus: { type: String, enum: ['not_required', 'unpaid', 'pending', 'paid', 'failed', 'expired'], default: 'not_required' },
+  paymentAmount: { type: Number, default: null },
+  paymentCurrency: { type: String, default: '' },
+  paymentDeadline: { type: Date, default: null },
+  safepayTrackerToken: { type: String, default: '' },
+  safepayReferenceCode: { type: String, default: '' },
+  paidAt: { type: Date, default: null },
   rejectionReason: { type: String, default: '' },
   notes: { type: String, default: '' },
   // Online consultation (all optional -> old appointments keep working)

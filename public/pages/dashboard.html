@@ -949,7 +949,8 @@
     function statusLabel(status, role) {
       const labels = {
         pending: '⏳ Pending',
-        accepted: role === 'patient' ? '✅ Confirmed' : '✅ Accepted',
+        accepted: role === 'patient' ? '🕒 Doctor accepted' : '✅ Accepted',
+        expired: '⌛ Expired',
         rejected: role === 'patient' ? '❌ Declined' : '❌ Rejected',
         completed: '🏁 Completed'
       };
@@ -961,8 +962,8 @@
       try {
         const data = await apiCall('/api/appointments/patient');
         allPatientAppts = data.appointments || [];
-        const pending = allPatientAppts.filter(a => a.status === 'pending').length;
-        const accepted = allPatientAppts.filter(a => a.status === 'accepted').length;
+        const pending = allPatientAppts.filter(a => apptBucket(a) === 'pending').length;
+        const accepted = allPatientAppts.filter(a => apptBucket(a) === 'accepted').length;
         document.getElementById('stat-total').textContent = allPatientAppts.length;
         document.getElementById('stat-pending').textContent = pending;
         const completed = allPatientAppts.filter(a => a.status === 'completed').length;
@@ -974,6 +975,16 @@
       }
     }
 
+    // Which tab/counter an appointment belongs to.
+    // "pending" = waiting on someone: the doctor's decision, OR the patient's payment after the doctor accepted.
+    // "accepted" (Confirmed) = doctor accepted AND payment done (or not required).
+    function apptBucket(a) {
+      if (a.status === 'accepted') {
+        return ['unpaid', 'pending', 'failed'].includes(a.paymentStatus) ? 'pending' : 'accepted';
+      }
+      return a.status;
+    }
+
     function filterAppts(status, btn) {
       currentApptFilter = status;
       document.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active'));
@@ -982,7 +993,7 @@
     }
 
     function renderPatientAppts(filter) {
-      const list = filter === 'all' ? allPatientAppts : allPatientAppts.filter(a => a.status === filter);
+      const list = filter === 'all' ? allPatientAppts : allPatientAppts.filter(a => apptBucket(a) === filter);
       const container = document.getElementById('appt-list');
       if (list.length === 0) {
         const msgs = {
@@ -1003,7 +1014,7 @@
           <div class="appt-name">👨‍⚕️ ${a.psychiatristName}</div>
           <div class="appt-mode">${a.consultationMode === 'online' ? '🌐 Online Consultation' : '🏥 In-Person Visit'}</div>
         </div>
-        <span class="badge-status badge-${a.status}">${statusLabel(a.status, 'patient')}</span>
+        <span class="badge-status badge-${a.status}">${a.status === 'accepted' && ['unpaid', 'pending', 'failed'].includes(a.paymentStatus) ? '💳 Payment due' : statusLabel(a.status, 'patient')}</span>
       </div>
       <div class="appt-meta-row">
         <span class="appt-meta-item">📅 ${a.date}</span>
@@ -1012,14 +1023,40 @@
       </div>
       ${a.notes ? `<div class="appt-meta-item" style="margin-top:0.4rem;">📝 ${a.notes}</div>` : ''}
       ${a.status === 'rejected' && a.rejectionReason ? `<div class="rejection-box">❌ Reason: ${a.rejectionReason}</div>` : ''}
-      ${a.status === 'accepted' ? `<div class="confirm-box">✅ Your appointment has been confirmed!</div>` : ''}
+      ${a.status === 'accepted' && a.paymentStatus === 'paid' ? `<div class="confirm-box">✅ Payment received — your appointment is confirmed!</div>` : ''}
+      ${a.status === 'accepted' && ['not_required', undefined].includes(a.paymentStatus) ? `<div class="confirm-box">✅ Your appointment is confirmed.</div>` : ''}
+      ${a.status === 'accepted' && ['unpaid', 'pending', 'failed'].includes(a.paymentStatus) ? `<div class="confirm-box">🕒 Your doctor accepted this request. Pay within ${a.paymentDeadline ? new Date(a.paymentDeadline).toLocaleString() : 'the payment deadline'} to confirm your appointment.
+        <div style="margin-top:10px;"><strong>Consultation fee:</strong> ${a.paymentAmount != null ? `${a.paymentCurrency.toUpperCase()} ${a.paymentAmount}` : 'Shown securely at checkout'}</div>
+        <button class="btn-primary" style="margin-top:10px;padding:10px 16px;border:0;border-radius:8px;cursor:pointer;" onclick="payForAppointment('${a._id}', this)">${a.paymentStatus === 'pending' ? 'Continue Payment' : 'Pay Now'}</button>
+        <div style="font-size:0.85rem;margin-top:6px;">Payment status: ${a.paymentStatus || 'unpaid'}</div></div>` : ''}
+      ${a.status === 'expired' ? `<div class="rejection-box">⌛ Payment deadline passed. Please book another available slot.</div>` : ''}
       ${a.status === 'completed' ? `<div class="confirm-box">🏁 This appointment has been completed.</div>` : ''}
-      ${(a.status === 'accepted' || a.status === 'completed') ? `<a class="chat-link" href="/chat?with=${a.psychiatrist}">💬 Message ${a.psychiatristName}</a>` : ''}
-      ${joinMeetingButton(a)}
-      ${a.status === 'accepted' && a.consultationMode === 'online' && !a.meetingLink ? `<div class="confirm-box">⏳ Your psychiatrist will share the meeting link soon.</div>` : ''}
+      ${((a.status === 'accepted' && ['paid', 'not_required', undefined].includes(a.paymentStatus)) || a.status === 'completed') ? `<a class="chat-link" href="/chat?with=${a.psychiatrist}">💬 Message ${a.psychiatristName}</a>` : ''}
+      ${a.status === 'accepted' && ['paid', 'not_required', undefined].includes(a.paymentStatus) ? joinMeetingButton(a) : ''}
+      ${a.status === 'accepted' && ['paid', 'not_required', undefined].includes(a.paymentStatus) && a.consultationMode === 'online' && !a.meetingLink ? `<div class="confirm-box">⏳ Your psychiatrist will share the meeting link soon.</div>` : ''}
     </div>
   `).join('');
     }
+
+    async function payForAppointment(appointmentId, button) {
+      if (button) { button.disabled = true; button.textContent = 'Opening secure checkout…'; }
+      try {
+        const result = await apiCall(`/api/payments/checkout/${appointmentId}`, 'POST', {});
+        if (result.success && result.checkoutUrl) {
+          window.location.href = result.checkoutUrl;
+          return;
+        }
+        showToast(result.message || 'Could not start payment. Please try again.', 'error');
+      } catch (e) {
+        showToast('Could not start payment. Please try again.', 'error');
+      }
+      if (button) { button.disabled = false; button.textContent = 'Pay Now'; }
+    }
+
+    // Show a helpful notice after Safepay redirects back; webhook remains the source of truth.
+    const paymentReturn = new URLSearchParams(window.location.search).get('payment');
+    if (paymentReturn === 'success') showToast('Safepay checkout completed. Your appointment will confirm after the payment webhook verifies it.', 'success');
+    if (paymentReturn === 'cancelled') showToast('Payment was cancelled. You can try again before the deadline.', 'error');
 
     /* ── Meeting reminder toast + auto-refresh of Join buttons (patient) ── */
     const meetingNotified = new Set();
