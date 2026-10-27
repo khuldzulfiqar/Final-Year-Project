@@ -40,7 +40,7 @@ async function loadPsychiatrists(search = "") {
     ? `/api/admin/psychiatrists?search=${search}`
     : `/api/admin/psychiatrists`;
 
-  const res = await fetch(url);
+  const res = await adminFetch(url);
   const data = await res.json();
 
   tableBody.innerHTML = "";
@@ -73,11 +73,11 @@ async function loadPsychiatrists(search = "") {
   });
 }
 
-function approve(id) { fetch(`/api/admin/approve/${id}`, { method: "PUT" }).then(loadPsychiatrists); }
-function rejectPsy(id) { fetch(`/api/admin/reject/${id}`, { method: "PUT" }).then(loadPsychiatrists); }
+function approve(id) { adminFetch(`/api/admin/approve/${id}`, { method: "PUT" }).then(loadPsychiatrists); }
+function rejectPsy(id) { adminFetch(`/api/admin/reject/${id}`, { method: "PUT" }).then(loadPsychiatrists); }
 function deletePsy(id) {
   if (!confirm("Delete this psychiatrist? This cannot be undone.")) return;
-  fetch(`/api/admin/delete/${id}`, { method: "DELETE" }).then(loadPsychiatrists);
+  adminFetch(`/api/admin/delete/${id}`, { method: "DELETE" }).then(loadPsychiatrists);
 }
 
 searchInput?.addEventListener("keyup", () => {

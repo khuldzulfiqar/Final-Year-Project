@@ -17,9 +17,14 @@ const appointmentSchema = new mongoose.Schema({
   reminderSent: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now }
 });
+// Only ACTIVE bookings block a slot. A rejected appointment no longer keeps the slot locked,
+// so the same slot can be booked again. (Partial index needs MongoDB 6.0+, Atlas is fine.)
 appointmentSchema.index(
   { psychiatrist: 1, date: 1, timeSlot: 1 },
-  { unique: true }
+  {
+    unique: true,
+    partialFilterExpression: { status: { $in: ['pending', 'accepted', 'completed'] } }
+  }
 );
 
 const Appointment = mongoose.model('Appointment', appointmentSchema);

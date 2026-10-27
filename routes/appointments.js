@@ -138,7 +138,7 @@ router.post('/book', async (req, res) => {
       psychiatrist: psychiatristId,
       date,
       timeSlot,
-      status: { $in: ['pending', 'accepted'] }
+      status: { $in: ['pending', 'accepted', 'completed'] }
     });
 
     if (existing) {

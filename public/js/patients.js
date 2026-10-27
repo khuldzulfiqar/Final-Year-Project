@@ -46,7 +46,7 @@ const searchInput = document.getElementById("search");
 let patients = [];
 
 async function loadPatients() {
-  const res = await fetch("/api/admin/patients");
+  const res = await adminFetch("/api/admin/patients");
   patients = await res.json();
   displayPatients(patients);
 }
@@ -88,7 +88,7 @@ function viewProfile(id) {
 
 async function deletePatient(id) {
   if (confirm("Delete this patient?")) {
-    await fetch("/api/admin/patient/" + id, { method: "DELETE" });
+    await adminFetch("/api/admin/patient/" + id, { method: "DELETE" });
     loadPatients();
   }
 }

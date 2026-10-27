@@ -1,5 +1,9 @@
 const express = require("express");
 const router = express.Router();
+const adminAuth = require("../middleware/adminAuth");
+
+// 🔒 every route below needs a valid admin token
+router.use(adminAuth);
 
 const User = require("../models/User");
 const Appointment = require("../models/Appointment");

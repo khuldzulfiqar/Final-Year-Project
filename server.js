@@ -20,7 +20,13 @@ app.use(session({
 
 const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://mindbridge:mindbridge12@mindbridge.nas1mkf.mongodb.net/mindbridge';
 mongoose.connect(MONGO_URI)
-  .then(() => { console.log('✅ MongoDB Connected'); require('./utils/reminders').start(); })
+  .then(async () => {
+    console.log('✅ MongoDB Connected');
+    // Replaces the old slot index with the partial one (see models/Appointment.js)
+    try { await require('./models/Appointment').syncIndexes(); }
+    catch (e) { console.log('⚠️ Appointment index sync failed:', e.message); }
+    require('./utils/reminders').start();
+  })
   .catch(err => console.log('❌ MongoDB Error:', err.message));
 
 

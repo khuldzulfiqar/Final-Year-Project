@@ -39,7 +39,7 @@ document.getElementById('dropdownLogout').addEventListener('click', function () 
 // Load dashboard counts
 async function loadCounts() {
   try {
-    const res = await fetch("/api/admin/dashboard-counts");
+    const res = await adminFetch("/api/admin/dashboard-counts");
     const data = await res.json();
 
     document.getElementById("patientsCount").textContent = data.patients;

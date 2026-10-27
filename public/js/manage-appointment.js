@@ -54,7 +54,7 @@ async function loadAppointments() {
     if (status) url += `status=${status}&`;
     if (search) url += `search=${search}`;
 
-    const res = await fetch(url);
+    const res = await adminFetch(url);
     const data = await res.json();
 
     tableBody.innerHTML = "";

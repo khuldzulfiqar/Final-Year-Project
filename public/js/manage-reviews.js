@@ -52,7 +52,7 @@ async function loadReviews() {
   try {
     const search = searchInput.value.trim();
 
-    const res = await fetch(`/api/admin/reviews?search=${search}`);
+    const res = await adminFetch(`/api/admin/reviews?search=${search}`);
     const data = await res.json();
 
     tableBody.innerHTML = "";
@@ -100,7 +100,7 @@ async function deleteReview(id) {
   if (!confirm("Delete this review?")) return;
 
   try {
-    await fetch(`/api/admin/reviews/delete/${id}`, {
+    await adminFetch(`/api/admin/reviews/delete/${id}`, {
       method: "DELETE"
     });
 
