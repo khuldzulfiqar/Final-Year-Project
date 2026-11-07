@@ -58,29 +58,54 @@
       background: #0b5e61;
     }
 
-    /* ---- Medicine rows ---- */
-    .rx-head { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
-    .rx-symbol { font-family:'Playfair Display',serif; font-size:2rem; color:var(--teal); font-weight:700; line-height:1; }
-    .med-head, .med-row { display:grid; grid-template-columns:44px 1.6fr 3fr 1fr 40px; gap:12px; align-items:start; }
-    .med-head { background:var(--teal); color:#fff; font-size:0.82rem; font-weight:600; padding:10px; border-radius:8px; }
-    .med-head div:first-child { text-align:center; }
-    .med-row { padding:12px 10px; border-bottom:1px solid var(--border); }
-    .med-row .sr { text-align:center; font-weight:600; color:var(--text-muted); padding-top:10px; }
-    .med-row input { padding:8px; font-size:0.9rem; }
-    .timing-boxes { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
-    .timing-box label { font-size:0.75rem; font-weight:600; color:var(--text-muted); margin-bottom:3px; }
-    .med-row .btn-remove-row { margin-top:4px; }
+    /* ---- Medicine rows (all cells share one height & are vertically centred) ---- */
+    .rx-head { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+    .rx-symbol { font-family:'Playfair Display',Georgia,'Times New Roman',serif; font-size:2.6rem; color:var(--teal); font-weight:700; line-height:1; }
+    .rx-title { font-weight:600; font-size:1rem; }
+    .med-head, .med-row {
+      display:grid;
+      grid-template-columns:40px 2fr 3fr 1.2fr 36px;
+      gap:10px; align-items:center;
+    }
+    .med-head { background:var(--teal); color:#fff; font-size:0.82rem; font-weight:600; padding:10px; border-radius:8px; text-align:center; }
+    .med-head div:nth-child(2) { text-align:left; }
+    .h-timing-title { padding-bottom:5px; margin-bottom:5px; border-bottom:1px solid rgba(255,255,255,0.4); }
+    .h-slots, .med-row .slots { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+    .med-row .slots { align-items:center; }
+    .med-row { padding:10px; border-bottom:1px solid var(--border); }
+    .med-row .sr { text-align:center; font-weight:600; color:var(--text-muted); }
+    .med-row input { height:40px; padding:0 10px; font-size:0.9rem; box-sizing:border-box; }
+    .med-row .cell { display:flex; align-items:center; min-width:0; }
+    .med-row .cell .m-label { display:none; }
     .btn-add-row, .btn-remove-row {
       width:auto; margin-top:0; padding:8px 14px; font-size:0.85rem;
     }
     .btn-add-row { margin-top:12px; background:transparent; color:var(--teal); border:1.5px dashed var(--teal); }
     .btn-add-row:hover { background:rgba(13,115,119,0.08); }
-    .btn-remove-row { background:transparent; color:#c0392b; border:none; font-size:1.1rem; padding:4px 8px; }
+    .btn-remove-row { background:transparent; color:#c0392b; border:none; font-size:1.1rem; padding:4px 8px; margin:0; height:40px; }
     .btn-remove-row:hover { background:rgba(192,57,43,0.1); }
-    .test-row { display:flex; gap:8px; margin-bottom:8px; }
-    .test-row input { flex:1; }
+
+    /* ---- Tests checklist ---- */
+    .test-box { border:1px solid var(--border); border-radius:10px; padding:6px 16px 14px; background:#fcfbf9; }
+    .test-group-title { font-size:0.8rem; font-weight:700; color:var(--teal); text-transform:uppercase; letter-spacing:0.5px; margin:14px 0 8px; padding-bottom:4px; border-bottom:1px solid var(--border); }
+    .test-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:6px 16px; }
+    .test-item { display:flex; align-items:center; gap:9px; font-weight:500; font-size:0.9rem; margin:0; padding:6px 8px; border-radius:6px; cursor:pointer; }
+    .test-item:hover { background:rgba(13,115,119,0.07); }
+    .test-item input { width:18px; height:18px; padding:0; margin:0; accent-color:var(--teal); flex-shrink:0; cursor:pointer; }
+    .test-count { font-size:0.82rem; color:var(--teal); font-weight:600; margin-top:12px; }
     .hint { font-size:0.8rem; color:var(--text-muted); margin-top:4px; }
-    @media (max-width:760px){ .med-head{display:none;} .med-row{grid-template-columns:30px 1fr 40px;} .med-row .timing-wrap,.med-row .dur-wrap{grid-column:1 / -1;} .container { margin:20px 12px; padding:20px; } }
+    @media (max-width:760px){
+      .med-head{display:none;}
+      .med-row{grid-template-columns:1fr 36px; gap:8px; padding:14px 10px;}
+      .med-row .slots{grid-column:1 / -1; gap:8px;}
+      .med-row .sr{display:none;}
+      .med-row .cell-name{grid-column:1;}
+      .med-row .cell-dur{grid-column:1 / -1;}
+      .med-row .cell-del{grid-column:2; grid-row:1;}
+      .med-row .cell{flex-direction:column; align-items:stretch; gap:3px;}
+      .med-row .cell .m-label{display:block; font-size:0.72rem; font-weight:600; color:var(--text-muted);}
+      .container { margin:20px 12px; padding:20px; }
+    }
   </style>
 </head>
 
@@ -99,9 +124,12 @@
   </div>
 
   <div class="form-group">
-    <div class="rx-head"></span><label style="margin:0;">Medicines</label></div>
+    <div class="rx-head"><span class="rx-symbol">&#8478;</span><span class="rx-title">Medicines</span></div>
     <div class="med-head">
-      <div>#</div><div>Medicine Name</div><div>Timing</div><div>Duration</div><div></div>
+      <div class="h-num">#</div><div class="h-name">Medicine Name</div>
+      <div class="h-timing"><div class="h-timing-title">Timing &amp; Dosage</div>
+        <div class="h-slots"><span>Morning</span><span>Afternoon</span><span>Night</span></div></div>
+      <div class="h-dur">Duration</div><div></div>
     </div>
     <div id="medBody"></div>
     <button type="button" class="btn-add-row" onclick="addMedRow()">+ Add Medicine</button>
@@ -109,9 +137,9 @@
 
   <div class="form-group">
     <label>Tests / Lab Investigations (optional)</label>
-    <div id="testList"></div>
-    <button type="button" class="btn-add-row" onclick="addTestRow()">+ Add Test</button>
-    <div class="hint">Refer the patient for any test, e.g. Blood CBC, Thyroid Profile (TSH), ECG, EEG, MRI Brain.</div>
+    <div class="test-box" id="testBox"></div>
+    <div class="test-count" id="testCount"></div>
+    <div class="hint">Tick the tests you want to suggest to the patient.</div>
   </div>
 
   <div class="form-group">
@@ -128,6 +156,47 @@
 const urlParams = new URLSearchParams(window.location.search);
 const appointmentId = urlParams.get("id");
 
+const TEST_GROUPS = [
+  { title: "Blood Tests", tests: [
+    "CBC (Complete Blood Count)", "LFTs (Liver Function Tests)", "RFTs (Renal Function Tests)",
+    "Serum Electrolytes", "Thyroid Profile (TSH, T3, T4)", "Fasting Blood Glucose / HbA1c",
+    "Lipid Profile", "Vitamin B12", "Vitamin D", "Serum Prolactin"
+  ]},
+  { title: "Drug Level Monitoring", tests: [
+    "Serum Lithium Level", "Serum Valproate Level", "Serum Carbamazepine Level"
+  ]},
+  { title: "Urine Tests", tests: [
+    "Urine Complete Examination", "Urine Drug Screen"
+  ]},
+  { title: "Cardiac & Brain Investigations", tests: [
+    "ECG (QTc interval)", "EEG", "CT Scan Brain", "MRI Brain"
+  ]},
+  { title: "Psychological Assessment / Scales", tests: [
+    "PHQ-9 (Depression)", "GAD-7 (Anxiety)", "HAM-D (Hamilton Depression)", "HAM-A (Hamilton Anxiety)",
+    "Beck Depression Inventory (BDI)", "Y-BOCS (OCD)", "YMRS (Mania)", "MMSE / MoCA (Cognition)",
+    "IQ Assessment", "PCL-5 (PTSD)"
+  ]}
+];
+
+function buildTestChecklist() {
+  const box = document.getElementById("testBox");
+  box.innerHTML = TEST_GROUPS.map(g => `
+    <div class="test-group-title">${g.title}</div>
+    <div class="test-grid">
+      ${g.tests.map(t => `
+        <label class="test-item"><input type="checkbox" class="t-check" value="${t}"> <span>${t}</span></label>
+      `).join("")}
+    </div>
+  `).join("");
+  box.addEventListener("change", updateTestCount);
+  updateTestCount();
+}
+
+function updateTestCount() {
+  const n = document.querySelectorAll(".t-check:checked").length;
+  document.getElementById("testCount").textContent = n ? n + " test" + (n > 1 ? "s" : "") + " selected" : "";
+}
+
 function addMedRow(data = {}) {
   const body = document.getElementById("medBody");
   const sch = data.schedule || {};
@@ -135,16 +204,14 @@ function addMedRow(data = {}) {
   div.className = "med-row";
   div.innerHTML = `
     <div class="sr"></div>
-    <div><input type="text" class="m-name" placeholder="e.g. Sertraline 50mg" value="${data.name || ''}"></div>
-    <div class="timing-wrap">
-      <div class="timing-boxes">
-        <div class="timing-box"><label>Morning</label><input type="text" class="m-morning" placeholder="Dosage" value="${sch.morning || ''}"></div>
-        <div class="timing-box"><label>Afternoon</label><input type="text" class="m-afternoon" placeholder="Dosage" value="${sch.afternoon || ''}"></div>
-        <div class="timing-box"><label>Night</label><input type="text" class="m-night" placeholder="Dosage" value="${sch.night || ''}"></div>
-      </div>
+    <div class="cell cell-name"><input type="text" class="m-name" placeholder="e.g. Sertraline 50mg" value="${data.name || ''}"></div>
+    <div class="slots">
+    <div class="cell"><span class="m-label">Morning</span><input type="text" class="m-morning" placeholder="e.g. 1 tab" value="${sch.morning || ''}"></div>
+    <div class="cell"><span class="m-label">Afternoon</span><input type="text" class="m-afternoon" placeholder="e.g. 1 tab" value="${sch.afternoon || ''}"></div>
+    <div class="cell"><span class="m-label">Night</span><input type="text" class="m-night" placeholder="e.g. 1 tab" value="${sch.night || ''}"></div>
     </div>
-    <div class="dur-wrap"><input type="text" class="m-duration" placeholder="e.g. 14 days" value="${data.duration || ''}"></div>
-    <div><button type="button" class="btn-remove-row" title="Remove" onclick="removeMedRow(this)">&#10005;</button></div>
+    <div class="cell cell-dur"><span class="m-label">Duration</span><input type="text" class="m-duration" placeholder="e.g. 14 days" value="${data.duration || ''}"></div>
+    <div class="cell cell-del"><button type="button" class="btn-remove-row" title="Remove" onclick="removeMedRow(this)">&#10005;</button></div>
   `;
   body.appendChild(div);
   renumberRows();
@@ -163,19 +230,9 @@ function renumberRows() {
   });
 }
 
-function addTestRow(value = "") {
-  const list = document.getElementById("testList");
-  const div = document.createElement("div");
-  div.className = "test-row";
-  div.innerHTML = `
-    <input type="text" class="t-name" placeholder="e.g. Blood CBC" value="${value}">
-    <button type="button" class="btn-remove-row" title="Remove" onclick="this.parentElement.remove()">&#10005;</button>
-  `;
-  list.appendChild(div);
-}
-
-// start with one empty medicine row
+// start with one empty medicine row + the tests checklist
 addMedRow();
+buildTestChecklist();
 
 async function submitPrescription() {
   const diagnosis = document.getElementById("diagnosis").value.trim();
@@ -191,8 +248,7 @@ async function submitPrescription() {
     duration: tr.querySelector(".m-duration").value.trim()
   })).filter(m => m.name);
 
-  const tests = [...document.querySelectorAll(".t-name")]
-    .map(i => i.value.trim()).filter(Boolean);
+  const tests = [...document.querySelectorAll(".t-check:checked")].map(c => c.value);
 
   if (!diagnosis || medicineList.length === 0) {
     alert("Please enter diagnosis and at least one medicine");
