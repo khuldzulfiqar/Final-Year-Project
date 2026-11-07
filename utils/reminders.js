@@ -7,6 +7,7 @@ const User = require('../models/User');
 
 const TZ_OFFSET = process.env.APP_TZ_OFFSET || '+05:00';   // Pakistan (no DST)
 const REMIND_BEFORE_MIN = 10;
+const BASE_URL = (process.env.APP_BASE_URL || `http://localhost:${process.env.PORT || 3000}`).replace(/\/$/, '');
 
 // "2026-10-25" + "14:00 – 15:00"  ->  Date of 14:00 in Pakistan time (independent of server time zone)
 function slotStart(date, timeSlot) {
@@ -28,7 +29,7 @@ function sendReminderMail(to, name, otherName, a) {
         <h2 style="color:#0d7377;">⏰ Meeting in 10 minutes</h2>
         <p>Hi <b>${name}</b>,</p>
         <p>Your online consultation with <b>${otherName}</b> starts at <b>${a.timeSlot}</b> on ${a.date}.</p>
-        <p><a href="${a.meetingLink}" style="background:#0d7377;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;">🎥 Join Meeting</a></p>
+        <p><a href="${BASE_URL}/meeting?id=${a._id}" style="background:#0d7377;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;">🎥 Join Meeting</a></p>
         <p style="color:#888;font-size:12px;">MindBridge</p>
       </div>`
   });
@@ -47,7 +48,6 @@ async function sendDueReminders() {
       status: 'accepted',
       consultationMode: 'online',
       reminderSent: { $ne: true },
-      meetingLink: { $nin: ['', null] },
       date: { $in: [dayStr(-1), dayStr(0), dayStr(1)] }
     });
 

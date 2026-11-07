@@ -19,9 +19,9 @@ const appointmentSchema = new mongoose.Schema({
   paidAt: { type: Date, default: null },
   rejectionReason: { type: String, default: '' },
   notes: { type: String, default: '' },
-  // Online consultation (all optional -> old appointments keep working)
+  // Online consultation: room is generated automatically (utils/meeting.js). meetingLink is legacy, no longer used.
   meetingLink: { type: String, default: '' },
-  meetingProvider: { type: String, enum: ['', 'google_meet', 'zoom', 'teams', 'other'], default: '' },
+  meetingProvider: { type: String, enum: ['', 'jitsi', 'google_meet', 'zoom', 'teams', 'other'], default: '' },
   reminderSent: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now }
 });

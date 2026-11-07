@@ -270,9 +270,14 @@
 
 <script src="/js/app.js"></script>
 <script>
-if (Auth.isLoggedIn()) window.location.href = '/dashboard';
+// After login, go back to the page the user came from (e.g. /meeting?id=...). Only same-site paths are allowed.
+function safeNext() {
+  const n = new URLSearchParams(window.location.search).get('next');
+  return n && /^\/(?![\/\\])/.test(n) ? n : null;
+}
+if (Auth.isLoggedIn()) window.location.href = safeNext() || '/dashboard';
 
-let selectedRole = null;s
+let selectedRole = null;
 const roleInfo = {
   patient:      { placeholder: 'e.g. example@gmail.com', heading: 'Patient Login',     sub: 'Sign in to book and track your appointments' },
   psychiatrist: { placeholder: 'e.g. example@gmail.com', heading: 'Doctor Login',     sub: 'Sign in to manage your practice and appointments' },
@@ -340,7 +345,7 @@ async function login() {
       showAlert('Login successful! Redirecting…', 'success');
       setTimeout(() => {
         if (data.user.role === 'admin') window.location.href = '/admin/admin-dashboard.html';
-        else window.location.href = '/dashboard';
+        else window.location.href = safeNext() || '/dashboard';
       }, 700);
     } else {
       showAlert(data.message || 'Incorrect email or password.', 'error');

@@ -69,6 +69,7 @@ app.get('/psy-profile', (req, res) => res.sendFile(p('psy-profile.html')));
 app.get('/patient-profile.html', (req, res) => res.sendFile(p('patient-profile.html')));
 app.get('/psy-profile.html', (req, res) => res.sendFile(p('psy-profile.html')));
 app.get('/chat', (req, res) => res.sendFile(p('chat.html')));
+app.get('/meeting', (req, res) => res.sendFile(p('meeting.html')));
 app.get('/patient-prescriptions', (req, res) => {
   res.sendFile(p('patient-prescriptions.html'));
 });

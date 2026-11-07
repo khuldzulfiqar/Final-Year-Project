@@ -1033,7 +1033,6 @@
       ${a.status === 'completed' ? `<div class="confirm-box">🏁 This appointment has been completed.</div>` : ''}
       ${((a.status === 'accepted' && ['paid', 'not_required', undefined].includes(a.paymentStatus)) || a.status === 'completed') ? `<a class="chat-link" href="/chat?with=${a.psychiatrist}">💬 Message ${a.psychiatristName}</a>` : ''}
       ${a.status === 'accepted' && ['paid', 'not_required', undefined].includes(a.paymentStatus) ? joinMeetingButton(a) : ''}
-      ${a.status === 'accepted' && ['paid', 'not_required', undefined].includes(a.paymentStatus) && a.consultationMode === 'online' && !a.meetingLink ? `<div class="confirm-box">⏳ Your psychiatrist will share the meeting link soon.</div>` : ''}
     </div>
   `).join('');
     }

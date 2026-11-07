@@ -5,7 +5,7 @@ const Appointment = require('../models/Appointment');
 const User = require('../models/User');
 const nodemailer = require('nodemailer');
 const Prescription = require('../models/Prescription');
-const { normalizeMeetingLink } = require('../utils/meeting');
+const { meetingState, buildJoinInfo, slotWindow, EARLY_MIN } = require('../utils/meeting');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'mindbridge-jwt-secret';
 
@@ -251,7 +251,7 @@ router.put('/:id/action', async (req, res) => {
     const decoded = getUser(req);
     if (!decoded) return res.status(401).json({ success: false, message: 'Not authenticated' });
 
-    const { action, rejectionReason, meetingLink } = req.body;
+    const { action, rejectionReason } = req.body;
     if (!['accepted', 'rejected'].includes(action))
       return res.status(400).json({ success: false, message: 'Invalid action' });
 
@@ -267,15 +267,9 @@ router.put('/:id/action', async (req, res) => {
     if (appointment.status !== 'pending')
       return res.status(400).json({ success: false, message: 'Only pending appointment requests can be accepted or rejected' });
 
-    // Online appointment: psychiatrist may paste a meeting link while accepting (optional)
+    // Online appointment: nothing to paste. The meeting room is created automatically when it is time to join.
     if (action === 'accepted' && appointment.consultationMode === 'online') {
-      const m = normalizeMeetingLink(meetingLink);
-      if (!m.ok) return res.status(400).json({ success: false, message: m.error });
-      if (m.link) {
-        appointment.meetingLink = m.link;
-        appointment.meetingProvider = m.provider;
-        appointment.reminderSent = false;
-      }
+      appointment.meetingProvider = 'jitsi';
     }
 
     appointment.status = action;
@@ -319,7 +313,7 @@ router.put('/:id/action', async (req, res) => {
           <li><b>Time:</b> ${appointment.timeSlot}</li>
           <li><b>Mode:</b> ${appointment.consultationMode}</li>
           ${appointment.consultationMode === 'online'
-            ? `<li><b>Meeting link:</b> available on your dashboard after successful payment.</li>`
+            ? `<li><b>Online meeting:</b> after payment, a "Join Meeting" button appears on your dashboard 10 minutes before the appointment.</li>`
             : ''}
         </ul>
 
@@ -359,36 +353,6 @@ router.put('/:id/action', async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 });
-// Psychiatrist adds / replaces the meeting link of an accepted online appointment
-router.put('/:id/meeting-link', async (req, res) => {
-  try {
-    const decoded = getUser(req);
-    if (!decoded) return res.status(401).json({ success: false, message: 'Not authenticated' });
-
-    const appointment = await Appointment.findById(req.params.id);
-    if (!appointment) return res.status(404).json({ success: false, message: 'Appointment not found' });
-
-    if (appointment.psychiatrist.toString() !== decoded.id)
-      return res.status(403).json({ success: false, message: 'Not authorized' });
-
-    if (appointment.consultationMode !== 'online' || appointment.status !== 'accepted')
-      return res.status(400).json({ success: false, message: 'Only accepted online appointments can have a meeting link' });
-
-    const m = normalizeMeetingLink(req.body.meetingLink);
-    if (!m.ok) return res.status(400).json({ success: false, message: m.error });
-    if (!m.link) return res.status(400).json({ success: false, message: 'Please paste a meeting link' });
-
-    appointment.meetingLink = m.link;
-    appointment.meetingProvider = m.provider;
-    appointment.reminderSent = false;   // new link -> reminder may go out again if still upcoming
-    await appointment.save();
-
-    res.json({ success: true, message: 'Meeting link saved', appointment });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-});
-
 router.put('/:id/complete', async (req, res) => {
   try {
     const decoded = getUser(req);
@@ -541,4 +505,44 @@ router.delete('/prescriptions/:id', async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 });
+// Join the online consultation. Checked on the server: right user, accepted, paid, and inside the allowed time window.
+router.get('/:id/meeting', async (req, res) => {
+  try {
+    const decoded = getUser(req);
+    if (!decoded) return res.status(401).json({ success: false, message: 'Please log in again' });
+
+    const a = await Appointment.findById(req.params.id);
+    if (!a) return res.status(404).json({ success: false, message: 'Appointment not found' });
+
+    const isPsy = a.psychiatrist.toString() === decoded.id;
+    const isPatient = a.patient.toString() === decoded.id;
+    if (!isPsy && !isPatient)
+      return res.status(403).json({ success: false, message: 'You are not part of this appointment' });
+
+    if (a.consultationMode !== 'online')
+      return res.status(400).json({ success: false, message: 'This is an in-person appointment' });
+    if (a.status !== 'accepted' || !['paid', 'not_required', undefined].includes(a.paymentStatus))
+      return res.status(400).json({ success: false, message: 'Meeting is available only for accepted and paid appointments' });
+
+    const state = meetingState(a);
+    const w = slotWindow(a.date, a.timeSlot);
+    if (state === 'ended')
+      return res.status(403).json({ success: false, state, message: 'This meeting has ended.' });
+    if (state === 'early')
+      return res.status(403).json({
+        success: false, state,
+        opensAt: new Date(w.start.getTime() - EARLY_MIN * 60000).toISOString(),
+        message: `The meeting room opens ${EARLY_MIN} minutes before the appointment (${a.date}, ${a.timeSlot}).`
+      });
+
+    const user = await User.findById(decoded.id).select('fullName email');
+    const name = isPsy ? `Dr. ${a.psychiatristName}` : a.patientName;
+    const info = buildJoinInfo(a, { userId: decoded.id, name, email: user && user.email, isModerator: isPsy });
+
+    res.json({ success: true, role: isPsy ? 'psychiatrist' : 'patient', otherName: isPsy ? a.patientName : `Dr. ${a.psychiatristName}`, ...info });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 module.exports = router;
