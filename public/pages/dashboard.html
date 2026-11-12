@@ -435,6 +435,23 @@
       color: white;
     }
 
+    /* icon-only message button */
+    .chat-link.chat-icon-btn {
+      width: 38px;
+      height: 38px;
+      padding: 0;
+      margin-right: 0.4rem;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      vertical-align: middle;
+    }
+
+    .chat-link.chat-icon-btn svg {
+      display: block;
+    }
+
     .rejection-box {
       background: #fff5f5;
       border-radius: 8px;
@@ -1031,7 +1048,7 @@
         <div style="font-size:0.85rem;margin-top:6px;">Payment status: ${a.paymentStatus || 'unpaid'}</div></div>` : ''}
       ${a.status === 'expired' ? `<div class="rejection-box">⌛ Payment deadline passed. Please book another available slot.</div>` : ''}
       ${a.status === 'completed' ? `<div class="confirm-box">🏁 This appointment has been completed.</div>` : ''}
-      ${((a.status === 'accepted' && ['paid', 'not_required', undefined].includes(a.paymentStatus)) || a.status === 'completed') ? `<a class="chat-link" href="/chat?with=${a.psychiatrist}">💬 Message ${a.psychiatristName}</a>` : ''}
+      ${((a.status === 'accepted' && ['paid', 'not_required', undefined].includes(a.paymentStatus)) || a.status === 'completed') ? `<a class="chat-link chat-icon-btn" href="/chat?with=${a.psychiatrist}" title="Message ${a.psychiatristName}" aria-label="Message ${a.psychiatristName}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></a>` : ''}
       ${a.status === 'accepted' && ['paid', 'not_required', undefined].includes(a.paymentStatus) ? joinMeetingButton(a) : ''}
     </div>
   `).join('');

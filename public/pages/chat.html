@@ -311,6 +311,63 @@
       cursor: not-allowed;
     }
 
+    .attach-btn {
+      background: none;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      width: 42px;
+      height: 42px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--teal);
+      flex-shrink: 0;
+      transition: all 0.15s;
+    }
+
+    .attach-btn:hover:not(:disabled) { background: rgba(13, 115, 119, 0.08); border-color: var(--teal); }
+    .attach-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .attach-preview {
+      display: none;
+      align-items: center;
+      gap: 0.7rem;
+      background: #f7f5f0;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0.5rem 0.65rem;
+      margin-bottom: 0.6rem;
+    }
+
+    .attach-preview img { width: 48px; height: 48px; object-fit: cover; border-radius: 8px; flex-shrink: 0; }
+    .attach-preview .file-icon { width: 48px; height: 48px; font-size: 1.5rem; }
+    .attach-preview .attach-info { flex: 1; min-width: 0; }
+    .attach-preview .attach-name { font-size: 0.85rem; font-weight: 600; color: var(--charcoal); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .attach-preview .attach-size { font-size: 0.72rem; color: var(--text-muted); }
+    .attach-remove { background: none; border: none; font-size: 1.2rem; line-height: 1; cursor: pointer; color: var(--text-muted); padding: 0.2rem 0.4rem; }
+    .attach-remove:hover { color: #c0392b; }
+
+    .file-icon {
+      width: 40px; height: 40px; border-radius: 10px; background: rgba(13, 115, 119, 0.12);
+      display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0;
+    }
+
+    /* attachments inside message bubbles */
+    .msg-image { display: block; margin-bottom: 0.3rem; }
+    .msg-image img { display: block; max-width: 260px; width: 100%; max-height: 300px; object-fit: cover; border-radius: 10px; cursor: zoom-in; background: #e9e6df; }
+    .file-card {
+      display: flex; align-items: center; gap: 0.6rem; text-decoration: none; color: inherit;
+      background: rgba(0, 0, 0, 0.06); border-radius: 10px; padding: 0.5rem 0.6rem; margin-bottom: 0.3rem; min-width: 190px;
+    }
+    .msg.mine .file-card { background: rgba(255, 255, 255, 0.18); }
+    .file-card:hover { filter: brightness(0.96); }
+    .file-card .file-icon { background: rgba(255, 255, 255, 0.85); }
+    .file-card-info { min-width: 0; }
+    .file-card-name { font-size: 0.84rem; font-weight: 600; overflow-wrap: anywhere; }
+    .file-card-size { font-size: 0.7rem; opacity: 0.75; }
+    .msg-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+
     .compose-note {
       font-size: 0.7rem;
       color: var(--text-muted);
@@ -403,11 +460,18 @@
 
       <div class="chat-compose" id="chat-compose" style="display:none;">
         <div class="compose-error" id="compose-error"></div>
+        <div class="attach-preview" id="attach-preview"></div>
         <div class="compose-row">
+          <button type="button" class="attach-btn" id="attach-btn" title="Attach a file or image" aria-label="Attach a file or image"
+            onclick="document.getElementById('file-input').click()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+          </button>
+          <input type="file" id="file-input" hidden
+            accept="image/jpeg,image/png,image/gif,image/webp,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv">
           <textarea id="msg-input" rows="1" maxlength="1000" placeholder="Type a message…"></textarea>
           <button class="send-btn" id="send-btn" onclick="sendMessage()">Send</button>
         </div>
-        <div class="compose-note" id="compose-note">Enter to send · Shift+Enter for a new line. This chat is not for emergencies — in a crisis,
+        <div class="compose-note" id="compose-note">Enter to send · Shift+Enter for a new line · Attach images or documents up to 10 MB. This chat is not for emergencies — in a crisis,
           contact your local emergency services.</div>
       </div>
     </section>
@@ -523,6 +587,7 @@
       const box = document.getElementById('chat-messages');
       box.innerHTML = '<div class="chat-placeholder">Loading…</div>';
       document.getElementById('compose-error').style.display = 'none';
+      clearPendingFile();
 
       try {
         const data = await apiCall(`/api/chat/${id}/messages`);
@@ -566,6 +631,132 @@
       renderContacts();
     }
 
+    /* ───────── attachments ───────── */
+    const MAX_FILE_BYTES = 10 * 1024 * 1024;
+    const ALLOWED_EXT = /\.(jpe?g|png|gif|webp|pdf|docx?|xlsx?|pptx?|txt|csv)$/i;
+    let pendingFile = null;
+    let pendingPreviewUrl = null;
+
+    function fmtSize(b) {
+      if (!b && b !== 0) return '';
+      if (b < 1024) return b + ' B';
+      if (b < 1024 * 1024) return (b / 1024).toFixed(0) + ' KB';
+      return (b / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    function fileEmoji(name, mime) {
+      const n = (name || '').toLowerCase();
+      if (/pdf$/.test(n) || mime === 'application/pdf') return '📕';
+      if (/\.(docx?)$/.test(n)) return '📘';
+      if (/\.(xlsx?|csv)$/.test(n)) return '📗';
+      if (/\.(pptx?)$/.test(n)) return '📙';
+      return '📄';
+    }
+
+    // only ever link to https URLs
+    const safeUrl = u => (/^https:\/\//i.test(u || '') ? u : '#');
+
+    function buildAttachment(a) {
+      if (a.kind === 'image') {
+        const link = document.createElement('a');
+        link.className = 'msg-image';
+        link.href = safeUrl(a.url);
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        const img = document.createElement('img');
+        img.src = safeUrl(a.url);
+        img.alt = a.name || 'Shared image';
+        img.loading = 'lazy';
+        img.addEventListener('load', () => scrollToBottom(false));
+        link.appendChild(img);
+        return link;
+      }
+      const card = document.createElement('a');
+      card.className = 'file-card';
+      card.href = safeUrl(a.url);
+      card.target = '_blank';
+      card.rel = 'noopener noreferrer';
+      const icon = document.createElement('div');
+      icon.className = 'file-icon';
+      icon.textContent = fileEmoji(a.name, a.mimeType);
+      const info = document.createElement('div');
+      info.className = 'file-card-info';
+      const nm = document.createElement('div');
+      nm.className = 'file-card-name';
+      nm.textContent = a.name || 'File';
+      const sz = document.createElement('div');
+      sz.className = 'file-card-size';
+      sz.textContent = fmtSize(a.size);
+      info.append(nm, sz);
+      card.append(icon, info);
+      return card;
+    }
+
+    function showComposeError(msg) {
+      const errEl = document.getElementById('compose-error');
+      errEl.textContent = msg;
+      errEl.style.display = 'block';
+    }
+
+    function setPendingFile(file) {
+      if (!file) return;
+      if (!ALLOWED_EXT.test(file.name) && !file.type.startsWith('image/')) {
+        showComposeError('This file type is not allowed. Send an image, PDF, Word, Excel, PowerPoint, TXT or CSV file.');
+        return;
+      }
+      if (file.size > MAX_FILE_BYTES) {
+        showComposeError('File is too large (max 10 MB).');
+        return;
+      }
+      document.getElementById('compose-error').style.display = 'none';
+      clearPendingFile();
+      pendingFile = file;
+      if (file.type.startsWith('image/')) pendingPreviewUrl = URL.createObjectURL(file);
+      renderAttachPreview();
+    }
+
+    function clearPendingFile() {
+      if (pendingPreviewUrl) URL.revokeObjectURL(pendingPreviewUrl);
+      pendingFile = null;
+      pendingPreviewUrl = null;
+      document.getElementById('file-input').value = '';
+      renderAttachPreview();
+    }
+
+    function renderAttachPreview() {
+      const box = document.getElementById('attach-preview');
+      box.innerHTML = '';
+      if (!pendingFile) { box.style.display = 'none'; return; }
+
+      let thumb;
+      if (pendingPreviewUrl) {
+        thumb = document.createElement('img');
+        thumb.src = pendingPreviewUrl;
+        thumb.alt = '';
+      } else {
+        thumb = document.createElement('div');
+        thumb.className = 'file-icon';
+        thumb.textContent = fileEmoji(pendingFile.name, pendingFile.type);
+      }
+      const info = document.createElement('div');
+      info.className = 'attach-info';
+      const nm = document.createElement('div');
+      nm.className = 'attach-name';
+      nm.textContent = pendingFile.name;
+      const sz = document.createElement('div');
+      sz.className = 'attach-size';
+      sz.textContent = fmtSize(pendingFile.size);
+      info.append(nm, sz);
+      const rm = document.createElement('button');
+      rm.type = 'button';
+      rm.className = 'attach-remove';
+      rm.setAttribute('aria-label', 'Remove attachment');
+      rm.textContent = '✕';
+      rm.onclick = clearPendingFile;
+      box.append(thumb, info, rm);
+      box.style.display = 'flex';
+    }
+
     function appendMessage(m) {
       if (renderedIds.has(m._id)) return;
       renderedIds.add(m._id);
@@ -587,7 +778,13 @@
 
       const el = document.createElement('div');
       el.className = `msg ${m.mine ? 'mine' : 'theirs'}`;
-      el.appendChild(document.createTextNode(m.text));   // text only — never HTML
+      if (m.attachment) el.appendChild(buildAttachment(m.attachment));
+      if (m.text) {
+        const tx = document.createElement('div');
+        tx.className = 'msg-text';
+        tx.textContent = m.text;                          // text only — never HTML
+        el.appendChild(tx);
+      }
       const t = document.createElement('span');
       t.className = 'time';
       t.textContent = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -623,38 +820,61 @@
       if (sending || !activeId) return;
       const input = document.getElementById('msg-input');
       const text = input.value.trim();
-      if (!text) return;
+      if (!text && !pendingFile) return;
 
       const errEl = document.getElementById('compose-error');
+      const sendBtn = document.getElementById('send-btn');
       errEl.style.display = 'none';
       sending = true;
-      document.getElementById('send-btn').disabled = true;
+      sendBtn.disabled = true;
+      document.getElementById('attach-btn').disabled = true;
+      if (pendingFile) sendBtn.textContent = 'Sending…';
 
       try {
-        const data = await apiCall(`/api/chat/${activeId}/messages`, 'POST', { text });
+        const fd = new FormData();
+        if (text) fd.append('text', text);
+        if (pendingFile) fd.append('file', pendingFile);
+
+        // multipart upload: let the browser set the Content-Type boundary (so no apiCall here)
+        const res = await fetch(`/api/chat/${activeId}/messages`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${Auth.getToken()}` },
+          body: fd
+        });
+        let data;
+        try { data = await res.json(); }
+        catch { data = { success: false, message: res.status === 413 ? 'File is too large (max 10 MB).' : 'Could not send message.' }; }
+
         if (data.success) {
           input.value = '';
           input.style.height = 'auto';
+          clearPendingFile();
           appendMessage(data.message);
           scrollToBottom(true);
           loadContacts();
         } else {
-          errEl.textContent = data.message || 'Could not send message.';
-          errEl.style.display = 'block';
+          showComposeError(data.message || 'Could not send message.');
         }
       } catch (e) {
-        errEl.textContent = 'Network error. Please try again.';
-        errEl.style.display = 'block';
+        showComposeError('Network error. Please try again.');
       } finally {
         sending = false;
-        document.getElementById('send-btn').disabled = false;
+        sendBtn.disabled = false;
+        sendBtn.textContent = 'Send';
+        document.getElementById('attach-btn').disabled = false;
         input.focus();
       }
     }
 
+    document.getElementById('file-input').addEventListener('change', e => setPendingFile(e.target.files[0]));
+
     const msgInput = document.getElementById('msg-input');
     msgInput.addEventListener('keydown', e => {
       if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+    });
+    msgInput.addEventListener('paste', e => {
+      const item = [...(e.clipboardData?.items || [])].find(i => i.kind === 'file' && i.type.startsWith('image/'));
+      if (item) { e.preventDefault(); setPendingFile(item.getAsFile()); }
     });
     msgInput.addEventListener('input', () => {
       msgInput.style.height = 'auto';

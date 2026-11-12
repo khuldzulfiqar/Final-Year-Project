@@ -62,6 +62,7 @@ router.delete("/patient/:id", async (req, res) => {
     }
 
     await User.findByIdAndDelete(req.params.id);
+    await require("../models/Message").deleteMany({ $or: [{ sender: req.params.id }, { receiver: req.params.id }] });
 
     // 📩 EMAIL SEND
     await createTransporter().sendMail({
@@ -193,6 +194,7 @@ router.delete("/delete/:id", async (req, res) => {
     }
 
     await User.findByIdAndDelete(req.params.id);
+    await require("../models/Message").deleteMany({ $or: [{ sender: req.params.id }, { receiver: req.params.id }] });
 
     // 📩 EMAIL SEND
     await createTransporter().sendMail({

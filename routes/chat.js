@@ -6,11 +6,84 @@ const Message = require('../models/Message');
 const Appointment = require('../models/Appointment');
 const User = require('../models/User');
 const Admin = require('../models/Admin');
+const multer = require('multer');
+const crypto = require('crypto');
+const path = require('path');
+const cloudinary = require('../config/cloudinary');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'mindbridge-jwt-secret';
 const MAX_LENGTH = 1000;
 // A patient and a psychiatrist can chat once an appointment between them is accepted (or completed)
 const CHAT_STATUSES = ['accepted', 'completed'];
+
+// ---- file / image sharing ----
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']; // no SVG (can carry scripts)
+const FILE_TYPES = [
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-powerpoint',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'text/plain',
+  'text/csv'
+];
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: MAX_FILE_SIZE, files: 1 },
+  fileFilter: (req, file, cb) => {
+    if (IMAGE_TYPES.includes(file.mimetype) || FILE_TYPES.includes(file.mimetype)) cb(null, true);
+    else cb(new Error('This file type is not allowed. Send an image, PDF, Word, Excel, PowerPoint, TXT or CSV file.'));
+  }
+});
+
+// multer errors -> the same JSON shape as every other error in this API
+function receiveFile(req, res, next) {
+  upload.single('file')(req, res, err => {
+    if (!err) return next();
+    const message = err.code === 'LIMIT_FILE_SIZE' ? 'File is too large (max 10 MB)' : err.message || 'Upload failed';
+    res.status(400).json({ success: false, message });
+  });
+}
+
+function uploadToCloudinary(file, kind) {
+  return new Promise((resolve, reject) => {
+    const parsed = path.parse(file.originalname || 'file');
+    const base = parsed.name.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 40) || 'file';
+    const ext = parsed.ext.toLowerCase().replace(/[^a-z0-9.]/g, '');
+    const unique = `${Date.now()}_${crypto.randomBytes(4).toString('hex')}_${base}`;
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder: 'mindbridge/chat',
+        resource_type: kind === 'image' ? 'image' : 'raw',
+        // raw files keep their extension so they open correctly
+        public_id: kind === 'image' ? unique : unique + ext
+      },
+      (error, result) => (error ? reject(error) : resolve(result))
+    );
+    stream.end(file.buffer);
+  });
+}
+
+const previewOf = m =>
+  m.text
+    ? m.text.slice(0, 80)
+    : m.attachment
+      ? (m.attachment.kind === 'image' ? '📷 Photo' : `📎 ${m.attachment.name || 'File'}`)
+      : '';
+
+const serialize = (m, me) => ({
+  _id: m._id,
+  text: m.text || '',
+  attachment: m.attachment
+    ? { url: m.attachment.url, name: m.attachment.name, mimeType: m.attachment.mimeType, size: m.attachment.size, kind: m.attachment.kind }
+    : null,
+  createdAt: m.createdAt,
+  mine: m.sender.equals(me._id)
+});
 
 // Logged-in patient, psychiatrist or admin
 async function auth(req, res, next) {
@@ -111,7 +184,7 @@ router.get('/contacts', auth, async (req, res) => {
           subtitle: subtitleOf(u),
           unread: st ? st.unread : 0,
           lastMessage: st
-            ? { text: st.last.text.slice(0, 80), createdAt: st.last.createdAt, mine: st.last.sender.equals(me._id) }
+            ? { text: previewOf(st.last), createdAt: st.last.createdAt, mine: st.last.sender.equals(me._id) }
             : null
         };
       });
@@ -137,7 +210,7 @@ router.get('/contacts', auth, async (req, res) => {
         ...p,
         unread,
         lastMessage: last
-          ? { text: last.text.slice(0, 80), createdAt: last.createdAt, mine: last.sender.equals(me._id) }
+          ? { text: previewOf(last), createdAt: last.createdAt, mine: last.sender.equals(me._id) }
           : null
       };
     }));
@@ -152,7 +225,20 @@ router.get('/contacts', auth, async (req, res) => {
 // Total unread messages (navbar badge)
 router.get('/unread-count', auth, async (req, res) => {
   try {
-    const count = await Message.countDocuments({ receiver: req.me._id, read: false });
+    // only count messages from accounts that still exist (a deleted user's messages can never be opened/read)
+    const senders = await Message.distinct('sender', { receiver: req.me._id, read: false });
+    if (!senders.length) return res.json({ success: true, count: 0 });
+    const [users, admins] = await Promise.all([
+      User.find({ _id: { $in: senders } }).select('_id').lean(),
+      Admin.find({ _id: { $in: senders } }).select('_id').lean()
+    ]);
+    const alive = [...users, ...admins].map(x => x._id);
+    const orphaned = senders.filter(id => !alive.some(a => a.equals(id)));
+    if (orphaned.length) // self-heal: clear stale unread flags left behind by deleted accounts
+      await Message.updateMany({ receiver: req.me._id, sender: { $in: orphaned }, read: false }, { read: true });
+    const count = alive.length
+      ? await Message.countDocuments({ receiver: req.me._id, sender: { $in: alive }, read: false })
+      : 0;
     res.json({ success: true, count });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -198,12 +284,7 @@ router.get('/:userId/messages', auth, async (req, res) => {
     res.json({
       success: true,
       other: { _id: other._id, name: other.name, subtitle: other.subtitle, role: other.role },
-      messages: messages.map(m => ({
-        _id: m._id,
-        text: m.text,
-        createdAt: m.createdAt,
-        mine: m.sender.equals(me._id)
-      }))
+      messages: messages.map(m => serialize(m, me))
     });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -211,7 +292,7 @@ router.get('/:userId/messages', auth, async (req, res) => {
 });
 
 // Send a message
-router.post('/:userId/messages', auth, async (req, res) => {
+router.post('/:userId/messages', auth, receiveFile, async (req, res) => {
   try {
     const me = req.me;
     const { userId } = req.params;
@@ -220,16 +301,33 @@ router.post('/:userId/messages', auth, async (req, res) => {
     if (!(await canChat(me, userId)))
       return res.status(403).json({ success: false, message: 'You can chat with a psychiatrist/patient once an appointment between you is accepted. You can always message the admin.' });
 
-    const text = typeof req.body.text === 'string' ? req.body.text.trim() : '';
-    if (!text) return res.status(400).json({ success: false, message: 'Message cannot be empty' });
+    const body = req.body || {};
+    const text = typeof body.text === 'string' ? body.text.trim() : '';
+    if (!text && !req.file) return res.status(400).json({ success: false, message: 'Message cannot be empty' });
     if (text.length > MAX_LENGTH)
       return res.status(400).json({ success: false, message: `Message is too long (max ${MAX_LENGTH} characters)` });
 
-    const msg = await Message.create({ sender: me._id, receiver: userId, text });
-    res.json({
-      success: true,
-      message: { _id: msg._id, text: msg.text, createdAt: msg.createdAt, mine: true }
-    });
+    let attachment;
+    if (req.file) {
+      const kind = IMAGE_TYPES.includes(req.file.mimetype) ? 'image' : 'file';
+      let result;
+      try { result = await uploadToCloudinary(req.file, kind); }
+      catch (e) {
+        console.error('Chat upload error:', e);
+        return res.status(502).json({ success: false, message: 'Could not upload the file. Please try again.' });
+      }
+      attachment = {
+        url: result.secure_url,
+        publicId: result.public_id,
+        name: (req.file.originalname || 'file').slice(0, 200),
+        mimeType: req.file.mimetype,
+        size: req.file.size,
+        kind
+      };
+    }
+
+    const msg = await Message.create({ sender: me._id, receiver: userId, text, attachment });
+    res.json({ success: true, message: serialize(msg, me) });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
