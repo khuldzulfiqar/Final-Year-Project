@@ -551,7 +551,7 @@
           // of showing nothing.
           if (!doctors.length) {
             const fallbackRes = await apiCall(`/api/psychiatrist`, 'GET');
-            doctors = (fallbackRes.success && fallbackRes.psychiatrists) ? fallbackRes.psychiatrists.slice(0, 3) : [];
+            doctors = (fallbackRes.success && fallbackRes.psychiatrists) ? fallbackRes.psychiatrists : [];
             heading = 'Psychiatrists you can consult';
           }
 
@@ -1259,7 +1259,7 @@
           // of showing nothing.
           if (!doctors.length) {
             const fallbackRes = await apiCall(`/api/psychiatrist`, 'GET');
-            doctors = (fallbackRes.success && fallbackRes.psychiatrists) ? fallbackRes.psychiatrists.slice(0, 3) : [];
+            doctors = (fallbackRes.success && fallbackRes.psychiatrists) ? fallbackRes.psychiatrists : [];
             heading = 'Psychiatrists you can consult';
           }
 

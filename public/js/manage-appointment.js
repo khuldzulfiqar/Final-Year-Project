@@ -79,10 +79,14 @@ async function loadAppointments() {
         ? formatTime12(app.timeSlot)
         : "";
 
+      // If the account was deleted, populate() returns null, so fall back to the name saved on the appointment
+      const patientName = app.patient?.fullName || (app.patientName ? `${app.patientName} (deleted)` : "—");
+      const psyName = app.psychiatrist?.fullName || (app.psychiatristName ? `${app.psychiatristName} (deleted)` : "—");
+
       tableBody.innerHTML += `
     <tr style="border-top:1px solid #eee;">
-      <td style="padding:12px;">${app.patient?.fullName || ""}</td>
-      <td style="padding:12px;">${app.psychiatrist?.fullName || ""}</td>
+      <td style="padding:12px;">${patientName}</td>
+      <td style="padding:12px;">${psyName}</td>
       <td style="padding:12px;">${app.date} | ${formattedTime}</td>
       <td style="padding:12px; font-weight:500;">${app.status}</td>
     </tr>

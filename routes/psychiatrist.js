@@ -8,11 +8,12 @@ router.get('/', async (req, res) => {
   try {
     const filter = { role: 'psychiatrist' };
     if (req.query.specialization) {
-      filter.specialization = { $regex: req.query.specialization, $options: 'i' };
+      // escape regex special characters so the search text can't break the query
+      const term = String(req.query.specialization).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      filter.specialization = { $regex: term, $options: 'i' };
     }
-    let query = User.find(filter).select('-password');
-    if (req.query.specialization) query = query.limit(3);
-    const psychiatrists = await query;
+    // No limit: return ALL psychiatrists matching the filter.
+    const psychiatrists = await User.find(filter).select('-password');
     res.json({ success: true, psychiatrists });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

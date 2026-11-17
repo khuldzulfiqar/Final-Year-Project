@@ -324,6 +324,13 @@ router.post('/create-profile', authMiddleware, async (req, res) => {
     } = req.body;
     const fee = Number(consultationFee);
 
+    if (!/^\d{6}-P$/i.test(String(licenseNumber || '').trim())) {
+      return res.status(400).json({
+        success: false,
+        message: 'License number must be in the format 551854-P (6 digits, a hyphen, then P)'
+      });
+    }
+
     if (consultationFee !== undefined) {
       if (isNaN(fee) || fee <= 0) {
         return res.status(400).json({
@@ -340,7 +347,8 @@ router.post('/create-profile', authMiddleware, async (req, res) => {
 
     const updateData = {
       fullName, phone, gender, bio,
-      specialization, experience, qualification, licenseNumber,
+      specialization, experience, qualification,
+      licenseNumber: String(licenseNumber).trim().toUpperCase(),
       consultationFee, consultationModes,
       availableDays: sched.availableDays,
       weeklySchedule: sched.weeklySchedule,

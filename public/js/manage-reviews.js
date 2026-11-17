@@ -69,10 +69,12 @@ async function loadReviews() {
     }
 
     data.forEach(r => {
+      const patientName = r.patient?.fullName || (r.patientName ? `${r.patientName} (deleted)` : "—");
+      const psyName = r.psychiatrist?.fullName || (r.psychiatristName ? `${r.psychiatristName} (deleted)` : "—");
       tableBody.innerHTML += `
         <tr style="border-top:1px solid #eee;">
-          <td style="padding:12px;">${r.patient?.fullName || "—"}</td>
-          <td style="padding:12px;">${r.psychiatrist?.fullName || "—"}</td>
+          <td style="padding:12px;">${patientName}</td>
+          <td style="padding:12px;">${psyName}</td>
           <td style="padding:12px;">${r.rating} ⭐</td>
           <td style="padding:12px;">${r.comment || "—"}</td>
           <td style="padding:12px;">${new Date(r.createdAt).toLocaleDateString()}</td>

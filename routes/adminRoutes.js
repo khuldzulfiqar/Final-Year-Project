@@ -39,7 +39,7 @@ router.get("/patient/:id", async (req, res) => {
     const patient = await User.findOne({
       _id: req.params.id,
       role: "patient"
-    });
+    }).select("-password");
 
     if (!patient) {
       return res.status(404).json({ message: "Not found" });
@@ -240,9 +240,10 @@ router.get("/appointments", async (req, res) => {
 
     // ✅ SEARCH FILTER
     if (search) {
+      const q = search.toLowerCase();
       appointments = appointments.filter(app =>
-        app.patient?.fullName.toLowerCase().includes(search.toLowerCase()) ||
-        app.psychiatrist?.fullName.toLowerCase().includes(search.toLowerCase())
+        (app.patient?.fullName || app.patientName || "").toLowerCase().includes(q) ||
+        (app.psychiatrist?.fullName || app.psychiatristName || "").toLowerCase().includes(q)
       );
     }
 
@@ -275,8 +276,8 @@ router.get("/reviews", async (req, res) => {
     // ✅ SEARCH FILTER
     if (search) {
       reviews = reviews.filter(r =>
-        r.patient?.fullName?.toLowerCase().includes(search.toLowerCase()) ||
-        r.psychiatrist?.fullName?.toLowerCase().includes(search.toLowerCase()) ||
+        (r.patient?.fullName || r.patientName || "").toLowerCase().includes(search.toLowerCase()) ||
+        (r.psychiatrist?.fullName || r.psychiatristName || "").toLowerCase().includes(search.toLowerCase()) ||
         r.comment?.toLowerCase().includes(search.toLowerCase())
       );
     }

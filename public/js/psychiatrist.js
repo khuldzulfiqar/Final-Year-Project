@@ -51,6 +51,7 @@ async function loadPsychiatrists(search = "") {
         <td style="padding:12px;">${p.fullName || "—"}</td>
         <td style="padding:12px;">${p.email || "—"}</td>
         <td style="padding:12px;">${p.specialization || "—"}</td>
+        <td style="padding:12px;">${p.licenseNumber || "—"}</td>
         <td style="padding:12px;">${p.status || "Pending"}</td>
         <td style="padding:12px;">
           <div class="action-group">
