@@ -141,9 +141,14 @@ router.post('/register-patient', async (req, res) => {
 router.post('/register-psychiatrist', async (req, res) => {
   try {
     const User = require('../models/User');
-    const { fullName, cnic, age, email, password, phone, specialization, experience, qualification, bio } = req.body;
-    if (!fullName || !cnic || !email || !password)
-      return res.status(400).json({ success: false, message: 'All required fields must be filled' });
+    const { fullName, cnic, age, email, password, phone, specialization, experience, qualification, bio, licenseNumber } = req.body;
+    if (!fullName || !cnic || !email || !password || !licenseNumber)
+      return res.status(400).json({ success: false, message: 'All required fields must be filled (including license number)' });
+
+    // License validation: must match 551854-P (6 digits, hyphen, P)
+    const license = String(licenseNumber).trim().toUpperCase();
+    if (!/^\d{6}-P$/.test(license))
+      return res.status(400).json({ success: false, message: 'License number must be in the format 551854-P (6 digits, a hyphen, then P)' });
 
     // CNIC validation: must match XXXXX-XXXXXXX-X
     const cnicRegex = /^\d{5}-\d{7}-\d{1}$/;
@@ -164,7 +169,9 @@ router.post('/register-psychiatrist', async (req, res) => {
 
     const existing = await User.findOne({ $or: [{ email }, { cnic }] });
     if (existing) return res.status(400).json({ success: false, message: 'Email or CNIC already registered' });
-    const user = new User({ fullName, cnic, email, password, role: 'psychiatrist', phone, specialization, experience, qualification, bio, isEmailVerified: true });
+    const licenseTaken = await User.findOne({ licenseNumber: license });
+    if (licenseTaken) return res.status(400).json({ success: false, message: 'This license number is already registered' });
+    const user = new User({ fullName, cnic, email, password, role: 'psychiatrist', phone, specialization, experience, qualification, bio, licenseNumber: license, isEmailVerified: true });
     await user.save();
     otpStore.delete(email.toLowerCase().trim());
     res.json({ success: true, message: 'Psychiatrist registered successfully!' });
@@ -324,11 +331,21 @@ router.post('/create-profile', authMiddleware, async (req, res) => {
     } = req.body;
     const fee = Number(consultationFee);
 
-    if (!/^\d{6}-P$/i.test(String(licenseNumber || '').trim())) {
-      return res.status(400).json({
-        success: false,
-        message: 'License number must be in the format 551854-P (6 digits, a hyphen, then P)'
-      });
+    // License number is collected at registration and is not editable here.
+    // Older accounts registered before that change may not have one yet, so accept it once for them.
+    const current = await User.findById(req.user.id).select('licenseNumber');
+    let licenseToSave = current && current.licenseNumber;
+    if (!licenseToSave) {
+      const lic = String(licenseNumber || '').trim().toUpperCase();
+      if (!/^\d{6}-P$/.test(lic)) {
+        return res.status(400).json({
+          success: false,
+          message: 'License number must be in the format 551854-P (6 digits, a hyphen, then P)'
+        });
+      }
+      const taken = await User.findOne({ licenseNumber: lic, _id: { $ne: req.user.id } });
+      if (taken) return res.status(400).json({ success: false, message: 'This license number is already registered' });
+      licenseToSave = lic;
     }
 
     if (consultationFee !== undefined) {
@@ -348,7 +365,7 @@ router.post('/create-profile', authMiddleware, async (req, res) => {
     const updateData = {
       fullName, phone, gender, bio,
       specialization, experience, qualification,
-      licenseNumber: String(licenseNumber).trim().toUpperCase(),
+      licenseNumber: licenseToSave,
       consultationFee, consultationModes,
       availableDays: sched.availableDays,
       weeklySchedule: sched.weeklySchedule,

@@ -607,6 +607,14 @@ async function prefillForm() {
   document.getElementById('experience').value      = u.experience || '';
   document.getElementById('qualification').value   = u.qualification || '';
   document.getElementById('licenseNumber').value   = u.licenseNumber || '';
+  if (u.licenseNumber) {
+    // Collected at registration - shown for reference only
+    const licEl = document.getElementById('licenseNumber');
+    licEl.readOnly = true;
+    licEl.style.background = 'rgba(0,0,0,0.04)';
+    licEl.style.cursor = 'not-allowed';
+    licEl.title = 'Provided at registration';
+  }
   document.getElementById('consultationFee').value = u.consultationFee || '';
 
   if (u.clinicAddress) {

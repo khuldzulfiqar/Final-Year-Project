@@ -35,6 +35,10 @@
         <input type="text" id="cnic" class="form-control" placeholder="XXXXX-XXXXXXX-X">
       </div>
       <div class="mb-3">
+        <label class="form-label">License Number *</label>
+        <input type="text" id="licenseNumber" class="form-control" placeholder="e.g. 551854-P" maxlength="8">
+      </div>
+      <div class="mb-3">
         <label class="form-label">Email Address *</label>
         <input type="email" id="email" class="form-control" placeholder="your@email.com">
       </div>
@@ -84,6 +88,7 @@ if (Auth.isLoggedIn()) window.location.href = '/dashboard';
 async function handleRegister() {
   const fullName = document.getElementById('fullName').value.trim();
   const cnic = document.getElementById('cnic').value.trim();
+  const licenseNumber = document.getElementById('licenseNumber').value.trim().toUpperCase();
   const email = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value;
   const specialization = document.getElementById('specialization').value.trim();
@@ -92,8 +97,11 @@ async function handleRegister() {
   const bio = document.getElementById('bio').value.trim();
   const btn = document.getElementById('reg-btn');
 
-  if (!fullName || !cnic || !email || !password) {
-    showAlert('alert-box', 'Please fill in all required fields (Name, CNIC, Email, Password).', 'error'); return;
+  if (!fullName || !cnic || !licenseNumber || !email || !password) {
+    showAlert('alert-box', 'Please fill in all required fields (Name, CNIC, License Number, Email, Password).', 'error'); return;
+  }
+  if (!/^\d{6}-P$/i.test(licenseNumber)) {
+    showAlert('alert-box', 'Invalid license number. Use the format 551854-P (6 digits, a hyphen, then P).', 'error'); return;
   }
   const cnicRegex = /^\d{5}-\d{7}-\d{1}$/;
   if (!cnicRegex.test(cnic)) {
@@ -108,7 +116,7 @@ async function handleRegister() {
 
   try {
     const data = await apiCall('/api/auth/register-psychiatrist', 'POST', {
-      fullName, cnic, email, password, specialization, experience, qualification, bio
+      fullName, cnic, licenseNumber, email, password, specialization, experience, qualification, bio
     });
     if (data.success) {
       showAlert('alert-box', '✅ Account created successfully! Redirecting to login...', 'success');

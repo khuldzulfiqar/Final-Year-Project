@@ -227,6 +227,11 @@
           <label class="form-label">Full Name *</label>
           <input type="text" id="ps-fullName" class="form-control" placeholder="Dr. Your Full Name">
         </div>
+        <div class="mb-3">
+          <label class="form-label">License Number *</label>
+          <input type="text" id="ps-license" class="form-control" placeholder="e.g. 551854-P" maxlength="8">
+          <p style="font-size:0.78rem;color:var(--text-muted);margin:0.35rem 0 0;">Your PMDC registration number. It is verified by admin before your account is activated.</p>
+        </div>
         <div class="row">
           <div class="col-md-6">
             <div class="mb-3">
@@ -451,6 +456,7 @@ async function registerPatient() {
 async function registerPsychiatrist() {
   const fullName       = document.getElementById('ps-fullName').value.trim();
   const cnic           = document.getElementById('ps-cnic').value.trim();
+  const licenseNumber  = document.getElementById('ps-license').value.trim().toUpperCase();
   const email          = document.getElementById('ps-email').value.trim();
   const password       = document.getElementById('ps-password').value;
   const phone          = document.getElementById('ps-phone').value.trim();
@@ -460,8 +466,11 @@ async function registerPsychiatrist() {
   const bio            = document.getElementById('ps-bio').value.trim();
   const btn            = document.getElementById('btn-psychiatrist');
 
-  if (!fullName || !cnic || !email || !password) {
-    showAlert('alert-psychiatrist', 'Please fill in all required fields (Name, CNIC, Email, Password).', 'error'); return;
+  if (!fullName || !cnic || !licenseNumber || !email || !password) {
+    showAlert('alert-psychiatrist', 'Please fill in all required fields (Name, CNIC, License Number, Email, Password).', 'error'); return;
+  }
+  if (!/^\d{6}-P$/i.test(licenseNumber)) {
+    showAlert('alert-psychiatrist', 'Invalid license number. Use the format 551854-P (6 digits, a hyphen, then P).', 'error'); return;
   }
   const cnicRegex = /^\d{5}-\d{7}-\d{1}$/;
   if (!cnicRegex.test(cnic)) {
@@ -480,7 +489,7 @@ async function registerPsychiatrist() {
 
   try {
     const data = await apiCall('/api/auth/register-psychiatrist', 'POST',
-      { fullName, cnic, email, password, phone, specialization, experience, qualification, bio });
+      { fullName, cnic, licenseNumber, email, password, phone, specialization, experience, qualification, bio });
     if (data.success) {
       showAlert('alert-psychiatrist', '✅ Account created! Pending admin approval. Redirecting to login...', 'success');
       setTimeout(() => window.location.href = '/login?role=psychiatrist', 2500);
@@ -501,6 +510,9 @@ function formatCnic(e) {
   else if (v.length > 5) v = v.substring(0, 5) + '-' + v.substring(5);
   e.target.value = v;
 }
+// License auto-uppercase (e.g. 551854-p -> 551854-P)
+const psLicenseEl = document.getElementById('ps-license');
+if (psLicenseEl) psLicenseEl.addEventListener('input', e => { e.target.value = e.target.value.toUpperCase(); });
 ['p-cnic', 'ps-cnic'].forEach(id => {
   const el = document.getElementById(id);
   if (el) el.addEventListener('input', formatCnic);
