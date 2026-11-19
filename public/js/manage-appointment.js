@@ -49,15 +49,24 @@ async function loadAppointments() {
     const status = statusFilter.value;
     const search = searchInput.value;
 
-    let url = `/api/admin/appointments?`;
+    const params = new URLSearchParams();
+    if (status) params.append("status", status);
+    if (search.trim()) params.append("search", search.trim());
 
-    if (status) url += `status=${status}&`;
-    if (search) url += `search=${search}`;
-
-    const res = await adminFetch(url);
+    const res = await adminFetch(`/api/admin/appointments?${params.toString()}`);
     const data = await res.json();
 
     tableBody.innerHTML = "";
+
+    if (!Array.isArray(data)) {
+      console.log("Error loading appointments:", data);
+      return;
+    }
+
+    if (data.length === 0) {
+      tableBody.innerHTML = `<tr><td colspan="4" style="padding:20px; text-align:center; color:#888;">No appointments found</td></tr>`;
+      return;
+    }
 
     data.forEach(app => {
 
@@ -88,7 +97,7 @@ async function loadAppointments() {
       <td style="padding:12px;">${patientName}</td>
       <td style="padding:12px;">${psyName}</td>
       <td style="padding:12px;">${app.date} | ${formattedTime}</td>
-      <td style="padding:12px; font-weight:500;">${app.status}</td>
+      <td style="padding:12px; font-weight:500; text-transform:capitalize;">${app.status}</td>
     </tr>
   `;
     });

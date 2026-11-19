@@ -148,7 +148,7 @@
             const doc = p.psychiatrist || {};
             const pat = p.patient || {};
             const addr = doc.clinicAddress || {};
-            const clinic = [addr.street, addr.city, addr.state].filter(Boolean).join(', ');
+            const clinic = [addr.street, addr.city, addr.state, addr.country].filter(Boolean).join(', ');
 
             // New prescriptions have medicineList; old ones only have the text field
             const dash = '<span class="dash">&mdash;</span>';
@@ -207,7 +207,9 @@
               <div class="rx-doc-meta">
                 ${doc.qualification ? esc(doc.qualification) + '<br>' : ''}
                 ${doc.specialization ? esc(doc.specialization) + '<br>' : ''}
+                ${doc.experience ? 'Experience: ' + esc(doc.experience) + (/[a-z]/i.test(doc.experience) ? '' : ' yrs') + '<br>' : ''}
                 ${doc.licenseNumber ? 'Reg. No: ' + esc(doc.licenseNumber) + '<br>' : ''}
+                ${doc.phone ? 'Phone: ' + esc(doc.phone) + '<br>' : ''}
                 ${clinic ? esc(clinic) : ''}
               </div>
             </div>

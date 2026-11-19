@@ -473,7 +473,7 @@ router.get('/prescriptions/patient', async (req, res) => {
     if (!decoded) return res.status(401).json({ message: 'Not authenticated' });
 
     const prescriptions = await Prescription.find({ patient: decoded.id, hiddenByPatient: { $ne: true } })
-      .populate('psychiatrist', 'fullName specialization qualification licenseNumber phone clinicAddress')
+      .populate('psychiatrist', 'fullName specialization qualification experience licenseNumber phone clinicAddress')
       .populate('patient', 'fullName age gender phone')
       .populate('appointment', 'date timeSlot')
       .sort({ createdAt: -1 });

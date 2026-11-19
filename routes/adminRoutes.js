@@ -231,7 +231,7 @@ router.get("/appointments", async (req, res) => {
 
     // ✅ STATUS FILTER
     if (status) {
-      filter.status = status;
+      filter.status = String(status).toLowerCase();
     }
 
     let appointments = await Appointment.find(filter)
